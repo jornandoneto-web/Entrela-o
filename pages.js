@@ -80,7 +80,7 @@ Object.assign(ENT, {
   eventos: {
     coll: 'eventos', title: 'Calendário escolar', singular: 'evento', plural: 'eventos', newLabel: 'Adicionar evento',
     desc: 'Feriados, avaliações, reuniões e prazos. Aparece para alunos e professores.',
-    fields: [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'tipo', l: 'Tipo', t: 'select', o: optsFix(['Avaliação', 'Reunião', 'Evento', 'Feriado', 'Recesso', 'Prazo']), req: 1 }, { k: 'escopo', l: 'Para quem', help: 'Ex.: Todas as turmas, 3º ano, Professores' }],
+    fields: [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'tipo', l: 'Tipo', t: 'select', o: optsFix(['Avaliação', 'Reunião', 'Evento', 'Feriado', 'Recesso', 'Prazo']), req: 1 }, { k: 'escopo', l: 'Para quem', t: 'select', outro: 1, o: optsFix(['Todas as turmas', 'Ensino fundamental', 'Ensino médio', '1º ano', '2º ano', '3º ano', 'Professores', 'Responsáveis', 'Sem aulas']) }],
     sort: (a, b) => a.data.localeCompare(b.data),
     cols: [['Data', r => `<span class="num">${fmtD(r.data)}</span>${caption2(DAYS[dOf(r.data).getDay()])}`], ['Evento', r => esc(r.titulo)], ['Tipo', r => esc(r.tipo)], ['Para quem', r => esc(r.escopo || '—')], ['Quando', r => { const n = daysUntil(r.data); return n < 0 ? '<span class="muted">Já passou</span>' : n === 0 ? st('Hoje', 'info') : `Em ${n} dia${n > 1 ? 's' : ''}`; }]],
     name: r => r.titulo
@@ -88,7 +88,7 @@ Object.assign(ENT, {
   comunicados: {
     coll: 'comunicados', title: 'Comunicados', singular: 'comunicado', plural: 'comunicados', newLabel: 'Publicar comunicado',
     desc: 'Avisos para a comunidade, para um grupo ou para uma turma específica.',
-    fields: () => [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'publico', l: 'Público', t: 'select', o: PUBLICOS, req: 1 }, { k: 'autor', l: 'Assinado por', req: 1 }, { k: 'texto', l: 'Mensagem', t: 'textarea', req: 1 }],
+    fields: () => [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'publico', l: 'Público', t: 'select', o: PUBLICOS, req: 1 }, { k: 'autor', l: 'Assinado por', req: 1, t: 'select', outro: 1, o: optsFix(['Secretaria escolar', 'Coordenação pedagógica', 'Direção da escola', 'Secretaria de Educação', 'Diretoria Regional']) }, { k: 'texto', l: 'Mensagem', t: 'textarea', req: 1 }],
     defaults: () => ({ autor: 'Secretaria escolar', data: TODAY_ISO, publico: 'Todos' }),
     sort: (a, b) => b.data.localeCompare(a.data),
     cols: [['Comunicado', r => `${esc(r.titulo)}${caption2(esc(r.texto.slice(0, 90)) + (r.texto.length > 90 ? '…' : ''))}`], ['Público', r => esc(publicoLabel(r.publico))], ['Autor', r => esc(r.autor)], ['Data', r => `<span class="num">${fmtD(r.data)}</span>`]],

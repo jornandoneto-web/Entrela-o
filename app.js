@@ -582,11 +582,40 @@ function fieldHTML(f, val) {
     return `<fieldset class="field wide"><legend>${label}</legend><div class="checks">${opts.map(([ov, ol]) => `<label class="check"><input type="checkbox" name="${f.k}" value="${esc(ov)}" ${v.includes(ov) ? 'checked' : ''}>${esc(ol)}</label>`).join('')}</div>${help}</fieldset>`;
   }
   let ctl;
+  if (f.t === 'select' && f.outro) return listaOutroHTML(id, f.l, opts, val, { req: !!f.req, help: f.help, name: f.k, wide: f.wide, vazio: f.vazio || 'Selecione…' });
   if (f.t === 'select') ctl = `<select id="${id}" name="${f.k}" ${req} ${desc} ${f.attrs || ''}><option value="">Selecione…</option>${opts.map(([ov, ol]) => `<option value="${esc(ov)}" ${String(ov) === String(val ?? '') ? 'selected' : ''}>${esc(ol)}</option>`).join('')}</select>`;
   else if (f.t === 'textarea') ctl = `<textarea id="${id}" name="${f.k}" ${req} ${desc}>${esc(val)}</textarea>`;
   else ctl = `<input id="${id}" name="${f.k}" type="${f.t || 'text'}" value="${esc(val)}" ${req} ${desc} ${f.attrs || ''} ${f.t === 'email' ? 'autocomplete="email"' : ''}>`;
   return `<div class="field ${f.wide || f.t === 'textarea' ? 'wide' : ''}" ${f.showIf ? `data-show-if="${esc(f.showIf)}"` : ''}><label for="${id}">${label}</label>${ctl}${help}</div>`;
 }
+const CHG_EXTRA = {};
+// ---------- Listas no lugar de texto livre ----------
+// Lista com a opção "Outro…": o campo de texto só aparece quando a resposta não está na lista.
+function listaOutroHTML(id, label, opts, val, { req = false, help = '', name = '', wide = false, vazio = 'Selecione…' } = {}) {
+  const lista = opts.map(o => Array.isArray(o) ? o : [o, o]);
+  const naLista = val == null || val === '' || lista.some(([v]) => String(v) === String(val));
+  const r = req ? ' <span class="req" aria-hidden="true">*</span>' : '';
+  return `<div class="field ${wide ? 'wide' : ''}"><label for="${id}">${esc(label)}${r}</label><select id="${id}" ${name ? `name="${name}__lista"` : ''} ${req ? 'required' : ''} data-change="outro">${`<option value="">${vazio}</option>`}${lista.map(([v, l]) => `<option value="${esc(v)}" ${naLista && String(v) === String(val ?? '') ? 'selected' : ''}>${esc(l)}</option>`).join('')}<option value="__outro" ${naLista ? '' : 'selected'}>Outro…</option></select>
+    <div class="field" data-outro-de="${id}" ${naLista ? 'hidden' : ''}><label for="${id}-outro" class="sr-only">${esc(label)}: outro</label><input id="${id}-outro" value="${naLista ? '' : esc(val)}" placeholder="Digite: ${esc(label.toLowerCase())}" ${!naLista && req ? 'required' : ''}></div>${help ? `<p class="help">${esc(help)}</p>` : ''}</div>`;
+}
+function valorOutro(id) { const s = document.getElementById(id); if (!s) return ''; return s.value === '__outro' ? (document.getElementById(id + '-outro')?.value || '').trim() : s.value; }
+CHG_EXTRA.outro = el => { const box = document.querySelector(`[data-outro-de="${el.id}"]`); if (!box) return; const on = el.value === '__outro'; box.hidden = !on; const i = box.querySelector('input'); i.required = on && el.required; if (on) i.focus(); };
+// Estado e cidade: a cidade vira lista dos municípios do estado escolhido (municipioService)
+function ufCidadeHTML(pref, uf, cidade, { rotuloUF = 'UF', rotuloCidade = 'Cidade' } = {}) {
+  return `<div class="field"><label for="${pref}-uf">${rotuloUF}</label><select id="${pref}-uf" data-change="ufCidade" data-pref="${pref}"><option value="">Selecione…</option>${UFS_BR.map(([u, n]) => `<option value="${u}" ${u === uf ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+    <div class="field" data-cidade="${pref}" data-valor="${esc(cidade)}"><label for="${pref}-cid">${rotuloCidade}</label><select id="${pref}-cid" disabled><option value="">${uf ? 'Carregando…' : 'Escolha o estado primeiro'}</option></select></div>`;
+}
+async function preencherCidades(pref, manterValor) {
+  const uf = document.getElementById(pref + '-uf')?.value; const box = document.querySelector(`[data-cidade="${pref}"]`); if (!box) return;
+  const atual = manterValor ? box.dataset.valor : ''; const label = box.querySelector('label').textContent;
+  if (!uf) { box.innerHTML = `<label for="${pref}-cid">${esc(label)}</label><select id="${pref}-cid" disabled><option value="">Escolha o estado primeiro</option></select>`; return; }
+  const lista = await municipioService.listarPorUF(uf);
+  box.innerHTML = lista.length
+    ? `<label for="${pref}-cid">${esc(label)}</label><select id="${pref}-cid"><option value="">Selecione…</option>${lista.map(m => `<option ${m === atual ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>`
+    : `<label for="${pref}-cid">${esc(label)}</label><input id="${pref}-cid" value="${esc(atual)}"><p class="help">Não foi possível carregar a lista de cidades agora. Digite o nome.</p>`;
+}
+CHG_EXTRA.ufCidade = el => { const box = document.querySelector(`[data-cidade="${el.dataset.pref}"]`); if (box) box.dataset.valor = ''; preencherCidades(el.dataset.pref, false); };
+
 // Campo que só aparece conforme outro campo: showIf: 'ingresso=Contrato' (aceita vários valores com |)
 function applyShowIf(form) {
   if (!form) return;
@@ -599,6 +628,7 @@ function readForm(form, fields) {
   const fd = new FormData(form); const out = {};
   fields.forEach(f => {
     if (f.t === 'checks') out[f.k] = fd.getAll(f.k);
+    else if (f.t === 'select' && f.outro) out[f.k] = valorOutro('f-' + f.k);
     else { let v = fd.get(f.k); if (v == null) return; v = String(v).trim(); if (f.t === 'number' || f.num) v = v === '' ? null : Number(v.replace(',', '.')); out[f.k] = v; }
   });
   return out;
@@ -796,9 +826,9 @@ document.addEventListener('input', e => {
   if (k === 'rate') { A.rate = Number(e.target.value); $('#rate-v').textContent = num(A.rate, 1) + 'x'; applyA11y(); }
   if (e.target.dataset.input && CHG[e.target.dataset.input]) CHG[e.target.dataset.input](e.target);
 });
-const CHG = {
+const CHG = Object.assign(CHG_EXTRA, {
   'login-role': el => { UI.loginRole = el.value; renderLogin(); $(`input[name=role][value="${el.value}"]`).focus(); }
-};
+});
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.filter) { UI.f[el.dataset.filter] = el.value; refreshCrud(el.dataset.filter); return; }

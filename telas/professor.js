@@ -5,6 +5,7 @@
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const opt = (lista, v, ph = 'Selecione…') => `<option value="">${ph}</option>` + lista.map(x => { const [val, l] = Array.isArray(x) ? x : [x, x]; return `<option value="${esc(val)}" ${String(val) === String(v ?? '') ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
 let seqLinha = 0;
+const CARGOS = ['Professor', 'Professor coordenador de área', 'Coordenador pedagógico', 'Diretor', 'Vice-diretor', 'Secretário escolar', 'Técnico em educação', 'Intérprete de Libras', 'Profissional de apoio'];
 
 // ---------- Linhas repetíveis ----------
 function linhaDependente(d = Modelos.dependente()) {
@@ -20,9 +21,9 @@ function linhaVinculo(v = Modelos.vinculo(), n = 1) {
   const hab = uniq(v.formacoes.flatMap(f => DADOS.formacoes.find(x => x.id === f)?.disciplinas || []));
   return `<fieldset class="vinc card" data-id="${esc(v.id)}" style="padding:1.25rem"><legend class="lbl" style="padding:0 .25rem">Vínculo ${n}</legend>
     <div class="form-grid">
-      <div class="field"><label for="vc${i}-cargo">Cargo <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-cargo" data-k="cargo" value="${esc(v.cargo)}" required></div>
+      ${listaOutroHTML(`vc${i}-cargo`, 'Cargo', CARGOS, v.cargo, { req: true }).replace('<select ', '<select data-k="cargo" ')}
       <div class="field"><label for="vc${i}-ing">Forma de ingresso <span class="req" aria-hidden="true">*</span></label><select id="vc${i}-ing" data-k="ingresso" required>${opt(['Concurso', 'Contrato', 'Cedido', 'Seleção simplificada'], v.ingresso)}</select></div>
-      <div class="field"><label for="vc${i}-org">Órgão de origem (se cedido)</label><input id="vc${i}-org" data-k="orgaoOrigem" value="${esc(v.orgaoOrigem)}" placeholder="Ex.: Prefeitura de Aracaju"></div>
+      ${listaOutroHTML(`vc${i}-org`, 'Órgão de origem (se cedido)', municipioService.orgaosCedentes(), v.orgaoOrigem, { vazio: 'Não se aplica' }).replace('<select ', '<select data-k="orgaoOrigem" ')}
       <div class="field"><label for="vc${i}-ch">Carga horária semanal (h) <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-ch" data-k="cargaHoraria" type="number" min="1" max="60" list="ch-padrao" value="${v.cargaHoraria}" required><p class="help">Padrão 25 h; integral 40 h.</p></div>
       <div class="field"><label for="vc${i}-ini">Data de início <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-ini" type="date" data-k="dataInicio" value="${esc(v.dataInicio)}" required></div>
       <div class="field"><label for="vc${i}-fim">Data de fim (opcional)</label><input id="vc${i}-fim" type="date" data-k="dataFim" value="${esc(v.dataFim)}"></div>
@@ -76,8 +77,8 @@ async function abrirProfessor(id) {
           <div class="field"><label for="pf-sexo">Sexo</label><select id="pf-sexo">${opt(['Feminino', 'Masculino', 'Prefiro não informar'], pe.sexo)}</select></div>
           <div class="field"><label for="pf-civil">Estado civil</label><select id="pf-civil">${opt(['Solteiro(a)', 'Casado(a)', 'União estável', 'Divorciado(a)', 'Viúvo(a)'], pe.estadoCivil)}</select></div>
           ${c('pf-tel1', 'Telefone principal', pe.telefones[0] || '', 'type="tel"')}${c('pf-tel2', 'Outro telefone', pe.telefones[1] || '', 'type="tel"')}${c('pf-email', 'E-mail', pe.email, 'type="email"')}
-          ${c('pf-nat-cid', 'Naturalidade: cidade', pe.naturalidade.cidade)}<div class="field"><label for="pf-nat-uf">Naturalidade: UF</label><select id="pf-nat-uf">${opt(UFS, pe.naturalidade.uf)}</select></div></div>
-        <fieldset class="form-grid" style="margin-top:1rem"><legend class="lbl">Endereço</legend>${c('pf-cep', 'CEP', d.cep, 'inputmode="numeric" maxlength="9"')}${c('pf-log', 'Logradouro', d.logradouro)}${c('pf-num', 'Número', d.numero)}${c('pf-comp', 'Complemento', d.complemento)}${c('pf-bairro', 'Bairro', d.bairro)}${c('pf-cid', 'Cidade', d.cidade)}<div class="field"><label for="pf-uf">UF</label><select id="pf-uf">${opt(UFS, d.uf)}</select></div></fieldset>
+          ${ufCidadeHTML('pf-nat', pe.naturalidade.uf, pe.naturalidade.cidade, { rotuloUF: 'Naturalidade: estado', rotuloCidade: 'Naturalidade: cidade' })}</div>
+        <fieldset class="form-grid" style="margin-top:1rem"><legend class="lbl">Endereço</legend>${c('pf-cep', 'CEP', d.cep, 'inputmode="numeric" maxlength="9"')}${c('pf-log', 'Logradouro', d.logradouro)}${c('pf-num', 'Número', d.numero)}${c('pf-comp', 'Complemento', d.complemento)}${c('pf-bairro', 'Bairro', d.bairro)}${ufCidadeHTML('pf', d.uf, d.cidade, { rotuloUF: 'Estado', rotuloCidade: 'Cidade' })}</fieldset>
       </div>
       <div role="tabpanel" id="pan-dep" aria-labelledby="tab-dep" class="aba-painel aba-oculta">
         <p class="muted">Filhos e outros dependentes do professor.</p><div id="deps" class="grid" style="gap:.75rem">${p.dependentes.map(linhaDependente).join('')}</div>
@@ -93,7 +94,7 @@ async function abrirProfessor(id) {
       const pessoa = Modelos.pessoa({ id: pe.id, nome: $('#pf-nome').value, cpf: $('#pf-cpf').value.replace(/\D/g, ''), nascimento: $('#pf-nasc').value, sexo: $('#pf-sexo').value, estadoCivil: $('#pf-civil').value,
         telefones: [$('#pf-tel1').value, $('#pf-tel2').value], email: $('#pf-email').value, naturalidade: { cidade: $('#pf-nat-cid').value, uf: $('#pf-nat-uf').value },
         endereco: { cep: $('#pf-cep').value, logradouro: $('#pf-log').value, numero: $('#pf-num').value, complemento: $('#pf-comp').value, bairro: $('#pf-bairro').value, cidade: $('#pf-cid').value, uf: $('#pf-uf').value } });
-      const ler = (fs, k) => fs.querySelector(`[data-k="${k}"]`).value;
+      const ler = (fs, k) => { const el = fs.querySelector(`[data-k="${k}"]`); return el.tagName === 'SELECT' && el.value === '__outro' ? valorOutro(el.id) : el.value; };
       const dependentes = $$('#deps .dep-linha').map(fs => Modelos.dependente({ id: fs.dataset.id, nome: ler(fs, 'nome'), parentesco: ler(fs, 'parentesco'), nascimento: ler(fs, 'nascimento') }));
       const vinculos = $$('#vincs .vinc').map(fs => { const arq = fs.querySelector('[data-k="anexo"]').files[0]; return Modelos.vinculo({ id: fs.dataset.id, cargo: ler(fs, 'cargo'), ingresso: ler(fs, 'ingresso'), orgaoOrigem: ler(fs, 'orgaoOrigem'), cargaHoraria: ler(fs, 'cargaHoraria'), dataInicio: ler(fs, 'dataInicio'), dataFim: ler(fs, 'dataFim'),
         formacoes: $$('[data-k="formacoes"]:checked', fs).map(x => x.value), disciplinas: $$('[data-k="disciplinas"]:checked', fs).map(x => x.value), anexoContrato: arq ? arq.name : fs.querySelector('[data-anexo]').dataset.anexo }); });

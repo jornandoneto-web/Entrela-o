@@ -2,6 +2,14 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v18 — Listas no lugar de texto digitado
+- Estado e cidade em lista: ao escolher o estado, a cidade mostra só os municípios dele. Sergipe vem completo (75 municípios); os outros estados vêm da API do IBGE e, se ela não responder, o campo volta a aceitar texto.
+- Cadastro de professor: naturalidade e endereço com estado e cidade em lista; cargo e órgão de origem (cedidos) em lista.
+- Novo padrão "lista com Outro…": quando a resposta não está na lista, abre um campo para digitar.
+- Também viraram lista: "Para quem" do evento, "Assinado por" do comunicado, restrição alimentar do aluno, sala da turma, motorista da rota, processo seletivo do banco de talentos, componente curricular da matriz, motivo da transferência e motivo da ausência no transporte.
+- Tipos de laboratório da infraestrutura em caixas de marcar.
+- Novo `services/municipioService.js`.
+
 ## v17 — Todas as telas pelos serviços
 - Separação entre o armazenamento do back-end simulado (`ARMAZEM`, usado só pelos serviços e migrações) e os dados de cada tela (`DADOS`).
 - Novo `services/dadosService.js` (unidade de trabalho): antes de cada tela abrir, carrega os dados pelos serviços. Ao salvar, envia aos serviços só o que mudou, e o serviço de cada coleção valida e grava.

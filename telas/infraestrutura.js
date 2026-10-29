@@ -1,6 +1,7 @@
 /* Telas: Infraestrutura da escola (Etapa 2). O diretor preenche a da sua escola; a Diretoria Regional consulta as da regional. */
 'use strict';
 
+const TIPOS_LAB = ['Ciências', 'Química', 'Física', 'Biologia', 'Matemática', 'Informática', 'Robótica', 'Línguas', 'Maker'];
 const INFRA_NUM = [['salasAula', 'Salas de aula'], ['salasTI', 'Salas de informática'], ['laboratorios', 'Laboratórios'], ['banheiros', 'Banheiros'], ['salasProfessores', 'Salas de professores']];
 
 async function telaInfraDiretor() {
@@ -12,7 +13,7 @@ async function telaInfraDiretor() {
   return pageHead('Infraestrutura da escola', `${esc(escola?.nome || '')}. Preenchido pela direção e usado pela Secretaria para planejar obras, matrículas e atendimento a estudantes com deficiência.`) +
     `<form class="card" data-form="infra" novalidate aria-labelledby="inf-h" style="max-width:52rem"><h2 id="inf-h" class="sr-only">Dados da infraestrutura</h2>
       <fieldset class="form-grid"><legend class="lbl">Espaços</legend>${INFRA_NUM.map(([k, l]) => `<div class="field"><label for="inf-${k}">${l}</label><input id="inf-${k}" type="number" min="0" step="1" inputmode="numeric" value="${infra[k]}"></div>`).join('')}
-        <div class="field wide"><label for="inf-tiposLab">Tipos de laboratório (opcional)</label><input id="inf-tiposLab" value="${esc(infra.tiposLaboratorio)}" placeholder="Ex.: Ciências, Química, Robótica"></div></fieldset>
+        <fieldset class="field wide"><legend class="lbl">Tipos de laboratório</legend><div class="checks">${[...TIPOS_LAB, ...infra.tiposLaboratorio.split(',').map(x => x.trim()).filter(x => x && !TIPOS_LAB.includes(x))].map(t => `<label class="check"><input type="checkbox" name="tiposLab" value="${esc(t)}" ${infra.tiposLaboratorio.split(',').map(x => x.trim()).includes(t) ? 'checked' : ''}>${esc(t)}</label>`).join('')}</div></fieldset></fieldset>
       <fieldset class="field"><legend class="lbl">Possui ginásio ou quadra?</legend><div class="seg">${[['sim', 'Sim'], ['nao', 'Não']].map(([v, l]) => `<label><input type="radio" name="ginasio" value="${v}" ${(infra.possuiGinasio ? 'sim' : 'nao') === v ? 'checked' : ''}>${l}</label>`).join('')}</div></fieldset>
       <fieldset class="field wide"><legend class="lbl">Recursos de acessibilidade</legend><div class="checks" id="inf-acess">${RECURSOS_INFRA.map(r => box(r, infra.recursosAcessibilidade.includes(r))).join('')}${extras.map(r => box(r, true)).join('')}</div>
         <div class="row" style="margin-top:.5rem;align-items:flex-end"><div class="field" style="flex:1 1 14rem"><label for="inf-outro">Outro recurso</label><input id="inf-outro" placeholder="Ex.: Mapa tátil da escola"></div><button type="button" class="btn outline" data-act="infra-outro">${icon('plus')}Adicionar</button></div></fieldset>
@@ -25,7 +26,7 @@ ACT['infra-outro'] = () => {
   i.value = ''; toast(`"${v}" adicionado. Salve para gravar.`, 'info');
 };
 FORMS.infra = f => {
-  const dados = { escolaId: escSessao(), tiposLaboratorio: $('#inf-tiposLab').value, possuiGinasio: f.querySelector('input[name=ginasio]:checked')?.value === 'sim', recursosAcessibilidade: new FormData(f).getAll('acess') };
+  const dados = { escolaId: escSessao(), tiposLaboratorio: new FormData(f).getAll('tiposLab').join(', '), possuiGinasio: f.querySelector('input[name=ginasio]:checked')?.value === 'sim', recursosAcessibilidade: new FormData(f).getAll('acess') };
   INFRA_NUM.forEach(([k]) => { dados[k] = Number($('#inf-' + k).value || 0); });
   infraestruturaService.salvar(Modelos.infraestruturaEscola(dados)).then(() => toast('Infraestrutura salva.')).catch(e => { toast(e.message, 'err'); alertSR(e.message); });
 };

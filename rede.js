@@ -16,6 +16,9 @@ Object.assign(IC, {
 const TURNOS = ['Manhã', 'Tarde', 'Noite', 'Integral'];
 const RECURSOS_ESCOLA = ['Acessível para cadeirantes', 'Sala de recursos (AEE)', 'Material em braille', 'Intérprete de Libras', 'Piso tátil'];
 const RECURSOS_PEI = ['Material ampliado', 'Material em braille', 'Ledor nas provas', 'Transcritor', 'Tempo adicional em provas', 'Leitor de tela', 'Intérprete de Libras', 'Profissional de apoio', 'Mobiliário adaptado', 'Comunicação alternativa'];
+const MOTIVOS_TRANSF = ['Mudança de endereço', 'Mudança de turno', 'Aluno começou a trabalhar ou estagiar', 'Proximidade da casa ou do trabalho dos responsáveis', 'Motivo de saúde', 'Oferta de curso que a escola atual não tem', 'Questões de convivência'];
+const motivoTransfHTML = () => `${listaOutroHTML('tr-mot', 'Motivo', MOTIVOS_TRANSF, '', { req: true, wide: true })}<div class="field wide"><label for="tr-det">Detalhes (opcional)</label><textarea id="tr-det" style="min-height:4.5rem"></textarea></div>`;
+const motivoTransf = () => [valorOutro('tr-mot'), $('#tr-det').value.trim()].filter(Boolean).join('. ');
 const DOCS = ['Certidão de nascimento', 'Comprovante de residência', 'Histórico escolar ou declaração', 'Cartão de vacina', 'CPF do estudante'];
 const INTEG = ['Sistema Entrelaço', 'API', 'Planilha CSV'];
 
@@ -51,9 +54,9 @@ const optHTML = (opts, val, ph = 'Selecione…') => `<option value="">${ph}</opt
 ENT.escolas.fields = [{ k: 'nome', l: 'Nome da escola', req: 1, wide: 1 }, { k: 'inep', l: 'Código INEP', req: 1, help: '8 dígitos do Censo Escolar. É usado para integrar vagas.' }, { k: 'cidade', l: 'Cidade / UF', req: 1 }, { k: 'bairro', l: 'Bairro', req: 1 }, { k: 'endereco', l: 'Endereço' }, { k: 'telefone', l: 'Telefone', t: 'tel' }, { k: 'diretor', l: 'Diretor(a)' }, { k: 'integracao', l: 'Como a escola publica as vagas', t: 'select', o: optsFix(INTEG), req: 1, help: 'Sistema Entrelaço: vagas calculadas pelas turmas. API ou planilha: a escola envia os números.' }, { k: 'recursos', l: 'Recursos de acessibilidade', t: 'checks', o: optsFix(RECURSOS_ESCOLA) }];
 ENT.escolas.defaults = () => ({ integracao: 'Sistema Entrelaço', recursos: [], ultimaSync: new Date().toISOString() });
 ENT.escolas.cols = [['Escola', r => `${esc(r.nome)}${caption2('INEP ' + esc(r.inep || '—'))}`], ['Bairro', r => esc(r.bairro || '—')], ['Vagas publicadas por', r => esc(r.integracao || '—')], ['Turmas', r => DADOS.turmas.filter(t => t.escolaId === r.id).length, 'n'], ['Vagas livres', r => DADOS.vagas.filter(v => v.escolaId === r.id).reduce((s, v) => s + disp(v), 0), 'n']];
-ENT.turmas.fields = () => [{ k: 'nome', l: 'Nome da turma', req: 1, help: 'Ex.: 2º ano A' }, ...(escSessao() ? [] : [{ k: 'escolaId', l: 'Escola', t: 'select', o: () => DADOS.escolas.filter(e => isLocal(e.id)).map(e => [e.id, e.nome]), req: 1 }]), { k: 'serie', l: 'Série', t: 'select', o: optsFix(SERIES), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(TURNOS), req: 1 }, { k: 'ano', l: 'Ano letivo', t: 'number', req: 1 }, { k: 'sala', l: 'Sala' }];
+ENT.turmas.fields = () => [{ k: 'nome', l: 'Nome da turma', req: 1, help: 'Ex.: 2º ano A' }, ...(escSessao() ? [] : [{ k: 'escolaId', l: 'Escola', t: 'select', o: () => DADOS.escolas.filter(e => isLocal(e.id)).map(e => [e.id, e.nome]), req: 1 }]), { k: 'serie', l: 'Série', t: 'select', o: optsFix(SERIES), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(TURNOS), req: 1 }, { k: 'ano', l: 'Ano letivo', t: 'number', req: 1 }, { k: 'sala', l: 'Sala', t: 'select', outro: 1, o: optsFix([...Array.from({ length: 30 }, (_, i) => `Sala ${i + 1}`), 'Laboratório', 'Sala de informática', 'Auditório']) }];
 const alunoFields = ENT.alunos.fields;
-ENT.alunos.fields = () => [...alunoFields(), { k: 'bolsaFamilia', l: 'Recebe Bolsa Família', t: 'select', o: optsFix(['Não', 'Sim']), help: 'Usado no acompanhamento de frequência do programa.' }, { k: 'rotaId', l: 'Transporte escolar', t: 'select', o: () => DADOS.rotas.map(r => [r.id, r.nome]), help: 'Deixe em branco se não usa.' }, { k: 'restricao', l: 'Restrição alimentar', help: 'Ex.: intolerância à lactose' }];
+ENT.alunos.fields = () => [...alunoFields(), { k: 'bolsaFamilia', l: 'Recebe Bolsa Família', t: 'select', o: optsFix(['Não', 'Sim']), help: 'Usado no acompanhamento de frequência do programa.' }, { k: 'rotaId', l: 'Transporte escolar', t: 'select', o: () => DADOS.rotas.map(r => [r.id, r.nome]), help: 'Deixe em branco se não usa.' }, { k: 'restricao', l: 'Restrição alimentar', t: 'select', outro: 1, vazio: 'Nenhuma', o: optsFix(['Intolerância à lactose', 'Doença celíaca (sem glúten)', 'Alergia a amendoim', 'Alergia a frutos do mar', 'Alergia a ovo', 'Diabetes', 'Dieta vegetariana']) }];
 const alunoDefaults = ENT.alunos.defaults;
 ENT.alunos.defaults = () => Object.assign(alunoDefaults(), { bolsaFamilia: 'Não', rotaId: '', restricao: '' });
 ENT.alunos.title = 'Alunos';
@@ -144,10 +147,10 @@ Object.assign(ACT, {
       title: 'Nova transferência', wide: true,
       body: `<div class="form-grid"><div class="field wide"><label for="tr-aluno">Aluno <span class="req" aria-hidden="true">*</span></label><select id="tr-aluno" required data-change="trAluno">${optHTML(alunosEsc().map(a => [a.id, `${a.nome}, ${turmaLong(a.turmaId)}`]).sort((a, b) => a[1].localeCompare(b[1])), '')}</select></div>
         <div class="field wide"><label for="tr-dest">Escola de destino <span class="req" aria-hidden="true">*</span></label><select id="tr-dest" required><option value="">Escolha o aluno primeiro</option></select><p class="help">Aparecem as escolas da rede com vagas para a série do aluno. Opções sem vaga ficam desativadas.</p></div>
-        <div class="field wide"><label for="tr-mot">Motivo <span class="req" aria-hidden="true">*</span></label><textarea id="tr-mot" required></textarea></div></div>`,
+        ${motivoTransfHTML()}</div>`,
       onSubmit: () => {
         const a = byId('alunos', $('#tr-aluno').value); const v = byId('vagas', $('#tr-dest').value);
-        DADOS.transferencias.push({ id: uid(), alunoId: a.id, origemId: escolaDe(a), destinoId: v.escolaId, vagaId: v.id, serie: v.serie, turno: v.turno, motivo: $('#tr-mot').value.trim(), solicitante: 'Escola', status: 'Aguardando escola de destino', data: TODAY_ISO, resposta: '' });
+        DADOS.transferencias.push({ id: uid(), alunoId: a.id, origemId: escolaDe(a), destinoId: v.escolaId, vagaId: v.id, serie: v.serie, turno: v.turno, motivo: motivoTransf(), solicitante: 'Escola', status: 'Aguardando escola de destino', data: TODAY_ISO, resposta: '' });
         save(); rerender(); toast(isLocal(v.escolaId) ? 'Transferência enviada para a escola de destino.' : 'Transferência enviada pela integração.');
       }
     });
@@ -242,7 +245,7 @@ Object.assign(FORMS, {
   },
   'transf-resp': f => {
     const a = byId('alunos', $('#tr-aluno').value); const v = byId('vagas', $('#tr-dest').value);
-    DADOS.transferencias.push({ id: uid(), alunoId: a.id, origemId: escolaDe(a), destinoId: v.escolaId, vagaId: v.id, serie: v.serie, turno: v.turno, motivo: $('#tr-mot').value.trim(), solicitante: 'Responsável', responsavelId: SESSION.userId, status: 'Aguardando escola de origem', data: TODAY_ISO, resposta: '' });
+    DADOS.transferencias.push({ id: uid(), alunoId: a.id, origemId: escolaDe(a), destinoId: v.escolaId, vagaId: v.id, serie: v.serie, turno: v.turno, motivo: motivoTransf(), solicitante: 'Responsável', responsavelId: SESSION.userId, status: 'Aguardando escola de origem', data: TODAY_ISO, resposta: '' });
     save(); go('pedidos'); toast('Pedido de transferência enviado à escola.');
   }
 });
@@ -411,7 +414,7 @@ function rTransferencia() {
     `<form class="card" data-form="transf-resp" novalidate aria-labelledby="tf-h" style="max-width:48rem"><h2 id="tf-h" class="sr-only">Pedido de transferência</h2><div class="form-grid">
       <div class="field wide"><label for="tr-aluno">Filho <span class="req" aria-hidden="true">*</span></label><select id="tr-aluno" required data-change="trAluno">${optHTML(fs.map(a => [a.id, `${a.nome}, ${turmaLong(a.turmaId)}`]), fs.length === 1 ? fs[0].id : '')}</select></div>
       <div class="field wide"><label for="tr-dest">Escola de destino <span class="req" aria-hidden="true">*</span></label><select id="tr-dest" required>${fs.length === 1 ? optHTML(vagaOpts(serieDe(fs[0]), '', escolaDe(fs[0])), '') : '<option value="">Escolha o filho primeiro</option>'}</select><p class="help">Escolas sem vaga aparecem desativadas.</p></div>
-      <div class="field wide"><label for="tr-mot">Motivo <span class="req" aria-hidden="true">*</span></label><textarea id="tr-mot" required placeholder="Ex.: mudamos de endereço"></textarea></div>
+      ${motivoTransfHTML()}
     </div><div class="row"><button class="btn primary" type="submit">${icon('send')}Enviar pedido</button></div></form>`;
 }
 function rPedidos() {
