@@ -9,3 +9,5 @@ const pessoaService = Object.assign({}, pessoaRepo, {
     return [...avulsas, ...profs].sort((a, b) => a.nome.localeCompare(b.nome));
   }
 });
+
+SERVICOS.pessoas = pessoaRepo;

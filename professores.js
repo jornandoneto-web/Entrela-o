@@ -3,9 +3,9 @@
 
 const INGRESSOS = ['Concurso', 'Contrato', 'Cedido'];
 const ativo = p => !!p && !(p.ingresso === 'Contrato' && p.contratoFim && p.contratoFim < TODAY_ISO);
-const aulasDoProf = p => DB.aulas.filter(a => a.professorId === p.id);
+const aulasDoProf = p => DADOS.aulas.filter(a => a.professorId === p.id);
 const livres = p => ativo(p) ? Math.max(0, (Number(p.cargaHoraria) || 0) - aulasDoProf(p).length) : 0;
-const formNome = id => DB.formacoes.find(f => f.id === id)?.nome || '—';
+const formNome = id => DADOS.formacoes.find(f => f.id === id)?.nome || '—';
 const turnoDe = a => byId('turmas', a.turmaId)?.turno;
 const conflita = (p, aula) => aulasDoProf(p).some(x => x.dia === aula.dia && x.slot === aula.slot && turnoDe(x) === turnoDe(aula));
 const diasAte = iso => daysUntil(iso);
@@ -19,10 +19,10 @@ ENT.formacoes = {
   fields: () => [{ k: 'nome', l: 'Nome da formação', req: 1, wide: 1, help: 'Ex.: Licenciatura em Matemática' }, { k: 'disciplinas', l: 'Disciplinas que esta formação habilita', t: 'checks', o: optsOf('disciplinas') }],
   defaults: () => ({ disciplinas: [], chaves: [] }),
   sort: (a, b) => a.nome.localeCompare(b.nome),
-  cols: [['Formação', r => esc(r.nome)], ['Habilita para', r => r.disciplinas.length ? esc(r.disciplinas.map(discNome).join(', ')) : '<span class="muted">Nenhuma disciplina da grade atual</span>'], ['Professores', r => DB.professores.filter(p => (p.formacoes || []).includes(r.id)).length, 'n'], ['Banco de talentos', r => (DB.talentos || []).filter(t => t.formacaoId === r.id && t.situacao === 'Aguardando chamada').length, 'n']],
+  cols: [['Formação', r => esc(r.nome)], ['Habilita para', r => r.disciplinas.length ? esc(r.disciplinas.map(discNome).join(', ')) : '<span class="muted">Nenhuma disciplina da grade atual</span>'], ['Professores', r => DADOS.professores.filter(p => (p.formacoes || []).includes(r.id)).length, 'n'], ['Banco de talentos', r => (DADOS.talentos || []).filter(t => t.formacaoId === r.id && t.situacao === 'Aguardando chamada').length, 'n']],
   canEdit: () => can('professores.editar'), canNew: () => can('professores.editar'),
-  check: (v, id) => DB.formacoes.some(f => f.id !== id && norm(f.nome) === norm(v.nome)) ? 'Já existe uma formação com esse nome.' : '',
-  onDelete: r => DB.professores.forEach(p => { p.formacoes = (p.formacoes || []).filter(f => f !== r.id); })
+  check: (v, id) => DADOS.formacoes.some(f => f.id !== id && norm(f.nome) === norm(v.nome)) ? 'Já existe uma formação com esse nome.' : '',
+  onDelete: r => DADOS.professores.forEach(p => { p.formacoes = (p.formacoes || []).filter(f => f !== r.id); })
 };
 
 // Cadastro do professor: formações no lugar das disciplinas + dados de RH
@@ -30,9 +30,9 @@ const profFieldsRH = () => [
   { k: 'nome', l: 'Nome completo', req: 1, wide: 1 },
   { k: 'email', l: 'E-mail institucional', t: 'email', req: 1 },
   { k: 'telefone', l: 'Telefone', t: 'tel' },
-  { k: 'escolaId', l: 'Escola de lotação', t: 'select', o: () => DB.escolas.filter(e => DB.turmas.some(t => t.escolaId === e.id)).map(e => [e.id, e.nome]), req: 1 },
+  { k: 'escolaId', l: 'Escola de lotação', t: 'select', o: () => DADOS.escolas.filter(e => DADOS.turmas.some(t => t.escolaId === e.id)).map(e => [e.id, e.nome]), req: 1 },
   { k: 'cargaHoraria', l: 'Carga horária semanal', t: 'number', req: 1, attrs: 'min="1" max="60"', help: 'Em aulas de 50 minutos por semana.' },
-  { k: 'formacoes', l: 'Formações', t: 'checks', o: () => DB.formacoes.map(f => [f.id, f.nome]).sort((a, b) => a[1].localeCompare(b[1])), help: 'As disciplinas que o professor pode lecionar saem daqui.' },
+  { k: 'formacoes', l: 'Formações', t: 'checks', o: () => DADOS.formacoes.map(f => [f.id, f.nome]).sort((a, b) => a[1].localeCompare(b[1])), help: 'As disciplinas que o professor pode lecionar saem daqui.' },
   { k: 'instituicao', l: 'Instituição e ano de conclusão', wide: 1, help: 'Ex.: UFPE, 2012' },
   { k: 'ingresso', l: 'Forma de ingresso', t: 'select', o: optsFix(INGRESSOS), req: 1 },
   { k: 'orgaoOrigem', l: 'Órgão de origem', req: 1, showIf: 'ingresso=Cedido', help: 'Ex.: Prefeitura do Recife' },
@@ -63,12 +63,12 @@ Object.assign(ENT.professores, {
     ['Situação', r => situacaoProf(r)]
   ]
 });
-ENT.disciplinas.cols = ENT.disciplinas.cols.slice(0, 3).concat([['Professores habilitados', r => esc(DB.professores.filter(p => habilitadas(p).includes(r.id)).map(p => p.nome).join(', ') || '—')]]);
+ENT.disciplinas.cols = ENT.disciplinas.cols.slice(0, 3).concat([['Professores habilitados', r => esc(DADOS.professores.filter(p => habilitadas(p).includes(r.id)).map(p => p.nome).join(', ') || '—')]]);
 
 // Atribuição de aulas: só professor ativo e habilitado na disciplina
 const aulaFields = ENT.aulas.fields;
 ENT.aulas.fields = () => aulaFields().map(f => f.k === 'disciplinaId' ? Object.assign({}, f, { attrs: 'data-change="aulaDisc"' })
-  : f.k === 'professorId' ? Object.assign({}, f, { o: () => DB.professores.filter(ativo).map(p => [p.id, `${p.nome} (${habilitadas(p).map(discNome).join(', ') || 'sem disciplina habilitada'})`]), help: 'Só ficam disponíveis professores habilitados na disciplina escolhida.' }) : f);
+  : f.k === 'professorId' ? Object.assign({}, f, { o: () => DADOS.professores.filter(ativo).map(p => [p.id, `${p.nome} (${habilitadas(p).map(discNome).join(', ') || 'sem disciplina habilitada'})`]), help: 'Só ficam disponíveis professores habilitados na disciplina escolhida.' }) : f);
 const aulaCheck = ENT.aulas.check;
 ENT.aulas.check = (v, id) => {
   const p = byId('professores', v.professorId);
@@ -85,20 +85,20 @@ HYDRATORS.push(root => { const d = root.querySelector('[data-change="aulaDisc"]'
 
 // Revisão da migração de formações
 function migracaoCard() {
-  const rel = (DB.migracoes || []).flatMap(m => m.formacoes || []).filter(r => r.status === 'revisar' && !r.revisado && byId('professores', r.professorId));
+  const rel = (DADOS.migracoes || []).flatMap(m => m.formacoes || []).filter(r => r.status === 'revisar' && !r.revisado && byId('professores', r.professorId));
   if (!rel.length) return '';
   return `<section class="card" style="border-color:var(--v300)" aria-labelledby="mig-h"><h2 id="mig-h">Revise as formações migradas</h2>
     <p class="muted">Os professores tinham disciplinas marcadas à mão. O sistema converteu para formações: primeiro pelo texto do curso informado, depois pela formação que cobre as disciplinas que a pessoa leciona. Confirme com o diploma.</p>
     <ul class="list">${rel.map(r => { const p = byId('professores', r.professorId); return `<li style="flex-wrap:wrap"><span class="grow" style="min-width:14rem"><span class="t">${esc(p.nome)}</span><br><span class="m">Formações atribuídas: ${esc(p.formacoes.map(formNome).join(', '))}.${r.inferidas.length ? ` Deduzida pelas aulas: ${esc(r.inferidas.join(', '))}.` : ''}${r.semCobertura.length ? ` Sem formação que habilite: ${esc(r.semCobertura.map(discNome).join(', '))}.` : ''}</span></span><button class="btn ghost sm" data-act="edit" data-ent="professores" data-id="${p.id}" aria-label="Editar formações de ${esc(p.nome)}">Editar</button><button class="btn outline sm" data-act="mig-ok" data-id="${p.id}" aria-label="Confirmar formações de ${esc(p.nome)}">Confirmar</button></li>`; }).join('')}</ul></section>`;
 }
-ACT['mig-ok'] = el => { (DB.migracoes || []).forEach(m => (m.formacoes || []).forEach(r => { if (r.professorId === el.dataset.id) r.revisado = true; })); save(); rerender(); toast('Formações confirmadas.'); };
+ACT['mig-ok'] = el => { (DADOS.migracoes || []).forEach(m => (m.formacoes || []).forEach(r => { if (r.professorId === el.dataset.id) r.revisado = true; })); save(); rerender(); toast('Formações confirmadas.'); };
 
 // ---------- 2. Perfil Diretor ----------
 function dInicio() {
   const g = me(); const e = byId('escolas', escSessao());
   const mes = TODAY_ISO.slice(0, 7);
-  const evMes = DB.eventos.filter(x => x.data.startsWith(mes));
-  const prox = DB.eventos.filter(x => x.data >= TODAY_ISO).sort((a, b) => a.data.localeCompare(b.data));
+  const evMes = DADOS.eventos.filter(x => x.data.startsWith(mes));
+  const prox = DADOS.eventos.filter(x => x.data >= TODAY_ISO).sort((a, b) => a.data.localeCompare(b.data));
   const prova = prox.find(x => x.tipo === 'Avaliação');
   return pageHead(`${greet()}, ${firstName(g.nome)}.`, `Direção da ${esc(e?.nome || 'rede')}. O calendário escolar é responsabilidade da direção.`, can('calendario.editar') ? `<button class="btn primary" data-act="new" data-ent="eventos">${icon('plus')}Adicionar evento</button>` : '', 'hello') +
     fioSemana() +
@@ -110,7 +110,7 @@ function dInicio() {
     </section>
     ${hrowOpen('painel-dir')}
       <section class="card" aria-labelledby="dev-h"><div class="card-h"><h2 id="dev-h">Próximos eventos</h2><button class="btn ghost sm" data-act="go" data-route="calendario">Abrir calendário</button></div><ul class="list">${prox.slice(0, 6).map(x => evItem(x, can('calendario.editar'))).join('')}</ul></section>
-      <section class="card" aria-labelledby="dcm-h"><div class="card-h"><h2 id="dcm-h">Comunicados recentes</h2><button class="btn ghost sm" data-act="go" data-route="comunicados">Ver todos</button></div><ul class="list">${DB.comunicados.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3).map(c => `<li><span class="grow"><span class="t">${esc(c.titulo)}</span><br><span class="m">${esc(c.autor)}, ${fmtD(c.data)}</span></span></li>`).join('')}</ul></section>
+      <section class="card" aria-labelledby="dcm-h"><div class="card-h"><h2 id="dcm-h">Comunicados recentes</h2><button class="btn ghost sm" data-act="go" data-route="comunicados">Ver todos</button></div><ul class="list">${DADOS.comunicados.slice().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3).map(c => `<li><span class="grow"><span class="t">${esc(c.titulo)}</span><br><span class="m">${esc(c.autor)}, ${fmtD(c.data)}</span></span></li>`).join('')}</ul></section>
     </div>`;
 }
 const calendarioPage = () => {
@@ -127,26 +127,26 @@ PAGES.diretor = {
 function perfisHTML() {
   if (SESSION.role !== 'gestao' || escSessao()) return '';
   const roles = Object.keys(PERFIS_PADRAO);
-  const atual = r => (DB.perfis && DB.perfis[r]) || PERFIS_PADRAO[r];
+  const atual = r => (DADOS.perfis && DADOS.perfis[r]) || PERFIS_PADRAO[r];
   return `<form class="card" data-form="perfis" novalidate aria-labelledby="pf-h"><h2 id="pf-h">Perfis de acesso</h2><p class="muted">O que cada perfil pode fazer. Ao ligar uma permissão, o item correspondente aparece no menu do perfil.</p>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Permissão</th>${roles.map(r => `<th scope="col" class="n">${esc(ROLE_LABEL[r])}</th>`).join('')}</tr></thead><tbody>${PERMISSOES.map(([k, l]) => `<tr><th scope="row">${esc(l)}</th>${roles.map(r => `<td class="n"><input type="checkbox" name="perm" value="${r}|${k}" ${atual(r).includes(k) ? 'checked' : ''} aria-label="${esc(ROLE_LABEL[r])}: ${esc(l)}" style="width:1.25rem;height:1.25rem;accent-color:var(--bg-brand)"></td>`).join('')}</tr>`).join('')}</tbody></table></div>
     <div class="row"><button class="btn primary" type="submit">${icon('check')}Salvar permissões</button><button class="btn ghost" type="button" data-act="perfis-padrao">Voltar ao padrão</button></div></form>`;
 }
-FORMS.perfis = f => { const p = {}; Object.keys(PERFIS_PADRAO).forEach(r => { p[r] = []; }); new FormData(f).getAll('perm').forEach(v => { const [r, k] = v.split('|'); p[r].push(k); }); DB.perfis = p; save(); toast('Permissões salvas.'); };
-ACT['perfis-padrao'] = () => { DB.perfis = JSON.parse(JSON.stringify(PERFIS_PADRAO)); save(); rerender(); toast('Permissões voltaram ao padrão.'); };
+FORMS.perfis = f => { const p = {}; Object.keys(PERFIS_PADRAO).forEach(r => { p[r] = []; }); new FormData(f).getAll('perm').forEach(v => { const [r, k] = v.split('|'); p[r].push(k); }); DADOS.perfis = p; save(); toast('Permissões salvas.'); };
+ACT['perfis-padrao'] = () => { DADOS.perfis = JSON.parse(JSON.stringify(PERFIS_PADRAO)); save(); rerender(); toast('Permissões voltaram ao padrão.'); };
 const gConfigBase = PAGES.gestao.config;
 PAGES.gestao.config = () => gConfigBase() + perfisHTML();
 
 // ---------- 3. RH ----------
 function necessidades() {
   const rows = [];
-  uniq(DB.turmas.map(t => t.escolaId)).forEach(e => DB.disciplinas.forEach(d => {
-    const aulas = DB.aulas.filter(a => a.disciplinaId === d.id && byId('turmas', a.turmaId)?.escolaId === e);
+  uniq(DADOS.turmas.map(t => t.escolaId)).forEach(e => DADOS.disciplinas.forEach(d => {
+    const aulas = DADOS.aulas.filter(a => a.disciplinaId === d.id && byId('turmas', a.turmaId)?.escolaId === e);
     if (!aulas.length) return;
     const abertas = aulas.filter(a => !ativo(byId('professores', a.professorId)));
     const vencendo = aulas.filter(a => { const p = byId('professores', a.professorId); return ativo(p) && p.ingresso === 'Contrato' && diasAte(p.contratoFim) <= 30; });
     const saidas = uniq(abertas.map(a => a.professorId)).map(id => byId('professores', id)).filter(Boolean);
-    const cand = DB.professores.filter(p => ativo(p) && habilitadas(p).includes(d.id) && livres(p) > 0)
+    const cand = DADOS.professores.filter(p => ativo(p) && habilitadas(p).includes(d.id) && livres(p) > 0)
       .map(p => ({ p, podem: Math.min(livres(p), abertas.filter(a => !conflita(p, a)).length) })).filter(x => x.podem > 0).sort((a, b) => b.podem - a.podem);
     rows.push({ e, d: d.id, nec: aulas.length, cob: aulas.length - abertas.length, saldo: abertas.length, abertas, vencendo, saidas, cand });
   }));
@@ -155,10 +155,10 @@ function necessidades() {
 function rhPainel() {
   const rows = necessidades(); const so = UI.sel.rhFalta !== false;
   const falta = rows.filter(r => r.saldo > 0);
-  const vence30 = DB.professores.filter(p => ativo(p) && p.ingresso === 'Contrato' && diasAte(p.contratoFim) <= 30);
-  const comLivres = DB.professores.filter(p => livres(p) > 0);
+  const vence30 = DADOS.professores.filter(p => ativo(p) && p.ingresso === 'Contrato' && diasAte(p.contratoFim) <= 30);
+  const comLivres = DADOS.professores.filter(p => livres(p) > 0);
   const vis = so ? rows.filter(r => r.saldo > 0 || r.vencendo.length) : rows;
-  const talentosPara = d => (DB.talentos || []).filter(t => t.situacao === 'Aguardando chamada' && (DB.formacoes.find(f => f.id === t.formacaoId)?.disciplinas || []).includes(d)).length;
+  const talentosPara = d => (DADOS.talentos || []).filter(t => t.situacao === 'Aguardando chamada' && (DADOS.formacoes.find(f => f.id === t.formacaoId)?.disciplinas || []).includes(d)).length;
   const comoCobrir = r => {
     if (!r.saldo) return r.vencendo.length ? st(`${r.vencendo.length}h abrem em até 30 dias`, 'warn') : st('Completo', 'ok');
     const c = r.cand[0]; const resta = r.saldo - (c ? c.podem : 0);
@@ -170,7 +170,7 @@ function rhPainel() {
       ${statCard('rose', 'Horas sem professor', falta.reduce((n, r) => n + r.saldo, 0), `${falta.length} disciplina${falta.length === 1 ? '' : 's'} com falta`)}
       ${statCard('peach', 'Contratos vencendo', vence30.length, 'nos próximos 30 dias', 'contratos')}
       ${statCard('mint', 'Professores com horas livres', comLivres.length, `${comLivres.reduce((n, p) => n + livres(p), 0)}h disponíveis no total`, 'professores')}
-      ${statCard('lilac', 'Banco de talentos', (DB.talentos || []).filter(t => t.situacao === 'Aguardando chamada').length, 'candidatos aguardando chamada', 'talentos')}
+      ${statCard('lilac', 'Banco de talentos', (DADOS.talentos || []).filter(t => t.situacao === 'Aguardando chamada').length, 'candidatos aguardando chamada', 'talentos')}
     </section>
     <label class="check" style="align-self:flex-start"><input type="checkbox" id="rh-so" data-change="rhSo" ${so ? 'checked' : ''}> Mostrar só onde falta professor ou vai faltar</label>
     ${uniq(vis.map(r => r.e)).map(e => `<section class="card" aria-labelledby="nec-${e}"><h2 id="nec-${e}">${esc(escNome(e))}</h2>
@@ -183,7 +183,7 @@ ACT['rh-cobrir'] = el => {
   r.abertas.forEach(a => { if (livres(p) > 0 && !conflita(p, a)) { a.professorId = p.id; n++; } });
   save(); rerender(); toast(`${n} aula${n === 1 ? '' : 's'} de ${discNome(r.d)} atribuída${n === 1 ? '' : 's'} a ${p.nome}.`);
 };
-ACT['rh-talentos'] = el => { const f = DB.formacoes.find(x => x.disciplinas.includes(el.dataset.d) && (DB.talentos || []).some(t => t.formacaoId === x.id)); UI.f.talentos = f ? f.id : ''; go('talentos'); };
+ACT['rh-talentos'] = el => { const f = DADOS.formacoes.find(x => x.disciplinas.includes(el.dataset.d) && (DADOS.talentos || []).some(t => t.formacaoId === x.id)); UI.f.talentos = f ? f.id : ''; go('talentos'); };
 
 function rhContratos() {
   const per = UI.sel.ctPer || '30', dis = UI.sel.ctDis || '';
@@ -191,10 +191,10 @@ function rhContratos() {
   const iniMes = off => isoOf(new Date(TODAY.getFullYear(), TODAY.getMonth() + off, 1, 12));
   const faixa = { 30: [TODAY_ISO, addDays(30)], 60: [TODAY_ISO, addDays(60)], 90: [TODAY_ISO, addDays(90)], mes: [TODAY_ISO, fimMes(0)], prox: [iniMes(1), fimMes(1)], vencidos: ['0000', addDays(-1)], todos: ['0000', '9999'] }[per];
   const discsDe = p => uniq(aulasDoProf(p).map(a => a.disciplinaId));
-  const list = DB.professores.filter(p => p.ingresso === 'Contrato' && p.contratoFim && p.contratoFim >= faixa[0] && p.contratoFim <= faixa[1] && (!dis || discsDe(p).includes(dis) || habilitadas(p).includes(dis))).sort((a, b) => a.contratoFim.localeCompare(b.contratoFim));
+  const list = DADOS.professores.filter(p => p.ingresso === 'Contrato' && p.contratoFim && p.contratoFim >= faixa[0] && p.contratoFim <= faixa[1] && (!dis || discsDe(p).includes(dis) || habilitadas(p).includes(dis))).sort((a, b) => a.contratoFim.localeCompare(b.contratoFim));
   const horas = list.reduce((n, p) => n + aulasDoProf(p).length, 0);
   return pageHead('Contratos a vencer', 'Professores contratados com término no período escolhido. Use para planejar a renovação ou a contratação antes de a turma ficar sem aula.') +
-    `<div class="toolbar">${selectCtl('ct-per', 'Período', [['30', 'Próximos 30 dias'], ['60', 'Próximos 60 dias'], ['90', 'Próximos 90 dias'], ['mes', 'Até o fim deste mês'], ['prox', 'Próximo mês'], ['vencidos', 'Já encerrados'], ['todos', 'Todos os contratos']], per, 'ctPer')}${selectCtl('ct-dis', 'Disciplina', [['', 'Todas'], ...DB.disciplinas.map(d => [d.id, d.nome])], dis, 'ctDis')}</div>
+    `<div class="toolbar">${selectCtl('ct-per', 'Período', [['30', 'Próximos 30 dias'], ['60', 'Próximos 60 dias'], ['90', 'Próximos 90 dias'], ['mes', 'Até o fim deste mês'], ['prox', 'Próximo mês'], ['vencidos', 'Já encerrados'], ['todos', 'Todos os contratos']], per, 'ctPer')}${selectCtl('ct-dis', 'Disciplina', [['', 'Todas'], ...DADOS.disciplinas.map(d => [d.id, d.nome])], dis, 'ctDis')}</div>
     <p class="muted" aria-live="polite">${list.length} contrato${list.length === 1 ? '' : 's'}, ${horas} aula${horas === 1 ? '' : 's'} semanais que ficam sem professor no término.</p>
     ${list.length ? `<div class="tbl-wrap"><table class="tbl stack"><caption class="sr-only">Contratos</caption><thead><tr><th scope="col">Professor</th><th scope="col">Disciplinas</th><th scope="col">Escolas</th><th scope="col">Vigência</th><th scope="col">Situação</th><th scope="col" class="n">Aulas em aberto</th></tr></thead><tbody>${list.map(p => { const n = diasAte(p.contratoFim); return `<tr><th scope="row">${esc(p.nome)}${caption2(esc(p.telefone || p.email))}</th><td data-label="Disciplinas">${esc(discsDe(p).map(discNome).join(', ') || habilitadas(p).map(discNome).join(', '))}</td><td data-label="Escolas">${esc(uniq(aulasDoProf(p).map(a => byId('turmas', a.turmaId)?.escolaId)).map(escNome).join(', ') || escNome(p.escolaId))}</td><td data-label="Vigência">${fmtD(p.contratoInicio)} a ${fmtD(p.contratoFim)}</td><td data-label="Situação">${n < 0 ? st(`Encerrado há ${-n} dia${n === -1 ? '' : 's'}`, 'err') : st(n === 0 ? 'Termina hoje' : `Termina em ${n} dia${n > 1 ? 's' : ''}`, n <= 30 ? 'warn' : 'info')}</td><td class="n" data-label="Aulas em aberto">${aulasDoProf(p).length}h</td></tr>`; }).join('')}</tbody></table></div>
       <div class="row"><button class="btn outline" data-act="copy" data-text="${esc(list.map(p => `${p.nome};${discsDe(p).map(discNome).join(', ')};${fmtD(p.contratoFim)};${aulasDoProf(p).length}h`).join('\n'))}">${icon('copy')}Copiar lista</button></div>` : '<p class="empty">Nenhum contrato termina nesse período.</p>'}`;
@@ -205,21 +205,21 @@ CHG.ctDis = el => { UI.sel.ctDis = el.value; rerender(); };
 ENT.talentos = {
   coll: 'talentos', title: 'Banco de talentos', singular: 'candidato', plural: 'candidatos', newLabel: 'Cadastrar candidato',
   desc: 'Candidatos classificados em processos seletivos que ainda não foram chamados. Consulte quando abrir uma vaga ou um afastamento.',
-  fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'formacaoId', l: 'Formação', t: 'select', o: () => DB.formacoes.map(f => [f.id, f.nome]), req: 1 }, { k: 'telefone', l: 'Telefone', t: 'tel', req: 1 }, { k: 'email', l: 'E-mail', t: 'email' }, { k: 'processo', l: 'Processo seletivo', req: 1, wide: 1 }, { k: 'classificacao', l: 'Classificação', t: 'number', req: 1, attrs: 'min="1"' }, { k: 'situacao', l: 'Situação', t: 'select', o: optsFix(['Aguardando chamada', 'Chamado', 'Desistiu']), req: 1 }],
+  fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'formacaoId', l: 'Formação', t: 'select', o: () => DADOS.formacoes.map(f => [f.id, f.nome]), req: 1 }, { k: 'telefone', l: 'Telefone', t: 'tel', req: 1 }, { k: 'email', l: 'E-mail', t: 'email' }, { k: 'processo', l: 'Processo seletivo', req: 1, wide: 1 }, { k: 'classificacao', l: 'Classificação', t: 'number', req: 1, attrs: 'min="1"' }, { k: 'situacao', l: 'Situação', t: 'select', o: optsFix(['Aguardando chamada', 'Chamado', 'Desistiu']), req: 1 }],
   defaults: () => ({ processo: 'Seleção Simplificada SEE 2025, professor temporário', situacao: 'Aguardando chamada' }),
-  filter: { k: 'formacaoId', l: 'Formação', o: () => DB.formacoes.map(f => [f.id, f.nome]) },
+  filter: { k: 'formacaoId', l: 'Formação', o: () => DADOS.formacoes.map(f => [f.id, f.nome]) },
   sort: (a, b) => (a.situacao === 'Aguardando chamada' ? 0 : 1) - (b.situacao === 'Aguardando chamada' ? 0 : 1) || a.processo.localeCompare(b.processo) || a.classificacao - b.classificacao,
-  cols: [['Candidato', r => `${esc(r.nome)}${caption2(`${esc(r.telefone)}${r.email ? ', ' + esc(r.email) : ''}`)}`], ['Formação', r => `${esc(formNome(r.formacaoId))}${caption2('Habilita: ' + esc((DB.formacoes.find(f => f.id === r.formacaoId)?.disciplinas || []).map(discNome).join(', ') || 'nenhuma disciplina'))}`], ['Processo seletivo', r => esc(r.processo)], ['Classificação', r => `${r.classificacao}º`, 'n'], ['Situação', r => r.situacao === 'Aguardando chamada' ? st('Aguardando chamada', 'info') : r.situacao === 'Chamado' ? st('Chamado', 'ok') : esc(r.situacao)]],
+  cols: [['Candidato', r => `${esc(r.nome)}${caption2(`${esc(r.telefone)}${r.email ? ', ' + esc(r.email) : ''}`)}`], ['Formação', r => `${esc(formNome(r.formacaoId))}${caption2('Habilita: ' + esc((DADOS.formacoes.find(f => f.id === r.formacaoId)?.disciplinas || []).map(discNome).join(', ') || 'nenhuma disciplina'))}`], ['Processo seletivo', r => esc(r.processo)], ['Classificação', r => `${r.classificacao}º`, 'n'], ['Situação', r => r.situacao === 'Aguardando chamada' ? st('Aguardando chamada', 'info') : r.situacao === 'Chamado' ? st('Chamado', 'ok') : esc(r.situacao)]],
   rowActs: r => r.situacao === 'Aguardando chamada' && can('talentos.gerir') ? `<button class="btn outline sm" data-act="chamar" data-id="${r.id}" aria-label="Chamar ${esc(r.nome)}">Chamar</button>` : '',
   canEdit: () => can('talentos.gerir'), canNew: () => can('talentos.gerir'),
   name: r => r.nome
 };
 ACT.chamar = el => {
   const t = byId('talentos', el.dataset.id);
-  openDialog({ title: `Chamar ${t.nome}`, body: `<p class="muted">${esc(formNome(t.formacaoId))}, ${t.classificacao}º lugar em ${esc(t.processo)}. O candidato vira professor contratado e já pode receber aulas.</p><div class="form-grid">${fieldHTML({ k: 'ch-esc', l: 'Escola de lotação', t: 'select', o: DB.escolas.filter(e => DB.turmas.some(x => x.escolaId === e.id)).map(e => [e.id, e.nome]), req: 1 }, '')}${fieldHTML({ k: 'ch-carga', l: 'Carga horária semanal', t: 'number', req: 1 }, 20)}${fieldHTML({ k: 'ch-ini', l: 'Início do contrato', t: 'date', req: 1 }, TODAY_ISO)}${fieldHTML({ k: 'ch-fim', l: 'Término do contrato', t: 'date', req: 1 }, `${TODAY.getFullYear()}-12-18`)}</div>`,
+  openDialog({ title: `Chamar ${t.nome}`, body: `<p class="muted">${esc(formNome(t.formacaoId))}, ${t.classificacao}º lugar em ${esc(t.processo)}. O candidato vira professor contratado e já pode receber aulas.</p><div class="form-grid">${fieldHTML({ k: 'ch-esc', l: 'Escola de lotação', t: 'select', o: DADOS.escolas.filter(e => DADOS.turmas.some(x => x.escolaId === e.id)).map(e => [e.id, e.nome]), req: 1 }, '')}${fieldHTML({ k: 'ch-carga', l: 'Carga horária semanal', t: 'number', req: 1 }, 20)}${fieldHTML({ k: 'ch-ini', l: 'Início do contrato', t: 'date', req: 1 }, TODAY_ISO)}${fieldHTML({ k: 'ch-fim', l: 'Término do contrato', t: 'date', req: 1 }, `${TODAY.getFullYear()}-12-18`)}</div>`,
     onSubmit: () => {
       if ($('#f-ch-fim').value < $('#f-ch-ini').value) { toast('O término precisa ser depois do início.', 'err'); return false; }
-      DB.professores.push({ id: uid(), nome: t.nome, email: t.email || '', telefone: t.telefone, escolaId: $('#f-ch-esc').value, formacoes: [t.formacaoId], instituicao: '', ingresso: 'Contrato', contratoInicio: $('#f-ch-ini').value, contratoFim: $('#f-ch-fim').value, cargaHoraria: Number($('#f-ch-carga').value) || 20 });
+      DADOS.professores.push({ id: uid(), nome: t.nome, email: t.email || '', telefone: t.telefone, escolaId: $('#f-ch-esc').value, formacoes: [t.formacaoId], instituicao: '', ingresso: 'Contrato', contratoInicio: $('#f-ch-ini').value, contratoFim: $('#f-ch-fim').value, cargaHoraria: Number($('#f-ch-carga').value) || 20 });
       t.situacao = 'Chamado'; save(); rerender(); toast(`${t.nome} foi chamado e já aparece entre os professores.`);
     } });
 };

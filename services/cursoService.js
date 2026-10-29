@@ -2,8 +2,8 @@
 'use strict';
 const cursoService = criarRepositorio('cursos', {
   modelo: Modelos.curso,
-  validar: c => { if (!c.nome) return 'Informe o nome do curso.'; if ((DB.cursos || []).some(x => x.id !== c.id && norm(x.nome) === norm(c.nome))) return 'Já existe um curso com esse nome.'; },
-  aoRemover: c => { DB.matrizes = (DB.matrizes || []).filter(m => m.cursoId !== c.id); (DB.escolas || []).forEach(e => { e.cursos = (e.cursos || []).filter(x => x !== c.id); }); }
+  validar: c => { if (!c.nome) return 'Informe o nome do curso.'; if ((ARMAZEM.cursos || []).some(x => x.id !== c.id && norm(x.nome) === norm(c.nome))) return 'Já existe um curso com esse nome.'; },
+  aoRemover: c => { ARMAZEM.matrizes = (ARMAZEM.matrizes || []).filter(m => m.cursoId !== c.id); (ARMAZEM.escolas || []).forEach(e => { e.cursos = (e.cursos || []).filter(x => x !== c.id); }); }
 });
 const matrizRepo = criarRepositorio('matrizes', {
   modelo: Modelos.matriz,
@@ -21,3 +21,6 @@ const matrizService = Object.assign({}, matrizRepo, {
   async buscarPorCurso(cursoId) { const [m] = await matrizRepo.listar(x => x.cursoId === cursoId); return m || Modelos.matriz({ id: 'm-' + cursoId, cursoId, series: [] }); },
   totalSerie: s => s.componentes.reduce((n, c) => n + c.cargaHoraria, 0)
 });
+
+SERVICOS.cursos = cursoService;
+SERVICOS.matrizes = matrizRepo;

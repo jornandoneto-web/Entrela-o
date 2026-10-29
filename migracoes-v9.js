@@ -41,7 +41,7 @@ function migrarV9(db) {
     delete e.recursos;
     return e;
   });
-  db.escolas.forEach(e => { DB.pessoas = db.pessoas; projetarEscola(e); });
+  db.escolas.forEach(e => { ARMAZEM.pessoas = db.pessoas; projetarEscola(e); });
 
   // Professores: Pessoa + Vínculo a partir dos campos antigos; a escola vira Lotação
   let n = 0;
@@ -76,7 +76,7 @@ function migrarV9(db) {
     // Histórico: Carlos já passou pela Unidade Atalaia
     db.lotacoes.push(Modelos.lotacao({ professorId: 'p2', vinculoId: P('p2').vinculos[0].id, escolaId: 'e2', cargaHoraria: 10, dataInicio: '2024-02-05', dataFim: '2025-12-19' }));
   }
-  DB.lotacoes = db.lotacoes; db.professores.forEach(projetarProfessor);
+  ARMAZEM.lotacoes = db.lotacoes; db.professores.forEach(projetarProfessor);
 
   // Perfis: acrescenta as permissões novas sem desfazer o que a secretaria já configurou
   const NOVAS = ['escolas.editar', 'infraestrutura.editar', 'cursos.gerir', 'lotacoes.gerir'];

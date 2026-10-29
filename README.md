@@ -25,12 +25,18 @@ Na tela de entrada você escolhe o perfil e a pessoa. No protótipo não há sen
 |---|---|
 | `index.html` | Estilos (design system Entrelaço) e carregamento dos scripts |
 | `models/` | Modelos de dados: Escola, DiretoriaRegional, Municipio, Curso, Matriz, Serie, ComponenteCurricular, InfraestruturaEscola, Pessoa, Professor, Dependente, Vinculo, Formacao, Lotacao |
-| `mock/` | Dados simulados (Diretorias Regionais de Sergipe, cursos, matriz de exemplo) |
-| `services/` | Serviços assíncronos (listar, buscarPorId, salvar, atualizar, remover) que simulam o back-end |
+| `mock/` | Dados simulados (Diretorias Regionais de Sergipe, cursos, matriz de exemplo, dados de exemplo da rede) |
+| `services/` | Serviços assíncronos (listar, buscarPorId, salvar, atualizar, remover) que simulam o back-end. O `dadosService` carrega os dados de cada tela pelos serviços e envia de volta só o que mudou |
 | `telas/` | Escolas, Infraestrutura, Matrizes, Professor, Lotações e telas dos perfis da Secretaria |
 | `app.js` | Núcleo: perfis e permissões, acessibilidade, navegação, formulários e cadastros genéricos |
 | `pages.js`, `rede.js`, `professores.js`, `estoque.js`, `transporte.js` | Telas e módulos das versões anteriores |
 | `migracoes.js`, `migracoes-v9.js` | Migrações dos dados salvos de uma versão para a outra |
+
+### Como os dados circulam
+
+1. `ARMAZEM` faz o papel do banco de dados do back-end simulado. Só os serviços (`services/`) e as migrações mexem nele.
+2. Antes de cada tela abrir, o `dadosService.carregar()` pede os dados aos serviços e entrega uma cópia em `DADOS`.
+3. A tela lê e altera só `DADOS`. Ao salvar, o `dadosService.gravar()` envia cada registro novo, alterado ou removido ao serviço da coleção, que valida e grava.
 
 Para ligar a um back-end real, troque a implementação de `services/base.js` (e dos serviços específicos) por chamadas à API. As telas não precisam mudar.
 
@@ -49,5 +55,4 @@ O portal oferece:
 ## Pendências conhecidas
 
 - A lista de municípios das DREs 1 a 10 está em `mock/sergipe.js` e precisa ser confirmada com a SEDUC. Só a DEA (Aracaju) está confirmada.
-- Algumas telas antigas ainda leem os dados direto do armazenamento, sem passar pelos serviços.
 - Os dados ficam só no navegador. Para que sejam compartilhados entre usuários, é preciso um back-end.

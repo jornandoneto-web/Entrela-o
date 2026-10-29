@@ -211,40 +211,46 @@ function seed() {
   return { v: 6, config: { mediaMin: 6, freqMin: 75, anoLetivo: 2026, bimestreAtual: 3, escolaNome: 'Escola Estadual Entrelaço' }, escolas, disciplinas, professores, turmas, alunos, aulas, notas, chamadas, atividades, entregas, comunicados, eventos, solicitacoes, ocorrencias };
 }
 
-let DB = LS.get('entrelaco.db', null);
-if (!DB || !DB.v || DB.v < 6) DB = seed();
-const save = () => LS.set('entrelaco.db', DB);
-save();
-function resetData() { DB = seed(); if (typeof seedRede === 'function') seedRede(DB); if (typeof migrar === 'function') migrar(DB); save(); }
+// ARMAZEM: o "banco de dados" do back-end simulado, guardado no navegador.
+// Só a camada services/ e as migrações mexem nele. Com um back-end real, ele deixa de existir.
+let ARMAZEM = LS.get('entrelaco.db', null);
+if (!ARMAZEM || !ARMAZEM.v || ARMAZEM.v < 6) ARMAZEM = seed();
+const persistirArmazem = () => LS.set('entrelaco.db', ARMAZEM);
+persistirArmazem();
+// DADOS: os dados da tela, carregados pelos serviços (services/dadosService.js) antes de cada tela abrir.
+// As telas leem e alteram só esta cópia; save() envia as mudanças aos serviços.
+let DADOS = {};
+const save = () => dadosService.gravar();
+async function resetData() { ARMAZEM = seed(); if (typeof seedRede === 'function') seedRede(ARMAZEM); if (typeof migrar === 'function') migrar(ARMAZEM); persistirArmazem(); await dadosService.carregar(); }
 
 // ---------- Consultas ----------
-const byId = (coll, id) => DB[coll].find(x => x.id === id);
+const byId = (coll, id) => DADOS[coll].find(x => x.id === id);
 const turmaNome = id => { const t = byId('turmas', id); return t ? t.nome : '—'; };
 const turmaLong = id => { const t = byId('turmas', id); if (!t) return '—'; const e = byId('escolas', t.escolaId); return `${t.nome}, ${e ? e.nome.split('— ').pop() : ''}`; };
 const discNome = id => { const d = byId('disciplinas', id); return d ? d.nome : '—'; };
 const profNome = id => { const p = byId('professores', id); return p ? p.nome : '—'; };
 const alunoNome = id => { const a = byId('alunos', id); return a ? a.nome : '—'; };
-const alunosDaTurma = tid => DB.alunos.filter(a => a.turmaId === tid).sort((a, b) => a.nome.localeCompare(b.nome));
-const discsDaTurma = tid => uniq(DB.aulas.filter(a => a.turmaId === tid).map(a => a.disciplinaId)).sort((a, b) => discNome(a).localeCompare(discNome(b)));
-const nota = (aid, did, b) => DB.notas[`${aid}|${did}|${b}`];
+const alunosDaTurma = tid => DADOS.alunos.filter(a => a.turmaId === tid).sort((a, b) => a.nome.localeCompare(b.nome));
+const discsDaTurma = tid => uniq(DADOS.aulas.filter(a => a.turmaId === tid).map(a => a.disciplinaId)).sort((a, b) => discNome(a).localeCompare(discNome(b)));
+const nota = (aid, did, b) => DADOS.notas[`${aid}|${did}|${b}`];
 const mediaDisc = (aid, did) => avg([1, 2, 3, 4].map(b => nota(aid, did, b)));
 const mediaGeral = aid => { const a = byId('alunos', aid); return a ? avg(discsDaTurma(a.turmaId).map(d => mediaDisc(aid, d))) : null; };
 function freqInfo(aid, did) {
   const a = byId('alunos', aid); if (!a) return { aulas: 0, faltas: 0, pct: null };
-  const ch = DB.chamadas.filter(c => c.turmaId === a.turmaId && (!did || c.disciplinaId === did));
+  const ch = DADOS.chamadas.filter(c => c.turmaId === a.turmaId && (!did || c.disciplinaId === did));
   const faltas = ch.filter(c => c.faltas.includes(aid)).length;
   return { aulas: ch.length, faltas, pct: ch.length ? (1 - faltas / ch.length) * 100 : null };
 }
 const freqPct = (aid, did) => freqInfo(aid, did).pct;
 function situacao(m) {
   if (m == null) return { l: 'Sem nota', c: 'neutral', i: 'dot' };
-  if (m >= DB.config.mediaMin) return { l: 'Aprovado', c: 'ok', i: 'okc' };
-  if (m >= DB.config.mediaMin - 2) return { l: 'Recuperação', c: 'warn', i: 'warnc' };
+  if (m >= DADOS.config.mediaMin) return { l: 'Aprovado', c: 'ok', i: 'okc' };
+  if (m >= DADOS.config.mediaMin - 2) return { l: 'Recuperação', c: 'warn', i: 'warnc' };
   return { l: 'Reprovado', c: 'err', i: 'errc' };
 }
 const st = (label, cls, ic) => `<span class="st ${cls}">${icon(ic || { ok: 'okc', warn: 'warnc', err: 'errc', info: 'info', neutral: 'dot' }[cls])}${esc(label)}</span>`;
 const sitHTML = m => { const s = situacao(m); return st(s.l, s.c, s.i); };
-const freqHTML = p => p == null ? '—' : `<span class="${p < DB.config.freqMin ? 'st err' : ''} num">${num(p, 0)}%</span>`;
+const freqHTML = p => p == null ? '—' : `<span class="${p < DADOS.config.freqMin ? 'st err' : ''} num">${num(p, 0)}%</span>`;
 const solHTML = s => st(s.status, s.status === 'Deferido' ? 'ok' : s.status === 'Indeferido' ? 'err' : 'info');
 
 // ---------- Sessão e UI ----------
@@ -253,7 +259,7 @@ const UI = { route: 'inicio', q: {}, f: {}, sel: {} };
 // ---------- Perfis de acesso ----------
 // Cada perfil tem uma lista de permissões. Para criar uma permissão nova: inclua em PERMISSOES,
 // marque nos perfis que devem tê-la (PERFIS_PADRAO) e use can('chave') na tela ou na entrada do menu (4º item do NAV).
-// A secretaria da rede pode ligar e desligar permissões em Configurações; o resultado fica em DB.perfis.
+// A secretaria da rede pode ligar e desligar permissões em Configurações; o resultado fica em DADOS.perfis.
 const ROLE_LABEL = { secretario: 'Secretário', ded: 'DED', regional: 'Diretoria Regional', gestao: 'Gestão escolar', diretor: 'Diretor', professor: 'Professor', aluno: 'Aluno', responsavel: 'Responsável', rh: 'RH', dae: 'DAE', motorista: 'Motorista' };
 const PERMISSOES = [
   ['calendario.editar', 'Editar o calendário escolar'],
@@ -282,7 +288,7 @@ const PERFIS_PADRAO = {
   dae: ['merenda.estoque', 'merenda.rede'],
   motorista: ['transporte.embarque']
 };
-const can = perm => ((DB.perfis && DB.perfis[SESSION?.role]) || PERFIS_PADRAO[SESSION?.role] || []).includes(perm);
+const can = perm => ((DADOS.perfis && DADOS.perfis[SESSION?.role]) || PERFIS_PADRAO[SESSION?.role] || []).includes(perm);
 // Pessoas da equipe (perfis que não são aluno, professor nem responsável)
 const EQUIPE = {
   'g-e1': { role: 'gestao', nome: 'Patrícia Gomes', cargo: 'Secretaria escolar, Unidade Centro', escolaId: 'e1' },
@@ -306,7 +312,7 @@ const escSessao = () => ['gestao', 'diretor'].includes(SESSION?.role) ? (EQUIPE[
 const naEscola = (...ids) => !escSessao() || ids.includes(escSessao());
 const me = () => SESSION?.role === 'professor' ? byId('professores', SESSION.userId) : SESSION?.role === 'aluno' ? byId('alunos', SESSION.userId) : SESSION?.role === 'responsavel' ? byId('responsaveis', SESSION.userId) : (EQUIPE[SESSION?.userId]?.role === SESSION?.role ? EQUIPE[SESSION.userId] : (SESSION?.role === 'gestao' ? EQUIPE['g-rede'] : null));
 // Disciplinas que o professor pode lecionar: vêm das formações dele
-const habilitadas = p => p ? (p.formacoes?.length ? uniq(p.formacoes.flatMap(f => (DB.formacoes || []).find(x => x.id === f)?.disciplinas || [])) : (p.disciplinas || [])) : [];
+const habilitadas = p => p ? (p.formacoes?.length ? uniq(p.formacoes.flatMap(f => (DADOS.formacoes || []).find(x => x.id === f)?.disciplinas || [])) : (p.disciplinas || [])) : [];
 
 const TABS = {
   gestao: [['inicio', 'Início', 'home'], ['vagas', 'Vagas', 'door'], ['alunos', 'Alunos', 'users'], ['relatorios', 'Relatórios', 'chart']],
@@ -599,13 +605,13 @@ function readForm(form, fields) {
 }
 
 // ---------- CRUD genérico ----------
-const optsOf = (coll, label = x => x.nome) => () => DB[coll].map(x => [x.id, label(x)]).sort((a, b) => a[1].localeCompare(b[1]));
+const optsOf = (coll, label = x => x.nome) => () => DADOS[coll].map(x => [x.id, label(x)]).sort((a, b) => a[1].localeCompare(b[1]));
 const optsFix = arr => arr.map(x => Array.isArray(x) ? x : [x, x]);
 const ENT = {}; // preenchido em pages.js
 
 function crudRows(key) {
   const E = ENT[key];
-  let rows = E.rows ? E.rows() : DB[E.coll].slice();
+  let rows = E.rows ? E.rows() : DADOS[E.coll].slice();
   if (E.filter && !(E.filter.scoped && escSessao()) && UI.f[key]) rows = rows.filter(r => String(r[E.filter.k]) === UI.f[key]);
   const q = norm(UI.q[key] || '');
   if (q) rows = rows.filter(r => norm(E.cols.map(c => String(c[1](r))).join(' ').replace(/<[^>]+>/g, ' ')).includes(q));
@@ -635,7 +641,7 @@ function refreshCrud(key) {
   const c = $('#cnt-' + key); if (c) { const n = crudRows(key).length; const E = ENT[key]; c.textContent = `${n} ${n === 1 ? E.singular : (E.plural || E.title.toLowerCase())}`; }
 }
 function openForm(key, id, defaults = {}) {
-  const E = ENT[key]; const row = id ? DB[E.coll].find(r => r.id === id) : Object.assign({}, E.defaults ? E.defaults() : {}, defaults);
+  const E = ENT[key]; const row = id ? DADOS[E.coll].find(r => r.id === id) : Object.assign({}, E.defaults ? E.defaults() : {}, defaults);
   const fields = typeof E.fields === 'function' ? E.fields() : E.fields;
   openDialog({
     title: (id ? 'Editar ' : (E.fem ? 'Nova ' : 'Novo ')) + E.singular,
@@ -670,7 +676,7 @@ function renderShell() {
     </aside>
     <div class="scrim" data-act="close-nav"></div>
     <div class="main">
-      <div class="topbar"><button class="icon-btn menu-btn" data-act="open-nav" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${icon('menu')}</button><span class="top-logo" aria-hidden="true">Entrelaço</span><button class="profile-btn" data-act="perfil-menu" aria-haspopup="dialog" aria-label="Seu perfil: ${esc(u.nome)}. Trocar de perfil"><span class="avatar" aria-hidden="true">${initials(u.nome)}</span></button><p class="crumb">${esc(escSessao() ? byId('escolas', escSessao())?.nome : SESSION.role === 'gestao' ? 'Rede estadual, todas as escolas' : DB.config.escolaNome)}<span class="crumb-sub">${DB.config.bimestreAtual}º bimestre de ${DB.config.anoLetivo}</span></p><div class="row" style="gap:.125rem">${notifBtn()}${a11yBar()}</div></div>
+      <div class="topbar"><button class="icon-btn menu-btn" data-act="open-nav" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${icon('menu')}</button><span class="top-logo" aria-hidden="true">Entrelaço</span><button class="profile-btn" data-act="perfil-menu" aria-haspopup="dialog" aria-label="Seu perfil: ${esc(u.nome)}. Trocar de perfil"><span class="avatar" aria-hidden="true">${initials(u.nome)}</span></button><p class="crumb">${esc(escSessao() ? byId('escolas', escSessao())?.nome : SESSION.role === 'gestao' ? 'Rede estadual, todas as escolas' : DADOS.config.escolaNome)}<span class="crumb-sub">${DADOS.config.bimestreAtual}º bimestre de ${DADOS.config.anoLetivo}</span></p><div class="row" style="gap:.125rem">${notifBtn()}${a11yBar()}</div></div>
       <main id="content" tabindex="-1"></main>
     </div>
     <nav class="tabbar" aria-label="Atalhos" style="grid-template-columns:repeat(${tabsFor().length + 1},minmax(0,1fr))">${tabsFor().map(([r, l, ic]) => `<a href="#${r}" data-act="go" data-route="${r}">${icon(ic)}<span>${l}</span></a>`).join('')}<button class="tab-more" data-act="open-nav" aria-controls="side" aria-expanded="false">${icon('menu')}<span>Mais</span></button></nav>
@@ -681,7 +687,8 @@ const tabsFor = () => (TABS[SESSION.role] || []).filter(t => navFor(SESSION.role
 // Componentes que precisam de JavaScript depois de entrar na tela (mapas, QR codes, gráficos interativos)
 const HYDRATORS = [];
 function hydrate(root) { if (root) HYDRATORS.forEach(h => { try { h(root); } catch (e) { console.warn(e); } }); }
-function renderPage() {
+function renderPage() { return dadosService.carregar().then(montarPagina); }
+function montarPagina() {
   const nav = navFor(SESSION.role);
   if (!nav.find(n => n[0] === UI.route)) UI.route = 'inicio';
   const fn = PAGES[SESSION.role][UI.route];
@@ -732,7 +739,7 @@ const LOGIN_GRUPOS = [['Escola', ['gestao', 'diretor', 'professor']], ['Estudant
 function renderLogin() {
   document.title = 'Entrar, Portal Entrelaço';
   const role = UI.loginRole || 'gestao';
-  const people = EQUIPE_ROLES.includes(role) ? equipeDe(role).map(([id, g]) => [id, `${g.nome} — ${g.cargo}`]) : role === 'professor' ? DB.professores.map(p => [p.id, `${p.nome} — ${habilitadas(p).map(discNome).join(', ')}`]) : role === 'aluno' ? DB.alunos.map(a => [a.id, `${a.nome} — ${turmaNome(a.turmaId)}`]) : role === 'responsavel' ? (DB.responsaveis || []).map(r => [r.id, `${r.nome} — ${(r.filhos || []).length ? 'responsável por ' + r.filhos.map(alunoNome).join(', ') : 'sem filhos na rede ainda'}`]) : [];
+  const people = EQUIPE_ROLES.includes(role) ? equipeDe(role).map(([id, g]) => [id, `${g.nome} — ${g.cargo}`]) : role === 'professor' ? DADOS.professores.map(p => [p.id, `${p.nome} — ${habilitadas(p).map(discNome).join(', ')}`]) : role === 'aluno' ? DADOS.alunos.map(a => [a.id, `${a.nome} — ${turmaNome(a.turmaId)}`]) : role === 'responsavel' ? (DADOS.responsaveis || []).map(r => [r.id, `${r.nome} — ${(r.filhos || []).length ? 'responsável por ' + r.filhos.map(alunoNome).join(', ') : 'sem filhos na rede ainda'}`]) : [];
   $('#root').innerHTML = `<div class="login">
     <section class="login-hero" aria-labelledby="hero-h"><span class="brand" aria-hidden="true">Entrelaço</span><h1 id="hero-h">Portal escolar</h1><p>Gestão, professores e alunos no mesmo lugar: matrículas, turmas, notas, frequência, atividades e comunicados.</p>
       <div class="principles"><div><b>Acolhedor</b><span>Tons calmos e cantos arredondados.</span></div><div><b>Claro</b><span>Um destaque por tela e contraste mínimo AA.</span></div><div><b>Acessível</b><span>Leitura em voz alta, alto contraste e atalhos.</span></div></div></section>
@@ -768,11 +775,11 @@ const ACT = {
   a11y: openA11y,
   preset: el => { const [l, p] = PRESETS[el.dataset.id]; A = Object.assign({}, A_DEFAULT, p); applyA11y(); if ($('#dlg').open) { closeDialog(); setTimeout(openA11y, 30); } toast(`Perfil "${l}" aplicado.`, 'info'); },
   speak: el => TTS.speak(el.dataset.text || $(el.dataset.target)?.innerText || ''),
-  reset: () => confirmBox('Restaurar dados de exemplo', 'Tudo o que foi cadastrado ou alterado neste navegador será substituído pelos dados de exemplo.', () => { resetData(); render(); toast('Dados de exemplo restaurados.'); }, 'Restaurar'),
+  reset: () => confirmBox('Restaurar dados de exemplo', 'Tudo o que foi cadastrado ou alterado neste navegador será substituído pelos dados de exemplo.', () => resetData().then(() => { render(); toast('Dados de exemplo restaurados.'); }), 'Restaurar'),
   new: el => { const d = {}; Object.keys(el.dataset).filter(k => k.startsWith('def')).forEach(k => { const f = k.slice(3); d[f.charAt(0).toLowerCase() + f.slice(1)] = isNaN(el.dataset[k]) || el.dataset[k] === '' ? el.dataset[k] : Number(el.dataset[k]); }); openForm(el.dataset.ent, null, d); },
   edit: el => openForm(el.dataset.ent, el.dataset.id),
   del: el => {
-    const E = ENT[el.dataset.ent]; const r = DB[E.coll].find(x => x.id === el.dataset.id);
+    const E = ENT[el.dataset.ent]; const r = DADOS[E.coll].find(x => x.id === el.dataset.id);
     const name = E.name ? E.name(r) : (r.nome || r.titulo || '');
     confirmBox(`Excluir ${E.singular}`, `Excluir <b>${esc(name)}</b>? Essa ação não pode ser desfeita.`, () => servico(E.coll).remover(r.id).then(() => { if (E.onDelete) E.onDelete(r); save(); rerender(); toast(`${cap(E.singular)} excluíd${E.fem ? 'a' : 'o'}.`); }));
   }

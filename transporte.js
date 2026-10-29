@@ -2,7 +2,7 @@
 'use strict';
 
 const CORES_ROTA = ['#7C3AED', '#EB6834', '#1BAF7A', '#2A78D6'];
-const corRota = id => CORES_ROTA[Math.max(0, DB.rotas.findIndex(r => r.id === id)) % CORES_ROTA.length];
+const corRota = id => CORES_ROTA[Math.max(0, DADOS.rotas.findIndex(r => r.id === id)) % CORES_ROTA.length];
 // Uma parada por linha: "06:20 Praça da Várzea | -8.0466, -34.9573" (coordenadas opcionais)
 function parseParadas(txt) {
   return String(txt || '').split('\n').map(l => l.trim()).filter(Boolean).map((l, i) => {
@@ -25,9 +25,9 @@ function paradaDoAluno(a) {
   const p = ps.find(x => x.id === a.paradaId) || ps[0]; return p ? { p, d: null } : null;
 }
 const codigoQR = a => 'ENT-' + a.matricula;
-const alunosDaRota = id => DB.alunos.filter(a => a.rotaId === id);
-const ausente = (a, data, sentido) => DB.ausencias.find(x => x.alunoId === a.id && x.data === data && (x.sentido === sentido || x.sentido === 'Ida e volta'));
-const embarcou = (a, data, sentido) => DB.embarques.find(x => x.alunoId === a.id && x.data === data && x.sentido === sentido);
+const alunosDaRota = id => DADOS.alunos.filter(a => a.rotaId === id);
+const ausente = (a, data, sentido) => DADOS.ausencias.find(x => x.alunoId === a.id && x.data === data && (x.sentido === sentido || x.sentido === 'Ida e volta'));
+const embarcou = (a, data, sentido) => DADOS.embarques.find(x => x.alunoId === a.id && x.data === data && x.sentido === sentido);
 const agoraHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 // Rotas: a lista de paradas vira dados estruturados
@@ -91,8 +91,8 @@ function paradasLista(r, destaque) {
 function transporteAluno(a, porResp) {
   const r = byId('rotas', a.rotaId);
   if (!r) return `<p class="empty">${porResp ? esc(firstName(a.nome)) + ' não usa' : 'Você não está cadastrado no'} transporte escolar. Para pedir, fale com a secretaria da escola.</p>`;
-  const pp = paradaDoAluno(a); const avisos = DB.ausencias.filter(x => x.alunoId === a.id && x.data >= TODAY_ISO).sort((x, y) => x.data.localeCompare(y.data));
-  const emb = DB.embarques.filter(x => x.alunoId === a.id).sort((x, y) => (y.data + y.hora).localeCompare(x.data + x.hora)).slice(0, 5);
+  const pp = paradaDoAluno(a); const avisos = DADOS.ausencias.filter(x => x.alunoId === a.id && x.data >= TODAY_ISO).sort((x, y) => x.data.localeCompare(y.data));
+  const emb = DADOS.embarques.filter(x => x.alunoId === a.id).sort((x, y) => (y.data + y.hora).localeCompare(x.data + x.hora)).slice(0, 5);
   const ultima = (r.paradas || []).slice(-1)[0];
   return `<div class="grid g2">
     <section class="card" aria-labelledby="tr-${a.id}"><h2 id="tr-${a.id}">${esc(r.nome)}</h2>
@@ -116,11 +116,11 @@ function transporteAluno(a, porResp) {
 FORMS.aviso = f => {
   const a = byId('alunos', f.dataset.aluno); const data = $(`#av-data-${a.id}`).value; const sentido = f.querySelector(`input[name="av-sent-${a.id}"]:checked`).value;
   if (data < TODAY_ISO) { toast('Escolha hoje ou um dia futuro.', 'err'); return; }
-  DB.ausencias = DB.ausencias.filter(x => !(x.alunoId === a.id && x.data === data));
-  DB.ausencias.push({ id: uid(), alunoId: a.id, data, sentido, motivo: $(`#av-mot-${a.id}`).value.trim(), por: SESSION.role === 'responsavel' ? 'Responsável' : 'Aluno', criado: new Date().toISOString() });
+  DADOS.ausencias = DADOS.ausencias.filter(x => !(x.alunoId === a.id && x.data === data));
+  DADOS.ausencias.push({ id: uid(), alunoId: a.id, data, sentido, motivo: $(`#av-mot-${a.id}`).value.trim(), por: SESSION.role === 'responsavel' ? 'Responsável' : 'Aluno', criado: new Date().toISOString() });
   save(); rerender(); toast(`Aviso enviado: ${sentido.toLowerCase()} em ${fmtD(data)}. O motorista não vai esperar.`);
 };
-ACT['cancelar-aviso'] = el => { DB.ausencias = DB.ausencias.filter(x => x.id !== el.dataset.id); save(); rerender(); toast('Aviso cancelado.'); };
+ACT['cancelar-aviso'] = el => { DADOS.ausencias = DADOS.ausencias.filter(x => x.id !== el.dataset.id); save(); rerender(); toast('Aviso cancelado.'); };
 
 // ---------- Motorista ----------
 const rotaMot = () => byId('rotas', EQUIPE[SESSION.userId]?.rotaId);
@@ -145,11 +145,11 @@ function registrarEmbarque(a, como) {
   if (!a) return 'Código não encontrado. Confira o cartão.';
   if (a.rotaId !== r.id) return `${a.nome} não é desta rota (${byId('rotas', a.rotaId)?.nome || 'sem transporte'}).`;
   const ja = embarcou(a, TODAY_ISO, sentido); if (ja) return `${a.nome} já embarcou às ${ja.hora}.`;
-  DB.embarques.push({ id: uid(), alunoId: a.id, rotaId: r.id, data: TODAY_ISO, hora: agoraHM(), sentido, como });
+  DADOS.embarques.push({ id: uid(), alunoId: a.id, rotaId: r.id, data: TODAY_ISO, hora: agoraHM(), sentido, como });
   save(); return '';
 }
 FORMS.embarque = () => {
-  const cod = $('#qr-in').value.trim().toUpperCase(); const a = DB.alunos.find(x => codigoQR(x).toUpperCase() === cod);
+  const cod = $('#qr-in').value.trim().toUpperCase(); const a = DADOS.alunos.find(x => codigoQR(x).toUpperCase() === cod);
   const err = registrarEmbarque(a, 'QR code');
   rerender(); const res = $('#scan-res'); const inp = $('#qr-in');
   const msg = err || `Embarque registrado: ${a.nome}.`;
@@ -169,8 +169,8 @@ function motoristaRota() {
 // ---------- Gestão: mapa e embarques do dia ----------
 const gTranspBase = PAGES.gestao.transporte;
 PAGES.gestao.transporte = () => {
-  const rotas = DB.rotas.filter(r => naEscola(r.escolaId)); const hoje = DB.embarques.filter(x => x.data === TODAY_ISO && rotas.some(r => r.id === x.rotaId));
-  const aus = DB.ausencias.filter(x => x.data === TODAY_ISO && rotas.some(r => r.id === byId('alunos', x.alunoId)?.rotaId));
+  const rotas = DADOS.rotas.filter(r => naEscola(r.escolaId)); const hoje = DADOS.embarques.filter(x => x.data === TODAY_ISO && rotas.some(r => r.id === x.rotaId));
+  const aus = DADOS.ausencias.filter(x => x.data === TODAY_ISO && rotas.some(r => r.id === byId('alunos', x.alunoId)?.rotaId));
   return gTranspBase() + `<section class="rel-sec" aria-labelledby="tm-h"><div class="rel-head"><h2 id="tm-h">Mapa das rotas</h2></div><section class="card">${mapaHTML('mapa-gestao', { rotas: rotas.map(r => r.id) })}</section></section>
     <section class="rel-sec" aria-labelledby="th-h"><div class="rel-head"><h2 id="th-h">Embarques de hoje</h2><p class="muted">${hoje.length} embarque${hoje.length === 1 ? '' : 's'} registrado${hoje.length === 1 ? '' : 's'} e ${aus.length} aviso${aus.length === 1 ? '' : 's'} de ausência.</p></div>
     ${hoje.length ? `<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Aluno</th><th scope="col">Rota</th><th scope="col">Trecho</th><th scope="col" class="n">Hora</th><th scope="col">Como</th></tr></thead><tbody>${hoje.sort((a, b) => b.hora.localeCompare(a.hora)).map(x => `<tr><th scope="row">${esc(alunoNome(x.alunoId))}</th><td data-label="Rota">${esc(byId('rotas', x.rotaId)?.nome)}</td><td data-label="Trecho">${esc(x.sentido)}</td><td class="n" data-label="Hora">${esc(x.hora)}</td><td data-label="Como">${esc(x.como || 'QR code')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhum embarque registrado hoje.</p>'}</section>`;

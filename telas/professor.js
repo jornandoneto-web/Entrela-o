@@ -17,7 +17,7 @@ function linhaDependente(d = Modelos.dependente()) {
 }
 function linhaVinculo(v = Modelos.vinculo(), n = 1) {
   const i = ++seqLinha;
-  const hab = uniq(v.formacoes.flatMap(f => DB.formacoes.find(x => x.id === f)?.disciplinas || []));
+  const hab = uniq(v.formacoes.flatMap(f => DADOS.formacoes.find(x => x.id === f)?.disciplinas || []));
   return `<fieldset class="vinc card" data-id="${esc(v.id)}" style="padding:1.25rem"><legend class="lbl" style="padding:0 .25rem">Vínculo ${n}</legend>
     <div class="form-grid">
       <div class="field"><label for="vc${i}-cargo">Cargo <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-cargo" data-k="cargo" value="${esc(v.cargo)}" required></div>
@@ -27,15 +27,15 @@ function linhaVinculo(v = Modelos.vinculo(), n = 1) {
       <div class="field"><label for="vc${i}-ini">Data de início <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-ini" type="date" data-k="dataInicio" value="${esc(v.dataInicio)}" required></div>
       <div class="field"><label for="vc${i}-fim">Data de fim (opcional)</label><input id="vc${i}-fim" type="date" data-k="dataFim" value="${esc(v.dataFim)}"></div>
     </div>
-    <fieldset class="field wide"><legend>Formações <span class="req" aria-hidden="true">*</span></legend><div class="checks">${DB.formacoes.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(f => `<label class="check"><input type="checkbox" data-k="formacoes" value="${f.id}" data-change="vincForm" ${v.formacoes.includes(f.id) ? 'checked' : ''}>${esc(f.nome)}</label>`).join('')}</div></fieldset>
-    <fieldset class="field wide"><legend>Disciplinas que leciona</legend><div class="checks">${DB.disciplinas.map(d => `<label class="check"><input type="checkbox" data-k="disciplinas" value="${d.id}" ${v.disciplinas.includes(d.id) ? 'checked' : ''} ${hab.includes(d.id) ? '' : 'disabled'}>${esc(d.nome)}</label>`).join('')}</div><p class="help">Só ficam disponíveis as disciplinas habilitadas pelas formações marcadas.</p></fieldset>
+    <fieldset class="field wide"><legend>Formações <span class="req" aria-hidden="true">*</span></legend><div class="checks">${DADOS.formacoes.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(f => `<label class="check"><input type="checkbox" data-k="formacoes" value="${f.id}" data-change="vincForm" ${v.formacoes.includes(f.id) ? 'checked' : ''}>${esc(f.nome)}</label>`).join('')}</div></fieldset>
+    <fieldset class="field wide"><legend>Disciplinas que leciona</legend><div class="checks">${DADOS.disciplinas.map(d => `<label class="check"><input type="checkbox" data-k="disciplinas" value="${d.id}" ${v.disciplinas.includes(d.id) ? 'checked' : ''} ${hab.includes(d.id) ? '' : 'disabled'}>${esc(d.nome)}</label>`).join('')}</div><p class="help">Só ficam disponíveis as disciplinas habilitadas pelas formações marcadas.</p></fieldset>
     <div class="row" style="align-items:flex-end;justify-content:space-between"><div class="field" style="flex:1 1 16rem"><label for="vc${i}-anx">Anexo do contrato</label><input id="vc${i}-anx" type="file" data-k="anexo" accept=".pdf,image/*"><p class="help" data-anexo="${esc(v.anexoContrato)}">${v.anexoContrato ? 'Arquivo atual: ' + esc(v.anexoContrato) : 'PDF ou imagem do contrato ou portaria.'}</p></div>
       <button type="button" class="btn ghost sm" data-act="vinc-rem" aria-label="Remover vínculo ${n}">${icon('trash')}Remover vínculo</button></div>
   </fieldset>`;
 }
 CHG.vincForm = el => {
   const fs = el.closest('.vinc'); const marc = $$('[data-k="formacoes"]:checked', fs).map(x => x.value);
-  const hab = uniq(marc.flatMap(f => DB.formacoes.find(x => x.id === f)?.disciplinas || []));
+  const hab = uniq(marc.flatMap(f => DADOS.formacoes.find(x => x.id === f)?.disciplinas || []));
   $$('[data-k="disciplinas"]', fs).forEach(c => { c.disabled = !hab.includes(c.value); if (c.disabled) c.checked = false; });
 };
 const renumerarVinculos = () => $$('#vincs .vinc').forEach((f, k) => { f.querySelector('legend').textContent = `Vínculo ${k + 1}`; });
@@ -44,7 +44,7 @@ ACT['dep-rem'] = el => { el.closest('.dep-linha').remove(); $('#deps-vazio').hid
 ACT['vinc-add'] = () => { $('#vincs').insertAdjacentHTML('beforeend', linhaVinculo(Modelos.vinculo({ dataInicio: TODAY_ISO }), $$('#vincs .vinc').length + 1)); $('#vincs .vinc:last-child input').focus(); };
 ACT['vinc-rem'] = el => {
   const fs = el.closest('.vinc');
-  if ((DB.lotacoes || []).some(l => l.vinculoId === fs.dataset.id && lotacaoAtiva(l))) { toast('Este vínculo tem lotação ativa. Encerre a lotação em Gerir lotações antes.', 'err'); return; }
+  if ((DADOS.lotacoes || []).some(l => l.vinculoId === fs.dataset.id && lotacaoAtiva(l))) { toast('Este vínculo tem lotação ativa. Encerre a lotação em Gerir lotações antes.', 'err'); return; }
   if ($$('#vincs .vinc').length === 1) { toast('O professor precisa de pelo menos um vínculo.', 'err'); return; }
   fs.remove(); renumerarVinculos();
 };
@@ -111,21 +111,21 @@ Object.assign(ENT.professores, {
     ['Professor', r => `${esc(r.nome)}${caption2('CPF ' + esc(formatarCPF(r.pessoa?.cpf || '') || '—'))}`],
     ['Formações', r => `${esc((r.formacoes || []).map(formNome).join(', ') || '—')}${caption2('Habilita: ' + esc(habilitadas(r).map(discNome).join(', ') || 'nenhuma disciplina'))}`],
     ['Vínculos', r => { const vs = (r.vinculos || []).filter(vinculoAtivo); return `${vs.length} ativo${vs.length === 1 ? '' : 's'}${caption2(vs.map(v => `${v.ingresso}, ${v.cargaHoraria} h`).join('; ') || 'Nenhum vínculo ativo')}`; }],
-    ['Lotado em', r => esc(uniq((DB.lotacoes || []).filter(l => l.professorId === r.id && lotacaoAtiva(l)).map(l => escNome(l.escolaId))).join(', ') || 'Sem lotação')],
+    ['Lotado em', r => esc(uniq((DADOS.lotacoes || []).filter(l => l.professorId === r.id && lotacaoAtiva(l)).map(l => escNome(l.escolaId))).join(', ') || 'Sem lotação')],
     ['Situação', r => situacaoProf(r)]
   ],
   rowActs: r => can('lotacoes.gerir') ? `<button class="btn ghost sm" data-act="lot-ver" data-id="${r.id}" aria-label="Ver lotações de ${esc(r.nome)}">Lotações</button>` : '',
-  onDelete: r => { DB.lotacoes = (DB.lotacoes || []).filter(l => l.professorId !== r.id); },
+  onDelete: r => { DADOS.lotacoes = (DADOS.lotacoes || []).filter(l => l.professorId !== r.id); },
   desc: 'Cadastro dos professores: dados pessoais, dependentes e vínculos. A escola de cada um é definida em Gerir lotações.'
 });
 
 // Banco de talentos: "Chamar" cria o professor completo (Pessoa + Vínculo) e a primeira lotação
 ACT.chamar = el => {
   const t = byId('talentos', el.dataset.id);
-  const locais = DB.escolas.filter(e => DB.turmas.some(x => x.escolaId === e.id));
+  const locais = DADOS.escolas.filter(e => DADOS.turmas.some(x => x.escolaId === e.id));
   openDialog({ title: `Chamar ${t.nome}`, body: `<p class="muted">${esc(formNome(t.formacaoId))}, ${t.classificacao}º lugar em ${esc(t.processo)}.</p><div class="form-grid">${fieldHTML({ k: 'ch-cpf', l: 'CPF', req: 1, attrs: 'inputmode="numeric" maxlength="14"' }, '')}${fieldHTML({ k: 'ch-nasc', l: 'Data de nascimento', t: 'date', req: 1 }, '')}${fieldHTML({ k: 'ch-esc', l: 'Primeira lotação', t: 'select', o: locais.map(e => [e.id, e.nome]), req: 1 }, '')}${fieldHTML({ k: 'ch-carga', l: 'Carga horária do vínculo (h)', t: 'number', req: 1 }, 25)}${fieldHTML({ k: 'ch-ini', l: 'Início do contrato', t: 'date', req: 1 }, TODAY_ISO)}${fieldHTML({ k: 'ch-fim', l: 'Fim do contrato', t: 'date', req: 1 }, `${TODAY.getFullYear()}-12-18`)}</div>`,
     onSubmit: () => {
-      const v = Modelos.vinculo({ cargo: 'Professor', formacoes: [t.formacaoId], disciplinas: DB.formacoes.find(f => f.id === t.formacaoId)?.disciplinas || [], ingresso: 'Contrato', dataInicio: $('#f-ch-ini').value, dataFim: $('#f-ch-fim').value, cargaHoraria: $('#f-ch-carga').value });
+      const v = Modelos.vinculo({ cargo: 'Professor', formacoes: [t.formacaoId], disciplinas: DADOS.formacoes.find(f => f.id === t.formacaoId)?.disciplinas || [], ingresso: 'Contrato', dataInicio: $('#f-ch-ini').value, dataFim: $('#f-ch-fim').value, cargaHoraria: $('#f-ch-carga').value });
       const p = Modelos.professor({ pessoa: { nome: t.nome, cpf: $('#f-ch-cpf').value.replace(/\D/g, ''), nascimento: $('#f-ch-nasc').value, telefones: [t.telefone], email: t.email }, vinculos: [v] });
       professorService.salvar(p).then(pr => lotacaoService.salvar(Modelos.lotacao({ professorId: pr.id, vinculoId: pr.vinculos[0].id, escolaId: $('#f-ch-esc').value, cargaHoraria: pr.vinculos[0].cargaHoraria, dataInicio: v.dataInicio })))
         .then(() => { t.situacao = 'Chamado'; save(); closeDialog(); rerender(); toast(`${t.nome} foi chamado e já está lotado.`); })

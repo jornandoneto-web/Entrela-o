@@ -12,5 +12,7 @@ const infraestruturaService = {
   async salvar(infra) { return infraRepo.salvar(Object.assign({}, infra, { id: infra.escolaId })); },
   listar: infraRepo.listar,
   // Leitura síncrona para telas antigas (ex.: busca de vagas do responsável)
-  recursosSync: escolaId => ((DB.infraestruturas || []).find(i => i.id === escolaId)?.recursosAcessibilidade) || []
+  recursosSync: escolaId => ((ARMAZEM.infraestruturas || []).find(i => i.id === escolaId)?.recursosAcessibilidade) || []
 };
+
+SERVICOS.infraestruturas = infraRepo;

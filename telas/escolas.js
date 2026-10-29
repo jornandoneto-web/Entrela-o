@@ -94,7 +94,7 @@ ACT['curso-rapido'] = () => {
 };
 ACT['escola-del'] = el => {
   const e = byId('escolas', el.dataset.id);
-  if (DB.turmas.some(t => t.escolaId === e.id)) { toast('A escola tem turmas. Transfira ou exclua as turmas antes.', 'err'); return; }
+  if (DADOS.turmas.some(t => t.escolaId === e.id)) { toast('A escola tem turmas. Transfira ou exclua as turmas antes.', 'err'); return; }
   confirmBox('Excluir escola', `Excluir <b>${esc(e.nome)}</b>? Essa ação não pode ser desfeita.`, () => escolaService.remover(e.id).then(() => { rerender(); toast('Escola excluída.'); }));
 };
 

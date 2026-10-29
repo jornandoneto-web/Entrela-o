@@ -7,7 +7,7 @@ ENT.cursos = {
   desc: 'Cursos que as escolas podem ofertar. A matriz de cada curso é montada em Gestão de matrizes.',
   fields: [{ k: 'nome', l: 'Nome do curso', req: 1, wide: 1 }, { k: 'etapa', l: 'Etapa', t: 'select', o: optsFix(['Educação Infantil', 'Ensino Fundamental', 'Ensino Médio', 'Educação Profissional', 'Educação de Jovens e Adultos']), req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea' }],
   sort: (a, b) => a.nome.localeCompare(b.nome),
-  cols: [['Curso', r => esc(r.nome)], ['Etapa', r => esc(r.etapa)], ['Séries na matriz', r => (DB.matrizes || []).find(m => m.cursoId === r.id)?.series.length || 0, 'n'], ['Escolas que ofertam', r => DB.escolas.filter(e => (e.cursos || []).includes(r.id)).length, 'n']],
+  cols: [['Curso', r => esc(r.nome)], ['Etapa', r => esc(r.etapa)], ['Séries na matriz', r => (DADOS.matrizes || []).find(m => m.cursoId === r.id)?.series.length || 0, 'n'], ['Escolas que ofertam', r => DADOS.escolas.filter(e => (e.cursos || []).includes(r.id)).length, 'n']],
   rowActs: r => `<button class="btn ghost sm" data-act="mx-abrir" data-id="${r.id}" aria-label="Abrir a matriz de ${esc(r.nome)}">Matriz</button>`,
   canEdit: () => can('cursos.gerir'), canNew: () => can('cursos.gerir'),
   name: r => r.nome
@@ -29,7 +29,7 @@ async function telaMatrizes() {
   if (!cursos.some(c => c.id === UI.sel.mxCurso)) UI.sel.mxCurso = cursos[0].id;
   const m = await matrizService.buscarPorCurso(UI.sel.mxCurso); UI.cache.matriz = m;
   const total = m.series.reduce((n, s) => n + matrizService.totalSerie(s), 0);
-  const nomes = uniq([...DB.disciplinas.map(d => d.nome), 'Educação Física', 'Arte', 'Filosofia', 'Sociologia', 'Química']).sort();
+  const nomes = uniq([...DADOS.disciplinas.map(d => d.nome), 'Educação Física', 'Arte', 'Filosofia', 'Sociologia', 'Química']).sort();
   return pageHead('Gestão de matrizes', 'Escolha o curso, cadastre as séries e, em cada série, os componentes curriculares com a carga horária anual em horas.') +
     `<div class="toolbar">${selectCtl('mx-curso', 'Curso', cursos.map(c => [c.id, c.nome]), UI.sel.mxCurso, 'mxCurso')}<p class="muted" style="padding-bottom:.75rem">${m.series.length} série${m.series.length === 1 ? '' : 's'}, ${total} h no curso todo.</p></div>
     <datalist id="mx-componentes">${nomes.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
