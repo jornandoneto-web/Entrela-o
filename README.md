@@ -52,7 +52,14 @@ O portal oferece:
 - comandos de voz
 - navegação completa por teclado
 
+## Regras de negócio confirmadas
+
+- **Diretor da escola:** pode ser qualquer pessoa cadastrada no sistema, não precisa ter vínculo de servidor.
+- **Unidades de carga horária:** a carga do vínculo do professor é semanal (padrão 25 h, integral 40 h). A carga dos componentes na matriz curricular é anual (ex.: Matemática, 80 h).
+- **Lotações:** a soma das horas das lotações ativas de um vínculo não pode passar a carga horária desse vínculo. A data de fim da lotação é a data de saída: nesse dia as horas já ficam livres.
+
 ## Pendências conhecidas
 
 - A lista de municípios das DREs 1 a 10 está em `mock/sergipe.js` e precisa ser confirmada com a SEDUC. Só a DEA (Aracaju) está confirmada.
+- A definir: uma lotação pode durar além da data de fim do vínculo? Hoje o sistema só bloqueia a lotação que começa depois que o vínculo termina.
 - Os dados ficam só no navegador. Para que sejam compartilhados entre usuários, é preciso um back-end.
