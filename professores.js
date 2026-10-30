@@ -1,8 +1,7 @@
 /* Portal Entrelaço — professores: formações, disciplinas habilitadas, perfil Diretor e RH (ingresso, necessidade, contratos, banco de talentos) */
 'use strict';
 
-const INGRESSOS = ['Concurso', 'Contrato', 'Cedido'];
-const ativo = p => !!p && !(p.ingresso === 'Contrato' && p.contratoFim && p.contratoFim < TODAY_ISO);
+const ativo = p => !!p && (p.vinculos?.length ? p.vinculos.some(vinculoAtivo) : !(p.ingresso === 'Contrato' && p.contratoFim && p.contratoFim < TODAY_ISO));
 const aulasDoProf = p => DADOS.aulas.filter(a => a.professorId === p.id);
 const livres = p => ativo(p) ? Math.max(0, (Number(p.cargaHoraria) || 0) - aulasDoProf(p).length) : 0;
 const formNome = id => DADOS.formacoes.find(f => f.id === id)?.nome || '—';
@@ -34,7 +33,7 @@ const profFieldsRH = () => [
   { k: 'cargaHoraria', l: 'Carga horária semanal', t: 'number', req: 1, attrs: 'min="1" max="60"', help: 'Em aulas de 50 minutos por semana.' },
   { k: 'formacoes', l: 'Formações', t: 'checks', o: () => DADOS.formacoes.map(f => [f.id, f.nome]).sort((a, b) => a[1].localeCompare(b[1])), help: 'As disciplinas que o professor pode lecionar saem daqui.' },
   { k: 'instituicao', l: 'Instituição e ano de conclusão', wide: 1, help: 'Ex.: UFPE, 2012' },
-  { k: 'ingresso', l: 'Forma de ingresso', t: 'select', o: optsFix(INGRESSOS), req: 1 },
+  { k: 'ingresso', l: 'Forma de ingresso', t: 'select', o: L('formasIngresso'), req: 1 },
   { k: 'orgaoOrigem', l: 'Órgão de origem', req: 1, showIf: 'ingresso=Cedido', help: 'Ex.: Prefeitura do Recife' },
   { k: 'contratoInicio', l: 'Início do contrato', t: 'date', req: 1, showIf: 'ingresso=Contrato' },
   { k: 'contratoFim', l: 'Término do contrato', t: 'date', req: 1, showIf: 'ingresso=Contrato' }
@@ -205,7 +204,7 @@ CHG.ctDis = el => { UI.sel.ctDis = el.value; rerender(); };
 ENT.talentos = {
   coll: 'talentos', title: 'Banco de talentos', singular: 'candidato', plural: 'candidatos', newLabel: 'Cadastrar candidato',
   desc: 'Candidatos classificados em processos seletivos que ainda não foram chamados. Consulte quando abrir uma vaga ou um afastamento.',
-  fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'formacaoId', l: 'Formação', t: 'select', o: () => DADOS.formacoes.map(f => [f.id, f.nome]), req: 1 }, { k: 'telefone', l: 'Telefone', t: 'tel', req: 1 }, { k: 'email', l: 'E-mail', t: 'email' }, { k: 'processo', l: 'Processo seletivo', req: 1, wide: 1, t: 'select', outro: 1, o: () => optsFix(uniq(DADOS.talentos.map(t => t.processo)).sort()) }, { k: 'classificacao', l: 'Classificação', t: 'number', req: 1, attrs: 'min="1"' }, { k: 'situacao', l: 'Situação', t: 'select', o: optsFix(['Aguardando chamada', 'Chamado', 'Desistiu']), req: 1 }],
+  fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'formacaoId', l: 'Formação', t: 'select', o: () => DADOS.formacoes.map(f => [f.id, f.nome]), req: 1 }, { k: 'telefone', l: 'Telefone', t: 'tel', req: 1 }, { k: 'email', l: 'E-mail', t: 'email' }, { k: 'processo', l: 'Processo seletivo', req: 1, wide: 1, t: 'select', outro: 1, o: L('processosSeletivos') }, { k: 'classificacao', l: 'Classificação', t: 'number', req: 1, attrs: 'min="1"' }, { k: 'situacao', l: 'Situação', t: 'select', o: optsFix(['Aguardando chamada', 'Chamado', 'Desistiu']), req: 1 }],
   defaults: () => ({ processo: 'Seleção Simplificada SEE 2025, professor temporário', situacao: 'Aguardando chamada' }),
   filter: { k: 'formacaoId', l: 'Formação', o: () => DADOS.formacoes.map(f => [f.id, f.nome]) },
   sort: (a, b) => (a.situacao === 'Aguardando chamada' ? 0 : 1) - (b.situacao === 'Aguardando chamada' ? 0 : 1) || a.processo.localeCompare(b.processo) || a.classificacao - b.classificacao,

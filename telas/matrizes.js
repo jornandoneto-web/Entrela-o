@@ -5,7 +5,7 @@
 ENT.cursos = {
   coll: 'cursos', title: 'Cursos', singular: 'curso', plural: 'cursos', newLabel: 'Cadastrar curso',
   desc: 'Cursos que as escolas podem ofertar. A matriz de cada curso é montada em Gestão de matrizes.',
-  fields: [{ k: 'nome', l: 'Nome do curso', req: 1, wide: 1 }, { k: 'etapa', l: 'Etapa', t: 'select', o: optsFix(['Educação Infantil', 'Ensino Fundamental', 'Ensino Médio', 'Educação Profissional', 'Educação de Jovens e Adultos']), req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea' }],
+  fields: [{ k: 'nome', l: 'Nome do curso', req: 1, wide: 1 }, { k: 'etapa', l: 'Etapa', t: 'select', o: L('etapas'), req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea' }],
   sort: (a, b) => a.nome.localeCompare(b.nome),
   cols: [['Curso', r => esc(r.nome)], ['Etapa', r => esc(r.etapa)], ['Séries na matriz', r => (DADOS.matrizes || []).find(m => m.cursoId === r.id)?.series.length || 0, 'n'], ['Escolas que ofertam', r => DADOS.escolas.filter(e => (e.cursos || []).includes(r.id)).length, 'n']],
   rowActs: r => `<button class="btn ghost sm" data-act="mx-abrir" data-id="${r.id}" aria-label="Abrir a matriz de ${esc(r.nome)}">Matriz</button>`,
@@ -29,13 +29,13 @@ async function telaMatrizes() {
   if (!cursos.some(c => c.id === UI.sel.mxCurso)) UI.sel.mxCurso = cursos[0].id;
   const m = await matrizService.buscarPorCurso(UI.sel.mxCurso); UI.cache.matriz = m;
   const total = m.series.reduce((n, s) => n + matrizService.totalSerie(s), 0);
-  const nomes = uniq([...DADOS.disciplinas.map(d => d.nome), 'Educação Física', 'Arte', 'Filosofia', 'Sociologia', 'Química', 'Projeto de Vida', 'Eletiva', 'Estudo Orientado']).sort();
+  const comps = DADOS.disciplinas.map(d => d.nome).sort((a, b) => a.localeCompare(b));
   return pageHead('Gestão de matrizes', 'Escolha o curso, cadastre as séries e, em cada série, os componentes curriculares com a carga horária anual em horas.') +
     `<div class="toolbar">${selectCtl('mx-curso', 'Curso', cursos.map(c => [c.id, c.nome]), UI.sel.mxCurso, 'mxCurso')}<p class="muted" style="padding-bottom:.75rem">${m.series.length} série${m.series.length === 1 ? '' : 's'}, ${total} h no curso todo.</p></div>
         <form class="card" data-form="mx-serie" novalidate aria-labelledby="ns-h"><h2 id="ns-h">Adicionar série</h2><div class="row" style="align-items:flex-end"><div class="field" style="flex:1 1 14rem"><label for="mx-nova-serie">Nome da série</label><input id="mx-nova-serie" placeholder="${m.series.length + 1}ª série"></div><button class="btn primary" type="submit">${icon('plus')}Adicionar série</button></div></form>
     ${m.series.map((s, si) => `<section class="card" aria-labelledby="se-${s.id}"><div class="card-h"><h2 id="se-${s.id}">${esc(s.nome)}</h2><div class="row"><span class="muted">Total da série: <b>${matrizService.totalSerie(s)} h</b></span><button class="icon-btn" data-act="mx-rem-serie" data-s="${si}" aria-label="Excluir ${esc(s.nome)}">${icon('trash')}</button></div></div>
       ${s.componentes.length ? `<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Componente curricular</th><th scope="col" class="n">Carga horária (h)</th><th scope="col" class="n"><span class="sr-only">Ação</span></th></tr></thead><tbody>${s.componentes.map((c, ci) => `<tr><th scope="row">${esc(c.nome)}</th><td class="n" data-label="Carga horária"><label class="sr-only" for="ch-${c.id}">Carga horária de ${esc(c.nome)} na ${esc(s.nome)}</label><input id="ch-${c.id}" class="input" type="number" min="1" step="1" value="${c.cargaHoraria}" data-change="mxCH" data-s="${si}" data-c="${ci}"></td><td class="n"><div class="acts"><button class="icon-btn" data-act="mx-rem-comp" data-s="${si}" data-c="${ci}" aria-label="Remover ${esc(c.nome)} da ${esc(s.nome)}">${icon('trash')}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhum componente nesta série ainda.</p>'}
-      <form class="row" data-form="mx-comp" data-s="${si}" novalidate style="align-items:flex-end" aria-label="Adicionar componente na ${esc(s.nome)}"><div style="flex:2 1 14rem">${listaOutroHTML(`mxc-n-${si}`, 'Componente curricular', nomes.filter(n => !s.componentes.some(c => norm(c.nome) === norm(n))), '')}</div><div class="field" style="flex:1 1 8rem"><label for="mxc-h-${si}">Carga horária (h)</label><input id="mxc-h-${si}" type="number" min="1" step="1" placeholder="80"></div><button class="btn outline" type="submit">${icon('plus')}Adicionar</button></form>
+      <form class="row" data-form="mx-comp" data-s="${si}" novalidate style="align-items:flex-end" aria-label="Adicionar componente na ${esc(s.nome)}"><div style="flex:2 1 14rem">${listaOutroHTML(`mxc-n-${si}`, 'Componente curricular', comps.filter(n => !s.componentes.some(c => norm(c.nome) === norm(n))), '')}</div><div class="field" style="flex:1 1 8rem"><label for="mxc-h-${si}">Carga horária (h)</label><input id="mxc-h-${si}" type="number" min="1" step="1" placeholder="80"></div><button class="btn outline" type="submit">${icon('plus')}Adicionar</button></form>
     </section>`).join('') || '<p class="empty">Este curso ainda não tem séries. Adicione a primeira acima.</p>'}`;
 }
 async function salvarMatriz(mudar, msg) {
@@ -53,4 +53,4 @@ FORMS['mx-comp'] = f => {
 ACT['mx-rem-comp'] = el => salvarMatriz(m => m.series[el.dataset.s].componentes.splice(el.dataset.c, 1), 'Componente removido.');
 ACT['mx-rem-serie'] = el => { const s = UI.cache.matriz.series[el.dataset.s]; confirmBox('Excluir série', `Excluir <b>${esc(s.nome)}</b> e os ${s.componentes.length} componentes dela?`, () => salvarMatriz(m => m.series.splice(el.dataset.s, 1), 'Série excluída.')); };
 
-PAGES.ded = { inicio: telaDedInicio, cursos: () => crudPage('cursos'), matrizes: telaMatrizes };
+PAGES.ded = { inicio: telaDedInicio, cursos: () => crudPage('cursos'), matrizes: telaMatrizes, disciplinas: () => crudPage('disciplinas') };

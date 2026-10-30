@@ -32,7 +32,7 @@ const agoraHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad
 
 // Rotas: a lista de paradas vira dados estruturados
 Object.assign(ENT.rotas, {
-  fields: semEscola(() => [{ k: 'nome', l: 'Nome da rota', req: 1, wide: 1 }, { k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(TURNOS), req: 1 }, { k: 'motorista', l: 'Motorista', req: 1, t: 'select', outro: 1, o: () => optsFix(equipeDe('motorista').map(([, p]) => p.nome)) }, { k: 'veiculo', l: 'Veículo e placa' }, { k: 'capacidade', l: 'Lugares', t: 'number', attrs: 'min="1"' }, { k: 'pontos', l: 'Paradas, na ordem da ida', t: 'textarea', req: 1, help: 'Uma parada por linha: horário, nome e, se souber, as coordenadas. Ex.: 06:20 Praça da Várzea | -8.0466, -34.9573. A última linha é a chegada à escola.' }]),
+  fields: semEscola(() => [{ k: 'nome', l: 'Nome da rota', req: 1, wide: 1 }, { k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: L('turnos'), req: 1 }, { k: 'motorista', l: 'Motorista', req: 1, t: 'select', outro: 1, o: () => optsFix(equipeDe('motorista').map(([, p]) => p.nome)) }, { k: 'veiculo', l: 'Veículo e placa' }, { k: 'capacidade', l: 'Lugares', t: 'number', attrs: 'min="1"' }, { k: 'pontos', l: 'Paradas, na ordem da ida', t: 'textarea', req: 1, help: 'Uma parada por linha: horário, nome e, se souber, as coordenadas. Ex.: 06:20 Praça da Várzea | -8.0466, -34.9573. A última linha é a chegada à escola.' }]),
   after: r => { r.paradas = parseParadas(r.pontos); }
 });
 
@@ -106,7 +106,7 @@ function transporteAluno(a, porResp) {
       <form class="card" data-form="aviso" data-aluno="${a.id}" novalidate aria-labelledby="av-${a.id}"><h2 id="av-${a.id}">Avisar que não vai usar</h2><p class="muted">O motorista deixa de esperar no ponto nesse dia.</p>
         <div class="form-grid"><div class="field"><label for="av-data-${a.id}">Dia <span class="req" aria-hidden="true">*</span></label><input id="av-data-${a.id}" type="date" min="${TODAY_ISO}" value="${TODAY_ISO}" required></div>
         <fieldset class="field"><legend>Trecho</legend><div class="seg">${['Ida', 'Volta', 'Ida e volta'].map((v, i) => `<label><input type="radio" name="av-sent-${a.id}" value="${v}" ${i === 1 ? 'checked' : ''}>${v}</label>`).join('')}</div></fieldset>
-        ${listaOutroHTML(`av-mot-${a.id}`, 'Motivo (opcional)', ['Consulta médica', 'Doença', 'Vai de carona', 'Viagem da família', 'Atividade fora da escola'], '', { wide: true, vazio: 'Não informar' })}</div>
+        ${listaOutroHTML(`av-mot-${a.id}`, 'Motivo (opcional)', nomes('motivosAusencia'), '', { wide: true, vazio: 'Não informar' })}</div>
         <div class="row"><button class="btn primary" type="submit">${icon('send')}Enviar aviso</button></div>
         ${avisos.length ? `<h3 class="lbl" style="margin-top:.5rem">Avisos enviados</h3><ul class="list">${avisos.map(x => `<li><span class="grow"><span class="t">${esc(fmtLong(x.data))}</span><br><span class="m">${esc(x.sentido)}${x.motivo ? ', ' + esc(x.motivo) : ''}</span></span><button type="button" class="btn ghost sm" data-act="cancelar-aviso" data-id="${x.id}" aria-label="Cancelar aviso de ${esc(fmtD(x.data))}">Cancelar</button></li>`).join('')}</ul>` : ''}
       </form>

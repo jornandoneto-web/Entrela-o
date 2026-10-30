@@ -54,7 +54,7 @@ function migrarV9(db) {
     const ch = Math.max(Number(p0.cargaHoraria) || 25, aulas.length);
     const v = Modelos.vinculo({ cargo: 'Professor', formacoes: p0.formacoes || [], disciplinas: lecionadas.length ? lecionadas : hab, ingresso: p0.ingresso || 'Concurso', orgaoOrigem: p0.orgaoOrigem, dataInicio: p0.contratoInicio || '2015-02-02', dataFim: p0.ingresso === 'Contrato' ? p0.contratoFim : '', cargaHoraria: ch, anexoContrato: p0.ingresso === 'Contrato' ? `contrato-${slug(p0.nome)}.pdf` : '' });
     const p = Modelos.professor({ id: p0.id, pessoa: { nome: p0.nome, email: p0.email, telefones: [p0.telefone], cpf: demo ? gerarCPF(101202303 + n * 1117) : '', nascimento: demo ? `19${78 + n}-0${1 + (n % 9)}-1${n % 9}` : '', naturalidade: demo ? { cidade: 'Aracaju', uf: 'SE' } : {} }, vinculos: [v] });
-    p.disciplinasLegado = p0.disciplinasLegado || []; p.instituicao = p0.instituicao || '';
+    p.disciplinasLegado = p0.disciplinasLegado || []; p.instituicao = p0.instituicao || ''; p.formacoes = p0.formacoes || [];
     // lotações: uma por escola onde dá aula; sem aulas, a escola de lotação antiga com a carga toda
     const porEscola = {}; aulas.forEach(a => { const e = db.turmas.find(t => t.id === a.turmaId)?.escolaId; if (e) porEscola[e] = (porEscola[e] || 0) + 1; });
     if (!Object.keys(porEscola).length && p0.escolaId) porEscola[p0.escolaId] = ch;
@@ -71,7 +71,7 @@ function migrarV9(db) {
     P('p7').vinculos.push(v2); db.lotacoes.push(Modelos.lotacao({ professorId: 'p7', vinculoId: v2.id, escolaId: 'e2', cargaHoraria: 15, dataInicio: '2026-03-02' }));
     // Professor de Arte em três escolas: 10 h + 10 h + 5 h = 25 h
     const va = Modelos.vinculo({ cargo: 'Professor', formacoes: ['f11'], disciplinas: ['d9'], ingresso: 'Concurso', dataInicio: '2019-02-04', cargaHoraria: 25 });
-    db.professores.push(Modelos.professor({ id: 'p9', pessoa: { nome: 'Juliana Freitas', cpf: gerarCPF(305406507), nascimento: '1988-09-21', sexo: 'Feminino', estadoCivil: 'Casado(a)', telefones: ['(79) 99812-3344'], email: 'juliana.freitas@entrelaco.edu.br', naturalidade: { cidade: 'Itabaiana', uf: 'SE' } }, vinculos: [va] }));
+    db.professores.push(Modelos.professor({ id: 'p9', pessoa: { nome: 'Juliana Freitas', cpf: gerarCPF(305406507), nascimento: '1988-09-21', sexo: 'Feminino', estadoCivil: 'Casado(a)', telefones: ['(79) 99812-3344'], email: 'juliana.freitas@entrelaco.edu.br', naturalidade: { cidade: 'Itabaiana', uf: 'SE' } }, vinculos: [va], formacoes: ['f11'], instituicao: 'UFS, 2011' }));
     [['e1', 10], ['e2', 10], ['e3', 5]].forEach(([escolaId, h]) => db.lotacoes.push(Modelos.lotacao({ professorId: 'p9', vinculoId: va.id, escolaId, cargaHoraria: h, dataInicio: '2026-02-02' })));
     // Histórico: Carlos já passou pela Unidade Atalaia
     db.lotacoes.push(Modelos.lotacao({ professorId: 'p2', vinculoId: P('p2').vinculos[0].id, escolaId: 'e2', cargaHoraria: 10, dataInicio: '2024-02-05', dataFim: '2025-12-19' }));

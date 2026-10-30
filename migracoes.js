@@ -42,6 +42,7 @@ function migrar(db) {
   if (db.v < 9 && typeof migrarV9 === 'function') migrarV9(db);
   // Versão 10: sem mudança de formato; as telas passam a ler e gravar só pelos serviços (dadosService)
   if (db.v < 10) { db.migracoes = db.migracoes || []; db.migracoes.push({ versao: 10, data: new Date().toISOString(), nota: 'Telas leem e gravam só pelos serviços (dadosService).' }); db.v = 10; }
+  if (db.v < 11) migrarV11(db);
 }
 function migrarV7(db) {
   const rel = [];
@@ -134,7 +135,7 @@ function migrarV8(db) {
   db.v = 8;
 }
 
-if (!ARMAZEM.v || ARMAZEM.v < 10) { migrar(ARMAZEM); persistirArmazem(); }
+if (!ARMAZEM.v || ARMAZEM.v < 11) { migrar(ARMAZEM); persistirArmazem(); }
 
 // ---------- Início ----------
 dadosService.carregar().then(() => { applyA11y(); render(); });

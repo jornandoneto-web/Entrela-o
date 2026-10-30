@@ -30,7 +30,12 @@ const uniq = a => [...new Set(a)];
 const DAYS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 const SLOTS = { 'Manhã': ['07:30', '08:20', '09:10', '10:20', '11:10'], 'Tarde': ['13:00', '13:50', '14:40', '15:50', '16:40'], 'Noite': ['19:00', '19:45', '20:30', '21:15', '22:00'] };
 const addMin = (h, m) => { const [a, b] = h.split(':').map(Number); const t = a * 60 + b + m; return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`; };
-const slotRange = (turno, i) => { const s = (SLOTS[turno] || SLOTS['Manhã'])[i]; return `${s}–${addMin(s, turno === 'Noite' ? 45 : 50)}`; };
+// Faixas de horário vêm do cadastro (DADOS.faixas). Integral usa as faixas da manhã até ter as próprias.
+const faixasDe = turno => { const f = t => (DADOS.faixas || []).filter(x => x.turno === t).sort((a, b) => a.ordem - b.ordem); return f(turno).length ? f(turno) : f('Manhã'); };
+const slotRange = (turno, i) => { const x = faixasDe(turno)[i]; return x ? `${x.inicio}–${x.fim}` : '—'; };
+// Opções de selects e caixas: vêm das listas gerenciáveis (Cadastros auxiliares)
+const nomes = tipo => (DADOS.listas || []).filter(x => x.tipo === tipo && x.ativo !== false).sort((a, b) => a.ordem - b.ordem).map(x => x.nome);
+const L = tipo => () => nomes(tipo).map(n => [n, n]);
 const greet = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 
 // ---------- Ícones (traço 1.75, estilo Lucide) ----------
@@ -260,7 +265,7 @@ const UI = { route: 'inicio', q: {}, f: {}, sel: {} };
 // Cada perfil tem uma lista de permissões. Para criar uma permissão nova: inclua em PERMISSOES,
 // marque nos perfis que devem tê-la (PERFIS_PADRAO) e use can('chave') na tela ou na entrada do menu (4º item do NAV).
 // A secretaria da rede pode ligar e desligar permissões em Configurações; o resultado fica em DADOS.perfis.
-const ROLE_LABEL = { secretario: 'Secretário', ded: 'DED', regional: 'Diretoria Regional', gestao: 'Gestão escolar', diretor: 'Diretor', professor: 'Professor', aluno: 'Aluno', responsavel: 'Responsável', rh: 'RH', dae: 'DAE', motorista: 'Motorista' };
+const ROLE_LABEL = { calendario: 'Calendário escolar', secretario: 'Secretário', ded: 'DED', regional: 'Diretoria Regional', gestao: 'Gestão escolar', diretor: 'Diretor', professor: 'Professor', aluno: 'Aluno', responsavel: 'Responsável', rh: 'RH', dae: 'DAE', motorista: 'Motorista' };
 const PERMISSOES = [
   ['calendario.editar', 'Editar o calendário escolar'],
   ['comunicados.publicar', 'Publicar comunicados'],
@@ -276,11 +281,13 @@ const PERMISSOES = [
   ['escolas.editar', 'Cadastrar e editar escolas'],
   ['infraestrutura.editar', 'Preencher a infraestrutura da escola'],
   ['cursos.gerir', 'Cadastrar cursos e matrizes curriculares'],
-  ['lotacoes.gerir', 'Gerir lotações de professores']
+  ['lotacoes.gerir', 'Gerir lotações de professores'],
+  ['vagas.editar', 'Cadastrar vagas por série e turma']
 ];
 const PERFIS_PADRAO = {
-  gestao: ['comunicados.publicar', 'relatorios.ver', 'boletins.ver', 'ocorrencias.ver', 'merenda.estoque', 'escolas.editar'],
-  diretor: ['calendario.editar', 'comunicados.publicar', 'relatorios.ver', 'infraestrutura.editar'],
+  gestao: ['comunicados.publicar', 'relatorios.ver', 'boletins.ver', 'ocorrencias.ver', 'merenda.estoque', 'escolas.editar', 'vagas.editar'],
+  diretor: ['comunicados.publicar', 'relatorios.ver', 'infraestrutura.editar', 'vagas.editar'],
+  calendario: ['calendario.editar', 'comunicados.publicar'], // TODO: confirmar a sigla do departamento citado na mentoria
   rh: ['professores.editar', 'rh.painel', 'talentos.gerir', 'lotacoes.gerir'],
   ded: ['cursos.gerir'],
   secretario: ['relatorios.ver'],
@@ -300,6 +307,7 @@ const EQUIPE = {
   'ded1': { role: 'ded', nome: 'Luciana Barreto', cargo: 'Departamento de Educação (DED)', escolaId: '' },
   'dr-dea': { role: 'regional', nome: 'Fernanda Lima', cargo: 'Diretoria de Educação de Aracaju (DEA)', drId: 'dea' },
   'dr-3': { role: 'regional', nome: 'Paulo Henrique Santos', cargo: 'Diretoria Regional de Educação 3', drId: 'dre3' },
+  'cal1': { role: 'calendario', nome: 'Marta Oliveira', cargo: 'Departamento do Calendário Escolar (sigla a confirmar)', escolaId: '' },
   'rh1': { role: 'rh', nome: 'Cláudio Nery', cargo: 'Recursos Humanos da Seduc', escolaId: '' },
   'dae1': { role: 'dae', nome: 'Joana Prado', cargo: 'Diretoria de Alimentação Escolar (DAE)', escolaId: '' },
   'm-ro1': { role: 'motorista', nome: 'Severino Alves', cargo: 'Motorista, Rota 1', rotaId: 'ro1' },
@@ -316,13 +324,14 @@ const habilitadas = p => p ? (p.formacoes?.length ? uniq(p.formacoes.flatMap(f =
 
 const TABS = {
   gestao: [['inicio', 'Início', 'home'], ['vagas', 'Vagas', 'door'], ['alunos', 'Alunos', 'users'], ['relatorios', 'Relatórios', 'chart']],
-  professor: [['inicio', 'Início', 'home'], ['chamada', 'Chamada', 'check2'], ['notas', 'Notas', 'pencil'], ['atividades', 'Atividades', 'clip']],
+  professor: [['inicio', 'Início', 'home'], ['chamada', 'Diário', 'check2'], ['notas', 'Notas', 'pencil'], ['atividades', 'Atividades', 'clip']],
   aluno: [['inicio', 'Início', 'home'], ['boletim', 'Boletim', 'pencil'], ['atividades', 'Atividades', 'clip'], ['horario', 'Horário', 'clock']],
   responsavel: [['inicio', 'Início', 'home'], ['vagas', 'Vagas', 'door'], ['pedidos', 'Pedidos', 'file'], ['boletim', 'Boletim', 'pencil']],
   diretor: [['inicio', 'Início', 'home'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Avisos', 'bell'], ['relatorios', 'Relatórios', 'chart']],
   rh: [['inicio', 'Necessidade', 'chart'], ['professores', 'Professores', 'teacher'], ['contratos', 'Contratos', 'calendar'], ['talentos', 'Talentos', 'users']],
   dae: [['inicio', 'Estoque', 'utensils'], ['entradas', 'Entradas', 'inbox'], ['historico', 'Consumo', 'chart']],
   motorista: [['inicio', 'Embarque', 'bus'], ['rota', 'Rota', 'pin']],
+  calendario: [['inicio', 'Calendário', 'calendar'], ['comunicados', 'Avisos', 'bell'], ['cadastros', 'Listas', 'clip']],
   ded: [['inicio', 'Início', 'home'], ['cursos', 'Cursos', 'book'], ['matrizes', 'Matrizes', 'layers']],
   secretario: [['inicio', 'Painel', 'home'], ['escolas', 'Escolas', 'building'], ['relatorios', 'Relatórios', 'chart']],
   regional: [['inicio', 'Escolas', 'building'], ['infraestrutura', 'Infraestrutura', 'layers']]
@@ -335,14 +344,16 @@ const NAV = {
     ['§', 'Escola'], ['escolas', 'Escolas', 'building'], ['turmas', 'Turmas', 'layers'], ['alunos', 'Alunos', 'users'], ['professores', 'Professores', 'teacher'], ['disciplinas', 'Disciplinas', 'book'], ['horarios', 'Grade horária', 'clock'],
     ['§', 'Pedagógico'], ['boletins', 'Notas e boletins', 'pencil'], ['frequencia', 'Frequência', 'check2'], ['aee', 'Educação especial (AEE)', 'access'], ['ocorrencias', 'Ocorrências', 'alert'],
     ['§', 'Programas e apoio'], ['buscaativa', 'Busca ativa', 'radar'], ['merenda', 'Merenda escolar', 'utensils'], ['transporte', 'Transporte escolar', 'bus'],
-    ['§', 'Comunicação'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'], ['config', 'Configurações', 'gear']],
-  professor: [['inicio', 'Início', 'home'], ['turmas', 'Minhas turmas', 'layers'], ['notas', 'Lançar notas', 'pencil'], ['chamada', 'Chamada e diário', 'check2'], ['atividades', 'Atividades', 'clip'], ['ocorrencias', 'Ocorrências', 'alert'], ['horario', 'Meu horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell']],
+    ['§', 'Comunicação'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'],
+    ['§', 'Cadastros auxiliares'], ['cadastros', 'Listas do sistema', 'clip'], ['faixas', 'Faixas de horário', 'clock'], ['config', 'Configurações', 'gear']],
+  professor: [['inicio', 'Início', 'home'], ['turmas', 'Minhas turmas', 'layers'], ['notas', 'Lançar notas', 'pencil'], ['chamada', 'Diário de classe', 'check2'], ['atividades', 'Atividades', 'clip'], ['ocorrencias', 'Ocorrências', 'alert'], ['horario', 'Meu horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell']],
   aluno: [['inicio', 'Início', 'home'], ['boletim', 'Boletim', 'pencil'], ['atividades', 'Atividades', 'clip'], ['horario', 'Horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['merenda', 'Merenda', 'utensils'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'], ['perfil', 'Meu perfil', 'user']],
-  diretor: [['inicio', 'Início', 'home'], ['infraestrutura', 'Infraestrutura da escola', 'building', 'infraestrutura.editar'], ['calendario', 'Calendário escolar', 'calendar', 'calendario.editar'], ['comunicados', 'Comunicados', 'bell', 'comunicados.publicar'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver'], ['boletins', 'Notas e boletins', 'pencil', 'boletins.ver'], ['ocorrencias', 'Ocorrências', 'alert', 'ocorrencias.ver']],
-  rh: [['inicio', 'Necessidade de professores', 'chart'], ['professores', 'Professores', 'teacher'], ['formacoes', 'Formações', 'cap'], ['lotacoes', 'Gerir lotações', 'swap', 'lotacoes.gerir'], ['contratos', 'Contratos a vencer', 'calendar', 'rh.painel'], ['talentos', 'Banco de talentos', 'users', 'talentos.gerir']],
-  dae: [['inicio', 'Estoque da rede', 'utensils'], ['entradas', 'Entradas da Seduc', 'inbox', 'merenda.estoque'], ['historico', 'Histórico de consumo', 'chart'], ['cardapio', 'Cardápio', 'book']],
+  diretor: [['inicio', 'Início', 'home'], ['infraestrutura', 'Infraestrutura da escola', 'building', 'infraestrutura.editar'], ['vagas', 'Vagas da escola', 'door', 'vagas.editar'], ['calendario', 'Calendário escolar', 'calendar'], ['comunicados', 'Comunicados', 'bell', 'comunicados.publicar'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver'], ['boletins', 'Notas e boletins', 'pencil', 'boletins.ver'], ['ocorrencias', 'Ocorrências', 'alert', 'ocorrencias.ver']],
+  rh: [['inicio', 'Necessidade de professores', 'chart'], ['professores', 'Professores', 'teacher'], ['formacoes', 'Formações', 'cap'], ['lotacoes', 'Gerir lotações', 'swap', 'lotacoes.gerir'], ['contratos', 'Contratos a vencer', 'calendar', 'rh.painel'], ['talentos', 'Banco de talentos', 'users', 'talentos.gerir'], ['cadastros', 'Cadastros auxiliares', 'clip']],
+  dae: [['inicio', 'Estoque da rede', 'utensils'], ['alimentos', 'Alimentos', 'clip'], ['entradas', 'Entradas da Seduc', 'inbox', 'merenda.estoque'], ['historico', 'Histórico de consumo', 'chart'], ['cardapio', 'Cardápio', 'book'], ['cadastros', 'Cadastros auxiliares', 'clip']],
   motorista: [['inicio', 'Embarque', 'bus'], ['rota', 'Minha rota', 'pin']],
-  ded: [['inicio', 'Início', 'home'], ['cursos', 'Cursos', 'book', 'cursos.gerir'], ['matrizes', 'Gestão de matrizes', 'layers', 'cursos.gerir']],
+  calendario: [['inicio', 'Calendário escolar', 'calendar'], ['comunicados', 'Comunicados', 'bell'], ['cadastros', 'Cadastros auxiliares', 'clip']],
+  ded: [['inicio', 'Início', 'home'], ['cursos', 'Cursos e modalidades', 'book', 'cursos.gerir'], ['matrizes', 'Gestão de matrizes', 'layers', 'cursos.gerir'], ['disciplinas', 'Componentes curriculares', 'pencil', 'cursos.gerir'], ['cadastros', 'Cadastros auxiliares', 'clip']],
   secretario: [['inicio', 'Painel da rede', 'home'], ['escolas', 'Escolas', 'building'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver']],
   regional: [['inicio', 'Escolas da regional', 'building'], ['infraestrutura', 'Infraestrutura das escolas', 'layers']],
   responsavel: [['inicio', 'Início', 'home'], ['vagas', 'Vagas na rede', 'door'], ['matricula', 'Matrícula online', 'inbox'], ['transferencia', 'Pedir transferência', 'swap'], ['pedidos', 'Meus pedidos', 'file'], ['boletim', 'Boletim dos filhos', 'pencil'], ['merenda', 'Merenda', 'utensils'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell']]
@@ -576,7 +587,8 @@ function fieldHTML(f, val) {
   const help = f.help ? `<p class="help" id="${id}-h">${esc(f.help)}</p>` : '';
   const desc = f.help ? `aria-describedby="${id}-h"` : '';
   const label = `${esc(f.l)}${f.req ? ' <span class="req" aria-hidden="true">*</span>' : ''}`;
-  const opts = typeof f.o === 'function' ? f.o() : (f.o || []);
+  const opts = (typeof f.o === 'function' ? f.o() : (f.o || [])).slice();
+  if (f.t === 'select' && !f.outro && val != null && val !== '' && !opts.some(o => String(o[0]) === String(val))) opts.push([val, `${val} (inativo)`]);
   if (f.t === 'checks') {
     const v = val || [];
     return `<fieldset class="field wide"><legend>${label}</legend><div class="checks">${opts.map(([ov, ol]) => `<label class="check"><input type="checkbox" name="${f.k}" value="${esc(ov)}" ${v.includes(ov) ? 'checked' : ''}>${esc(ol)}</label>`).join('')}</div>${help}</fieldset>`;
@@ -759,13 +771,13 @@ function render() {
 }
 
 // ---------- Login ----------
-const EQUIPE_ROLES = ['gestao', 'diretor', 'rh', 'dae', 'motorista', 'ded', 'secretario', 'regional'];
+const EQUIPE_ROLES = ['gestao', 'diretor', 'rh', 'dae', 'motorista', 'ded', 'secretario', 'regional', 'calendario'];
 const LOGIN_PERFIS = {
   gestao: ['Secretaria escolar', 'Matrículas, turmas, vagas e relatórios', 'building'], diretor: ['Diretor', 'Calendário, comunicados e relatórios', 'calendar'], professor: ['Professor', 'Chamada, notas e atividades', 'teacher'],
   aluno: ['Aluno', 'Boletim, entregas, horário e transporte', 'cap'], responsavel: ['Responsável', 'Vagas, matrícula online e boletim dos filhos', 'users'],
-  rh: ['RH', 'Professores, vínculos e lotações', 'teacher'], secretario: ['Secretário', 'Painel da rede e relatórios', 'home'], ded: ['DED', 'Cursos e matrizes curriculares', 'book'], regional: ['Diretoria Regional', 'Escolas e infraestrutura da regional', 'pin'], dae: ['DAE', 'Estoque e consumo da merenda', 'utensils'], motorista: ['Motorista', 'Lista de embarque do ônibus', 'bus']
+  rh: ['RH', 'Professores, vínculos e lotações', 'teacher'], calendario: ['Calendário escolar', 'Eventos, feriados e prazos da rede', 'calendar'], secretario: ['Secretário', 'Painel da rede e relatórios', 'home'], ded: ['DED', 'Cursos e matrizes curriculares', 'book'], regional: ['Diretoria Regional', 'Escolas e infraestrutura da regional', 'pin'], dae: ['DAE', 'Estoque e consumo da merenda', 'utensils'], motorista: ['Motorista', 'Lista de embarque do ônibus', 'bus']
 };
-const LOGIN_GRUPOS = [['Escola', ['gestao', 'diretor', 'professor']], ['Estudantes e famílias', ['aluno', 'responsavel']], ['Secretaria de Educação', ['secretario', 'ded', 'rh', 'dae', 'regional']], ['Transporte escolar', ['motorista']]];
+const LOGIN_GRUPOS = [['Escola', ['gestao', 'diretor', 'professor']], ['Estudantes e famílias', ['aluno', 'responsavel']], ['Secretaria de Educação', ['secretario', 'ded', 'rh', 'dae', 'calendario', 'regional']], ['Transporte escolar', ['motorista']]];
 function renderLogin() {
   document.title = 'Entrar, Portal Entrelaço';
   const role = UI.loginRole || 'gestao';

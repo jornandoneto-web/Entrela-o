@@ -16,7 +16,7 @@ Na tela de entrada você escolhe o perfil e a pessoa. No protótipo não há sen
 |---|---|
 | Escola | Secretaria escolar, Diretor, Professor |
 | Estudantes e famílias | Aluno, Responsável |
-| Secretaria de Educação | Secretário, DED, RH, DAE, Diretoria Regional |
+| Secretaria de Educação | Secretário, DED, RH, DAE, Calendário escolar, Diretoria Regional |
 | Transporte | Motorista |
 
 ## Organização do código
@@ -30,7 +30,7 @@ Na tela de entrada você escolhe o perfil e a pessoa. No protótipo não há sen
 | `telas/` | Escolas, Infraestrutura, Matrizes, Professor, Lotações e telas dos perfis da Secretaria |
 | `app.js` | Núcleo: perfis e permissões, acessibilidade, navegação, formulários e cadastros genéricos |
 | `pages.js`, `rede.js`, `professores.js`, `estoque.js`, `transporte.js` | Telas e módulos das versões anteriores |
-| `migracoes.js`, `migracoes-v9.js` | Migrações dos dados salvos de uma versão para a outra |
+| `migracoes.js`, `migracoes-v9.js`, `migracoes-v11.js` | Migrações dos dados salvos de uma versão para a outra |
 
 ### Como os dados circulam
 
@@ -55,11 +55,19 @@ O portal oferece:
 ## Regras de negócio confirmadas
 
 - **Diretor da escola:** pode ser qualquer pessoa cadastrada no sistema, não precisa ter vínculo de servidor.
+- **Grade e matriz:** aulas por semana = carga anual da matriz ÷ 40 semanas letivas (valor em configuração, a confirmar).
 - **Unidades de carga horária:** a carga do vínculo do professor é semanal (padrão 25 h, integral 40 h). A carga dos componentes na matriz curricular é anual (ex.: Matemática, 80 h).
 - **Lotações:** a soma das horas das lotações ativas de um vínculo não pode passar a carga horária desse vínculo. A data de fim da lotação é a data de saída: nesse dia as horas já ficam livres.
 
+## Listas gerenciáveis
+
+Toda opção de select ou caixa de marcar vem de um cadastro. As listas ficam em `mock/listas.js` como valores iniciais e são editadas em Cadastros auxiliares, no menu do perfil responsável.
+
+Ficam fixos só os valores que são regra interna do sistema: dias da semana, UFs, Sim/Não, etapas de fluxo (situação de pedidos e candidatos), formas de publicar vagas e perfis de acesso.
+
 ## Pendências conhecidas
 
-- A lista de municípios das DREs 1 a 10 está em `mock/sergipe.js` e precisa ser confirmada com a SEDUC. Só a DEA (Aracaju) está confirmada.
+- A associação de DR1 a DR10 com os municípios está em `mock/sergipe.js` e precisa ser conferida com o painel da SEDUC. Só a DEA (Aracaju) está confirmada.
+- A sigla do departamento do calendário escolar precisa ser confirmada (nome provisório: Calendário escolar).
 - A definir: uma lotação pode durar além da data de fim do vínculo? Hoje o sistema só bloqueia a lotação que começa depois que o vínculo termina.
 - Os dados ficam só no navegador. Para que sejam compartilhados entre usuários, é preciso um back-end.

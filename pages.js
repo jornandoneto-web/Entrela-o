@@ -2,8 +2,6 @@
 'use strict';
 
 // ---------- Opções compartilhadas ----------
-const SERIES = ['6º ano — Fundamental', '7º ano — Fundamental', '8º ano — Fundamental', '9º ano — Fundamental', '1º ano — Ensino médio', '2º ano — Ensino médio', '3º ano — Ensino médio'];
-const ACESSOS = ['Nenhuma', 'Baixa visão', 'Deficiência visual', 'Daltonismo', 'Surdez ou deficiência auditiva', 'Deficiência física', 'TEA', 'TDAH', 'Dislexia', 'Outra'];
 const PUBLICOS = () => [['Todos', 'Toda a comunidade'], ['Alunos', 'Alunos'], ['Professores', 'Professores'], ['Responsáveis', 'Responsáveis'], ...DADOS.turmas.map(t => ['turma:' + t.id, 'Turma ' + turmaLong(t.id)])];
 const publicoLabel = p => p && p.startsWith('turma:') ? 'Turma ' + turmaNome(p.slice(6)) : p === 'Todos' ? 'Toda a comunidade' : p;
 const turmasEsc = () => DADOS.turmas.filter(t => naEscola(t.escolaId));
@@ -32,7 +30,7 @@ Object.assign(ENT, {
   turmas: {
     coll: 'turmas', title: 'Turmas', singular: 'turma', plural: 'turmas', fem: true, newLabel: 'Criar turma',
     desc: 'Turmas do ano letivo, com série, turno e sala. A grade horária é montada por turma.',
-    fields: () => [{ k: 'nome', l: 'Nome da turma', req: 1, help: 'Ex.: 2º ano A' }, { k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'serie', l: 'Série', t: 'select', o: optsFix(SERIES), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(['Manhã', 'Tarde', 'Noite']), req: 1 }, { k: 'ano', l: 'Ano letivo', t: 'number', req: 1 }, { k: 'sala', l: 'Sala' }],
+    fields: () => [{ k: 'nome', l: 'Nome da turma', req: 1, help: 'Ex.: 2º ano A' }, { k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'serie', l: 'Série', t: 'select', o: L('series'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: L('turnos'), req: 1 }, { k: 'ano', l: 'Ano letivo', t: 'number', req: 1 }, { k: 'sala', l: 'Sala' }],
     defaults: () => ({ ano: DADOS.config.anoLetivo, turno: 'Manhã' }),
     rows: () => turmasEsc(),
     filter: { k: 'escolaId', l: 'Escola', o: optsOf('escolas'), scoped: true },
@@ -42,7 +40,7 @@ Object.assign(ENT, {
   alunos: {
     coll: 'alunos', title: 'Alunos e matrículas', singular: 'aluno', plural: 'alunos', newLabel: 'Matricular aluno',
     desc: 'Matrícula, transferência de turma e dados do responsável. Informe necessidades de acessibilidade para que os professores adaptem o material.',
-    fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'matricula', l: 'Nº de matrícula', req: 1 }, { k: 'nascimento', l: 'Data de nascimento', t: 'date' }, { k: 'turmaId', l: 'Turma', t: 'select', o: optTurmas, req: 1 }, { k: 'email', l: 'E-mail do aluno', t: 'email' }, { k: 'responsavel', l: 'Responsável', req: 1 }, { k: 'telResp', l: 'Telefone do responsável', t: 'tel' }, { k: 'acess', l: 'Necessidade de acessibilidade', t: 'select', o: optsFix(ACESSOS), help: 'Aparece para os professores da turma.' }],
+    fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'matricula', l: 'Nº de matrícula', req: 1 }, { k: 'nascimento', l: 'Data de nascimento', t: 'date' }, { k: 'turmaId', l: 'Turma', t: 'select', o: optTurmas, req: 1 }, { k: 'email', l: 'E-mail do aluno', t: 'email' }, { k: 'responsavel', l: 'Responsável', req: 1 }, { k: 'telResp', l: 'Telefone do responsável', t: 'tel' }, { k: 'acess', l: 'Necessidade de acessibilidade', t: 'select', o: L('necessidades'), help: 'Aparece para os professores da turma.' }],
     defaults: () => ({ matricula: '2026' + String(DADOS.alunos.length + 1).padStart(4, '0'), acess: 'Nenhuma' }),
     rows: () => alunosEsc(),
     filter: { k: 'turmaId', l: 'Turma', o: optTurmas },
@@ -62,12 +60,12 @@ Object.assign(ENT, {
   disciplinas: {
     coll: 'disciplinas', title: 'Disciplinas', singular: 'disciplina', plural: 'disciplinas', fem: true, newLabel: 'Criar disciplina',
     desc: 'Componentes curriculares por área do conhecimento (BNCC).',
-    fields: [{ k: 'nome', l: 'Nome', req: 1 }, { k: 'area', l: 'Área do conhecimento', t: 'select', o: optsFix(['Linguagens', 'Matemática', 'Ciências da Natureza', 'Ciências Humanas', 'Formação técnica', 'Itinerário formativo']), req: 1 }, { k: 'ch', l: 'Carga horária anual (h)', t: 'number' }],
+    fields: [{ k: 'nome', l: 'Nome', req: 1 }, { k: 'area', l: 'Área do conhecimento', t: 'select', o: L('areasConhecimento'), req: 1 }, { k: 'ch', l: 'Carga horária anual (h)', t: 'number' }],
     cols: [['Disciplina', r => esc(r.nome)], ['Área', r => esc(r.area)], ['Carga anual', r => (r.ch || '—') + ' h', 'n'], ['Professores', r => esc(DADOS.professores.filter(p => (p.disciplinas || []).includes(r.id)).map(p => p.nome).join(', ') || '—')]]
   },
   aulas: {
     coll: 'aulas', title: 'Grade horária', singular: 'aula', plural: 'aulas', fem: true, newLabel: 'Adicionar aula',
-    fields: () => [{ k: 'turmaId', l: 'Turma', t: 'select', o: optTurmas, req: 1 }, { k: 'disciplinaId', l: 'Disciplina', t: 'select', o: optsOf('disciplinas'), req: 1 }, { k: 'professorId', l: 'Professor', t: 'select', o: optsOf('professores'), req: 1 }, { k: 'dia', l: 'Dia da semana', t: 'select', o: DIAS, req: 1, num: 1 }, { k: 'slot', l: 'Horário', t: 'select', o: [0, 1, 2, 3, 4].map(i => [i, `${i + 1}ª aula (${slotRange(byId('turmas', UI.sel.hTurma)?.turno || 'Manhã', i)})`]), req: 1, num: 1 }],
+    fields: () => [{ k: 'turmaId', l: 'Turma', t: 'select', o: optTurmas, req: 1 }, { k: 'disciplinaId', l: 'Disciplina', t: 'select', o: optsOf('disciplinas'), req: 1 }, { k: 'professorId', l: 'Professor', t: 'select', o: optsOf('professores'), req: 1 }, { k: 'dia', l: 'Dia da semana', t: 'select', o: DIAS, req: 1, num: 1 }, { k: 'slot', l: 'Horário', t: 'select', o: faixasDe(byId('turmas', UI.sel.hTurma)?.turno || 'Manhã').map((_, i) => [i, `${i + 1}ª aula (${slotRange(byId('turmas', UI.sel.hTurma)?.turno || 'Manhã', i)})`]), req: 1, num: 1 }],
     name: r => `${discNome(r.disciplinaId)}, ${DAYS[r.dia]} ${slotRange(byId('turmas', r.turmaId)?.turno, r.slot)}`,
     check: (v, id) => {
       if (DADOS.aulas.some(a => a.id !== id && a.turmaId === v.turmaId && a.dia === v.dia && a.slot === v.slot)) return 'A turma já tem aula nesse horário. Escolha outro horário ou edite a aula existente.';
@@ -80,7 +78,7 @@ Object.assign(ENT, {
   eventos: {
     coll: 'eventos', title: 'Calendário escolar', singular: 'evento', plural: 'eventos', newLabel: 'Adicionar evento',
     desc: 'Feriados, avaliações, reuniões e prazos. Aparece para alunos e professores.',
-    fields: [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'tipo', l: 'Tipo', t: 'select', o: optsFix(['Avaliação', 'Reunião', 'Evento', 'Feriado', 'Recesso', 'Prazo']), req: 1 }, { k: 'escopo', l: 'Para quem', t: 'select', outro: 1, o: optsFix(['Todas as turmas', 'Ensino fundamental', 'Ensino médio', '1º ano', '2º ano', '3º ano', 'Professores', 'Responsáveis', 'Sem aulas']) }],
+    fields: [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'tipo', l: 'Tipo', t: 'select', o: L('tiposEvento'), req: 1 }, { k: 'escopo', l: 'Para quem', t: 'select', outro: 1, o: L('escoposEvento') }],
     sort: (a, b) => a.data.localeCompare(b.data),
     cols: [['Data', r => `<span class="num">${fmtD(r.data)}</span>${caption2(DAYS[dOf(r.data).getDay()])}`], ['Evento', r => esc(r.titulo)], ['Tipo', r => esc(r.tipo)], ['Para quem', r => esc(r.escopo || '—')], ['Quando', r => { const n = daysUntil(r.data); return n < 0 ? '<span class="muted">Já passou</span>' : n === 0 ? st('Hoje', 'info') : `Em ${n} dia${n > 1 ? 's' : ''}`; }]],
     name: r => r.titulo
@@ -88,7 +86,7 @@ Object.assign(ENT, {
   comunicados: {
     coll: 'comunicados', title: 'Comunicados', singular: 'comunicado', plural: 'comunicados', newLabel: 'Publicar comunicado',
     desc: 'Avisos para a comunidade, para um grupo ou para uma turma específica.',
-    fields: () => [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'publico', l: 'Público', t: 'select', o: PUBLICOS, req: 1 }, { k: 'autor', l: 'Assinado por', req: 1, t: 'select', outro: 1, o: optsFix(['Secretaria escolar', 'Coordenação pedagógica', 'Direção da escola', 'Secretaria de Educação', 'Diretoria Regional']) }, { k: 'texto', l: 'Mensagem', t: 'textarea', req: 1 }],
+    fields: () => [{ k: 'titulo', l: 'Título', req: 1, wide: 1 }, { k: 'publico', l: 'Público', t: 'select', o: PUBLICOS, req: 1 }, { k: 'autor', l: 'Assinado por', req: 1, t: 'select', outro: 1, o: L('assinaturas') }, { k: 'texto', l: 'Mensagem', t: 'textarea', req: 1 }],
     defaults: () => ({ autor: 'Secretaria escolar', data: TODAY_ISO, publico: 'Todos' }),
     sort: (a, b) => b.data.localeCompare(a.data),
     cols: [['Comunicado', r => `${esc(r.titulo)}${caption2(esc(r.texto.slice(0, 90)) + (r.texto.length > 90 ? '…' : ''))}`], ['Público', r => esc(publicoLabel(r.publico))], ['Autor', r => esc(r.autor)], ['Data', r => `<span class="num">${fmtD(r.data)}</span>`]],
@@ -102,14 +100,14 @@ Object.assign(ENT, {
   },
   solicitacao: {
     coll: 'solicitacoes', title: 'Solicitações', singular: 'solicitação', fem: true, newLabel: 'Nova solicitação',
-    fields: [{ k: 'tipo', l: 'O que você precisa?', t: 'select', o: optsFix(['Declaração de matrícula', 'Histórico escolar', 'Atestado médico', 'Revisão de nota', 'Segunda chamada de prova', 'Transferência', 'Carteirinha estudantil', 'Outro']), req: 1 }, { k: 'descricao', l: 'Descreva o pedido', t: 'textarea', req: 1, help: 'Inclua datas, disciplina ou para que o documento será usado.' }],
+    fields: [{ k: 'tipo', l: 'O que você precisa?', t: 'select', o: L('tiposSolicitacao'), req: 1 }, { k: 'descricao', l: 'Descreva o pedido', t: 'textarea', req: 1, help: 'Inclua datas, disciplina ou para que o documento será usado.' }],
     defaults: () => ({ alunoId: SESSION.userId, status: 'Em análise', data: TODAY_ISO, resposta: '' }),
     cols: [], name: r => r.tipo
   },
   ocorrencias: {
     coll: 'ocorrencias', title: 'Ocorrências', singular: 'ocorrência', plural: 'ocorrências', fem: true, newLabel: 'Registrar ocorrência',
     desc: 'Registros de comportamento, atrasos e elogios feitos pelos professores e pela coordenação.',
-    fields: () => [{ k: 'alunoId', l: 'Aluno', t: 'select', o: optAlunos, req: 1 }, { k: 'professorId', l: 'Registrado por', t: 'select', o: optsOf('professores') }, { k: 'tipo', l: 'Tipo', t: 'select', o: optsFix(['Elogio', 'Atraso', 'Comportamento', 'Material', 'Saúde', 'Outro']), req: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea', req: 1 }],
+    fields: () => [{ k: 'alunoId', l: 'Aluno', t: 'select', o: optAlunos, req: 1 }, { k: 'professorId', l: 'Registrado por', t: 'select', o: optsOf('professores') }, { k: 'tipo', l: 'Tipo', t: 'select', o: L('tiposOcorrencia'), req: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea', req: 1 }],
     defaults: () => ({ data: TODAY_ISO }),
     rows: () => DADOS.ocorrencias.filter(o => alunosEsc().some(a => a.id === o.alunoId)),
     sort: (a, b) => b.data.localeCompare(a.data),
@@ -132,7 +130,7 @@ Object.assign(ENT, {
   ocorrenciasProf: {
     coll: 'ocorrencias', title: 'Ocorrências', singular: 'ocorrência', plural: 'ocorrências', fem: true, newLabel: 'Registrar ocorrência',
     desc: 'Registre elogios, atrasos e situações de comportamento. A coordenação acompanha tudo.',
-    fields: () => [{ k: 'alunoId', l: 'Aluno', t: 'select', o: () => myAlunos().map(a => [a.id, `${a.nome} — ${turmaNome(a.turmaId)}`]).sort((a, b) => a[1].localeCompare(b[1])), req: 1 }, { k: 'tipo', l: 'Tipo', t: 'select', o: optsFix(['Elogio', 'Atraso', 'Comportamento', 'Material', 'Saúde', 'Outro']), req: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea', req: 1 }],
+    fields: () => [{ k: 'alunoId', l: 'Aluno', t: 'select', o: () => myAlunos().map(a => [a.id, `${a.nome} — ${turmaNome(a.turmaId)}`]).sort((a, b) => a[1].localeCompare(b[1])), req: 1 }, { k: 'tipo', l: 'Tipo', t: 'select', o: L('tiposOcorrencia'), req: 1 }, { k: 'data', l: 'Data', t: 'date', req: 1 }, { k: 'descricao', l: 'Descrição', t: 'textarea', req: 1 }],
     defaults: () => ({ data: TODAY_ISO, professorId: SESSION.userId }),
     rows: () => DADOS.ocorrencias.filter(o => o.professorId === SESSION.userId),
     sort: (a, b) => b.data.localeCompare(a.data),
@@ -153,8 +151,8 @@ function bars(items, max, fmt, low) {
   return `<ul class="bars list" style="gap:.875rem">${items.map(([l, v]) => `<li class="bar-row" style="border:0;padding:0"><span>${esc(l)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill ${low != null && v != null && v < low ? 'low' : ''}" style="width:${v == null ? 0 : Math.max(2, Math.min(100, v / max * 100))}%"></span></span><span class="n">${fmt(v)}</span></li>`).join('')}</ul>`;
 }
 function gradeTable(aulas, turno, cellFn, emptyFn, cap) {
-  const table = `<div class="tbl-wrap grade-wrap"><table class="tbl grade"><caption>${esc(cap)}</caption><thead><tr><th scope="col">Horário</th>${DIAS.map(([d, l]) => `<th scope="col">${l}${d === TODAY.getDay() ? ' <span class="sr-only">(hoje)</span>' : ''}</th>`).join('')}</tr></thead><tbody>${[0, 1, 2, 3, 4].map(s => `<tr><th scope="row" class="num">${slotRange(turno, s)}</th>${DIAS.map(([d]) => { const c = aulas.filter(a => a.dia === d && a.slot === s); return `<td class="${d === TODAY.getDay() ? 'today' : ''}">${c.length ? c.map(cellFn).join('') : (emptyFn ? emptyFn(d, s) : '<span class="muted">—</span>')}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
-  const list = `<div class="grade-list">${DIAS.map(([d, l]) => { const c = aulas.filter(a => a.dia === d).sort((x, y) => x.slot - y.slot); return `<section class="card day-block" aria-label="${l}"><h3>${l}${d === TODAY.getDay() ? ', hoje' : ''}</h3>${c.length ? `<ul class="list">${c.map(a => `<li><span class="time">${slotRange(turno, a.slot)}</span><span class="grow">${cellFn(a)}</span></li>`).join('')}</ul>` : '<p class="muted">Sem aulas</p>'}${emptyFn ? `<div>${emptyFn(d, [0, 1, 2, 3, 4].find(x => !c.some(a => a.slot === x)) ?? 0)}</div>` : ''}</section>`; }).join('')}</div>`;
+  const table = `<div class="tbl-wrap grade-wrap"><table class="tbl grade"><caption>${esc(cap)}</caption><thead><tr><th scope="col">Horário</th>${DIAS.map(([d, l]) => `<th scope="col">${l}${d === TODAY.getDay() ? ' <span class="sr-only">(hoje)</span>' : ''}</th>`).join('')}</tr></thead><tbody>${faixasDe(turno).map((_, s) => `<tr><th scope="row" class="num">${slotRange(turno, s)}</th>${DIAS.map(([d]) => { const c = aulas.filter(a => a.dia === d && a.slot === s); return `<td class="${d === TODAY.getDay() ? 'today' : ''}">${c.length ? c.map(cellFn).join('') : (emptyFn ? emptyFn(d, s) : '<span class="muted">—</span>')}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const list = `<div class="grade-list">${DIAS.map(([d, l]) => { const c = aulas.filter(a => a.dia === d).sort((x, y) => x.slot - y.slot); return `<section class="card day-block" aria-label="${l}"><h3>${l}${d === TODAY.getDay() ? ', hoje' : ''}</h3>${c.length ? `<ul class="list">${c.map(a => `<li><span class="time">${slotRange(turno, a.slot)}</span><span class="grow">${cellFn(a)}</span></li>`).join('')}</ul>` : '<p class="muted">Sem aulas</p>'}${emptyFn ? `<div>${emptyFn(d, faixasDe(turno).map((_, x) => x).find(x => !c.some(a => a.slot === x)) ?? 0)}</div>` : ''}</section>`; }).join('')}</div>`;
   return table + list;
 }
 function todayList(aulas, sub, action, span = '') {
@@ -163,8 +161,8 @@ function todayList(aulas, sub, action, span = '') {
   const list = aulas.filter(a => a.dia === dia).sort((a, b) => a.slot - b.slot);
   return `<section class="card ${span}" aria-labelledby="hoje-h"><div class="card-h"><h2 id="hoje-h">${title}</h2><span class="caption">${esc(fmtLong(TODAY_ISO))}</span></div>${list.length ? `<ul class="list">${list.map(a => `<li><span class="time">${slotRange(byId('turmas', a.turmaId)?.turno, a.slot)}</span><span class="grow"><span class="t">${esc(discNome(a.disciplinaId))}</span><br><span class="m">${sub(a)}</span></span>${action ? action(a) : ''}</li>`).join('')}</ul>` : '<p class="empty">Nenhuma aula neste dia.</p>'}</section>`;
 }
-const EV_TYPES = [['Avaliação', 'avaliacao'], ['Reunião', 'reuniao'], ['Evento', 'evento'], ['Feriado', 'feriado'], ['Recesso', 'recesso'], ['Prazo', 'prazo']];
-const evColor = t => `var(--ev-${(EV_TYPES.find(x => x[0] === t) || [0, 'evento'])[1]})`;
+const EV_CORES = ['avaliacao', 'reuniao', 'evento', 'feriado', 'recesso', 'prazo'];
+const evColor = t => `var(--ev-${EV_CORES[Math.max(0, nomes('tiposEvento').indexOf(t)) % EV_CORES.length]})`;
 const sw = t => `<span class="sw" style="background:${evColor(t)}" aria-hidden="true"></span>`;
 function calendarView(canEdit) {
   const ym = UI.sel.cal || TODAY_ISO.slice(0, 7); const [y, m] = ym.split('-').map(Number);
@@ -189,7 +187,7 @@ function calendarView(canEdit) {
   const doMes = evs.filter(e => e.data.startsWith(ym));
   return `<section class="card" aria-labelledby="cal-h">
     <div class="cal-head"><h2 id="cal-h" aria-live="polite">${esc(monthLbl)}</h2><div class="cal-nav"><button class="icon-btn" data-act="cal-nav" data-d="-1" aria-label="Mês anterior"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><button class="btn ghost sm" data-act="cal-nav" data-d="0">Hoje</button><button class="icon-btn" data-act="cal-nav" data-d="1" aria-label="Próximo mês"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div></div>
-    <ul class="legend" aria-label="Legenda">${EV_TYPES.map(([t]) => `<li>${sw(t)}${t}</li>`).join('')}</ul>
+    <ul class="legend" aria-label="Legenda">${nomes('tiposEvento').map(t => `<li>${sw(t)}${esc(t)}</li>`).join('')}</ul>
     <div class="cal-wrap"><table class="cal"><caption class="sr-only">Calendário de ${esc(monthLbl)}</caption><thead><tr>${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d, i) => `<th scope="col"><abbr title="${DAYS[i]}" style="text-decoration:none">${d}</abbr></th>`).join('')}</tr></thead><tbody>${weeks.map(w => `<tr>${w.map(cell).join('')}</tr>`).join('')}</tbody></table></div>
   </section>
   <section class="card" aria-labelledby="ag-h"><h2 id="ag-h">Eventos de ${esc(first.toLocaleDateString('pt-BR', { month: 'long' }))}</h2>${doMes.length ? `<ul class="list">${doMes.map(e => evItem(e, canEdit)).join('')}</ul>` : '<p class="empty">Nenhum evento neste mês.</p>'}</section>`;
@@ -228,7 +226,7 @@ function fioDia(aulas, role) {
   const nowD = new Date(); let dia = TODAY.getDay(); let nowMin = nowD.getHours() * 60 + nowD.getMinutes(); let quando = fmtLong(TODAY_ISO);
   let titulo = role === 'professor' ? 'Suas aulas hoje' : 'Seu dia';
   if (dia === 0 || dia === 6) { dia = 1; nowMin = -1; quando = 'segunda-feira'; titulo = role === 'professor' ? 'Suas aulas na segunda' : 'Sua segunda-feira'; }
-  const list = aulas.filter(a => a.dia === dia).map(a => { const t = byId('turmas', a.turmaId); const st0 = toMin((SLOTS[t?.turno] || SLOTS['Manhã'])[a.slot]); return { a, t, ini: st0, fim: st0 + (t?.turno === 'Noite' ? 45 : 50) }; }).sort((x, y) => x.ini - y.ini);
+  const list = aulas.filter(a => a.dia === dia).map(a => { const t = byId('turmas', a.turmaId); const st0 = toMin(faixasDe(t?.turno)[a.slot]?.inicio || '07:30'); return { a, t, ini: st0, fim: st0 + (t?.turno === 'Noite' ? 45 : 50) }; }).sort((x, y) => x.ini - y.ini);
   if (!list.length) return `<section class="fio" aria-labelledby="fio-h"><div class="fio-head"><h2 id="fio-h">${titulo}</h2><p class="muted">${esc(quando)}</p></div><p class="muted">Nenhuma aula neste dia.</p></section>`;
   const state = x => nowMin >= x.fim ? 'past' : nowMin >= x.ini ? 'now' : 'next';
   const hhmm = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
@@ -465,7 +463,7 @@ function gRelatorios() {
   const baixaFreq = alunos.filter(a => (freqPct(a.id) ?? 100) < fm).length;
   const dm = DADOS.disciplinas.map(d => [d.nome, avg(alunos.map(a => mediaDisc(a.id, d.id)))]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]);
   const tf = turmas.map(t => [t.nome, avg(alunosDaTurma(t.id).map(a => freqPct(a.id)))]);
-  const acc = ACESSOS.slice(1).map(n => [n, alunos.filter(a => a.acess === n).length]).filter(x => x[1]);
+  const acc = nomes('necessidades').slice(1).map(n => [n, alunos.filter(a => a.acess === n).length]).filter(x => x[1]);
   const ocTipos = uniq(DADOS.ocorrencias.filter(o => alunos.some(a => a.id === o.alunoId)).map(o => o.tipo));
   const oc = ocTipos.map(t => [t, DADOS.ocorrencias.filter(o => o.tipo === t && alunos.some(a => a.id === o.alunoId)).length]).sort((a, b) => b[1] - a[1]);
   const bf = alunos.filter(a => a.bolsaFamilia === 'Sim');

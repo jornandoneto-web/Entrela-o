@@ -640,6 +640,23 @@ h2{font-size:var(--t-xl);font-weight:500;letter-spacing:-.01em}
 .vinc>legend{font-size:var(--t-md)}
 fieldset.form-grid{border:0;padding:0;margin:0}
 fieldset.form-grid>legend{grid-column:1/-1;margin-bottom:.25rem;padding:0}
+
+/* ===== Grade em colunas ===== */
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.75rem}
+.kan-col{display:flex;flex-direction:column;gap:.5rem;background:var(--bg-subtle);border-radius:var(--r-lg);padding:.75rem}
+.kan-col h2{font-size:var(--t-md);font-weight:600}
+.kan-slot{background:var(--bg-surface);border:1px solid var(--bd);border-radius:var(--r-md);padding:.5rem .625rem;min-height:5.5rem;display:flex;flex-direction:column;gap:.25rem}
+.kan-h{font-size:var(--t-xs);color:var(--tx-2)}
+.kan-aula b{display:block;color:var(--tx-strong);font-size:.9375rem;line-height:1.25}
+.kan-aula>span{font-size:var(--t-xs);color:var(--tx-2)}
+.kan-acts{display:flex;justify-content:flex-end}
+.kan-acts .icon-btn{width:2.25rem;height:2.25rem}
+.kan-add{align-self:center;margin:auto;display:grid;place-items:center;width:2.75rem;height:2.75rem;border:0;border-radius:var(--r-md);background:transparent;color:var(--tx-brand);cursor:pointer}
+.kan-add:hover{background:var(--bg-brand-subtle)}
+@media (max-width:62em){.kanban{grid-template-columns:minmax(0,1fr)}}
+.list>li.dest .t{color:var(--tx-brand)}
+.hab-linha{padding:1rem;border:1px solid var(--bd);border-radius:var(--r-lg);margin:0}
+.field>.seg{align-self:flex-start}
 </style>
 
 <a class="skip" href="#content">Pular para o conteúdo principal</a>
@@ -659,6 +676,7 @@ fieldset.form-grid>legend{grid-column:1/-1;margin-bottom:.25rem;padding:0}
 <script src="app.js"></script>
 <script src="pages.js"></script>
 <script src="rede.js"></script>
+<script src="mock/listas.js"></script>
 <script src="mock/redeSeed.js"></script>
 <script src="professores.js"></script>
 <script src="estoque.js"></script>
@@ -675,11 +693,18 @@ fieldset.form-grid>legend{grid-column:1/-1;margin-bottom:.25rem;padding:0}
 <script src="services/lotacaoService.js"></script>
 <script src="services/dadosService.js"></script>
 <script src="services/municipioService.js"></script>
+<script src="services/listaService.js"></script>
+<script src="services/matriculaService.js"></script>
 <script src="telas/escolas.js"></script>
 <script src="telas/infraestrutura.js"></script>
 <script src="telas/matrizes.js"></script>
 <script src="telas/professor.js"></script>
 <script src="telas/lotacoes.js"></script>
 <script src="telas/perfis.js"></script>
+<script src="telas/cadastros.js"></script>
+<script src="telas/grade.js"></script>
+<script src="telas/diario.js"></script>
+<script src="telas/matricula.js"></script>
 <script src="migracoes-v9.js"></script>
+<script src="migracoes-v11.js"></script>
 <script src="migracoes.js"></script>

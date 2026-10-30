@@ -2,6 +2,17 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v19 — Mentoria de 29/10/2026
+- Regra "tudo que está em tela deve ser gerenciado": as opções de selects e caixas vêm de listas gerenciáveis, com tela de Cadastros auxiliares no menu do perfil responsável. Novas telas de Faixas de horário e Alimentos.
+- Diretorias Regionais DEA e DR1 a DR10 com os 75 municípios de Sergipe. Só a DEA está confirmada; o restante está marcado como TODO em `mock/sergipe.js`.
+- Modalidades básicas: Anos Iniciais, Anos Finais e Ensino Médio.
+- Professor: nova aba Formação, com formação, instituição e ano de conclusão validado. A formação saiu do vínculo.
+- Grade horária refeita: montagem por turma em colunas, professor filtrado por disciplina e lotação, conflitos bloqueados, visão por professor e lista do que falta preencher com base na matriz.
+- Diário de classe: aulas do dia, frequência, conteúdo e resumo com o cálculo explicado.
+- Matrícula: cadastro básico do estudante em etapas, solicitação de vaga com reserva, fila de espera, cancelamento e chamada automática do primeiro da fila.
+- Perfil do calendário escolar (nome provisório) assume a edição do calendário. O Diretor e a Gestão cadastram vagas.
+- Migração para a versão 11 dos dados, testada a partir de um banco da v18.
+
 ## v18 — Listas no lugar de texto digitado
 - Estado e cidade em lista: ao escolher o estado, a cidade mostra só os municípios dele. Sergipe vem completo (75 municípios); os outros estados vêm da API do IBGE e, se ela não responder, o campo volta a aceitar texto.
 - Cadastro de professor: naturalidade e endereço com estado e cidade em lista; cargo e órgão de origem (cedidos) em lista.

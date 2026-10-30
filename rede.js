@@ -13,13 +13,8 @@ Object.assign(IC, {
   upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/>'
 });
 
-const TURNOS = ['Manhã', 'Tarde', 'Noite', 'Integral'];
-const RECURSOS_ESCOLA = ['Acessível para cadeirantes', 'Sala de recursos (AEE)', 'Material em braille', 'Intérprete de Libras', 'Piso tátil'];
-const RECURSOS_PEI = ['Material ampliado', 'Material em braille', 'Ledor nas provas', 'Transcritor', 'Tempo adicional em provas', 'Leitor de tela', 'Intérprete de Libras', 'Profissional de apoio', 'Mobiliário adaptado', 'Comunicação alternativa'];
-const MOTIVOS_TRANSF = ['Mudança de endereço', 'Mudança de turno', 'Aluno começou a trabalhar ou estagiar', 'Proximidade da casa ou do trabalho dos responsáveis', 'Motivo de saúde', 'Oferta de curso que a escola atual não tem', 'Questões de convivência'];
-const motivoTransfHTML = () => `${listaOutroHTML('tr-mot', 'Motivo', MOTIVOS_TRANSF, '', { req: true, wide: true })}<div class="field wide"><label for="tr-det">Detalhes (opcional)</label><textarea id="tr-det" style="min-height:4.5rem"></textarea></div>`;
+const motivoTransfHTML = () => `${listaOutroHTML('tr-mot', 'Motivo', nomes('motivosTransferencia'), '', { req: true, wide: true })}<div class="field wide"><label for="tr-det">Detalhes (opcional)</label><textarea id="tr-det" style="min-height:4.5rem"></textarea></div>`;
 const motivoTransf = () => [valorOutro('tr-mot'), $('#tr-det').value.trim()].filter(Boolean).join('. ');
-const DOCS = ['Certidão de nascimento', 'Comprovante de residência', 'Histórico escolar ou declaração', 'Cartão de vacina', 'CPF do estudante'];
 const INTEG = ['Sistema Entrelaço', 'API', 'Planilha CSV'];
 
 
@@ -32,17 +27,18 @@ function ocupadas(v) {
   if (isLocal(v.escolaId)) return DADOS.alunos.filter(a => { const t = byId('turmas', a.turmaId); return t && t.escolaId === v.escolaId && t.serie === v.serie && t.turno === v.turno; }).length;
   return Number(v.ocupadasExt) || 0;
 }
-const disp = v => Math.max(0, (Number(v.total) || 0) - ocupadas(v));
+const reservadas = v => DADOS.prematriculas.filter(p => p.status === 'Vaga reservada' && p.escolaId === v.escolaId && p.serie === v.serie && p.turno === v.turno).length;
+const disp = v => Math.max(0, (Number(v.total) || 0) - ocupadas(v) - reservadas(v));
 const vagasHTML = n => n > 0 ? st(`${n} vaga${n > 1 ? 's' : ''}`, 'ok') : st('Sem vagas', 'err');
-const fila = (e, s, t) => DADOS.prematriculas.filter(p => p.status === 'Lista de espera' && p.escolaId === e && p.serie === s && p.turno === t).sort((a, b) => a.data.localeCompare(b.data));
+const fila = (e, s, t) => DADOS.prematriculas.filter(p => p.status === 'Lista de espera' && p.escolaId === e && p.serie === s && p.turno === t).sort((a, b) => (a.criado || a.data).localeCompare(b.criado || b.data));
 const posEspera = p => fila(p.escolaId, p.serie, p.turno).indexOf(p) + 1;
-const pedCls = s => /confirmada|Concluída|Encaminhada/.test(s) ? 'ok' : /espera|pendentes/.test(s) ? 'warn' : /Indeferida|Recusada/.test(s) ? 'err' : 'info';
+const pedCls = s => /confirmada|Concluída|Encaminhada|reservada/.test(s) ? 'ok' : /espera|pendentes/.test(s) ? 'warn' : /Indeferida|Recusada|Cancelada/.test(s) ? 'err' : 'info';
 const pedHTML = s => st(s, pedCls(s));
 const idade = iso => Math.floor((TODAY - dOf(iso)) / (365.25 * 864e5));
 const bfMin = a => idade(a.nascimento) >= 16 ? 75 : 85;
 const filhos = () => (me().filhos || []).map(id => byId('alunos', id)).filter(Boolean);
 const fmtHora = iso => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-const serieOpts = () => uniq(DADOS.vagas.map(v => v.serie)).sort((a, b) => SERIES.indexOf(a) - SERIES.indexOf(b)).map(s => [s, s]);
+const serieOpts = () => uniq(DADOS.vagas.map(v => v.serie)).sort((a, b) => nomes('series').indexOf(a) - nomes('series').indexOf(b)).map(s => [s, s]);
 function vagaOpts(serie, turno, excluir) {
   return DADOS.vagas.filter(v => v.serie === serie && (!turno || v.turno === turno) && v.escolaId !== excluir)
     .sort((a, b) => disp(b) - disp(a))
@@ -51,12 +47,12 @@ function vagaOpts(serie, turno, excluir) {
 const optHTML = (opts, val, ph = 'Selecione…') => `<option value="">${ph}</option>` + opts.map(([v, l, dis]) => `<option value="${esc(v)}" ${String(v) === String(val) ? 'selected' : ''} ${dis ? 'disabled' : ''}>${esc(l)}</option>`).join('');
 
 // ---------- Cadastros ----------
-ENT.escolas.fields = [{ k: 'nome', l: 'Nome da escola', req: 1, wide: 1 }, { k: 'inep', l: 'Código INEP', req: 1, help: '8 dígitos do Censo Escolar. É usado para integrar vagas.' }, { k: 'cidade', l: 'Cidade / UF', req: 1 }, { k: 'bairro', l: 'Bairro', req: 1 }, { k: 'endereco', l: 'Endereço' }, { k: 'telefone', l: 'Telefone', t: 'tel' }, { k: 'diretor', l: 'Diretor(a)' }, { k: 'integracao', l: 'Como a escola publica as vagas', t: 'select', o: optsFix(INTEG), req: 1, help: 'Sistema Entrelaço: vagas calculadas pelas turmas. API ou planilha: a escola envia os números.' }, { k: 'recursos', l: 'Recursos de acessibilidade', t: 'checks', o: optsFix(RECURSOS_ESCOLA) }];
+ENT.escolas.fields = [{ k: 'nome', l: 'Nome da escola', req: 1, wide: 1 }, { k: 'inep', l: 'Código INEP', req: 1, help: '8 dígitos do Censo Escolar. É usado para integrar vagas.' }, { k: 'cidade', l: 'Cidade / UF', req: 1 }, { k: 'bairro', l: 'Bairro', req: 1 }, { k: 'endereco', l: 'Endereço' }, { k: 'telefone', l: 'Telefone', t: 'tel' }, { k: 'diretor', l: 'Diretor(a)' }, { k: 'integracao', l: 'Como a escola publica as vagas', t: 'select', o: optsFix(INTEG), req: 1, help: 'Sistema Entrelaço: vagas calculadas pelas turmas. API ou planilha: a escola envia os números.' }, { k: 'recursos', l: 'Recursos de acessibilidade', t: 'checks', o: [] }];
 ENT.escolas.defaults = () => ({ integracao: 'Sistema Entrelaço', recursos: [], ultimaSync: new Date().toISOString() });
 ENT.escolas.cols = [['Escola', r => `${esc(r.nome)}${caption2('INEP ' + esc(r.inep || '—'))}`], ['Bairro', r => esc(r.bairro || '—')], ['Vagas publicadas por', r => esc(r.integracao || '—')], ['Turmas', r => DADOS.turmas.filter(t => t.escolaId === r.id).length, 'n'], ['Vagas livres', r => DADOS.vagas.filter(v => v.escolaId === r.id).reduce((s, v) => s + disp(v), 0), 'n']];
-ENT.turmas.fields = () => [{ k: 'nome', l: 'Nome da turma', req: 1, help: 'Ex.: 2º ano A' }, ...(escSessao() ? [] : [{ k: 'escolaId', l: 'Escola', t: 'select', o: () => DADOS.escolas.filter(e => isLocal(e.id)).map(e => [e.id, e.nome]), req: 1 }]), { k: 'serie', l: 'Série', t: 'select', o: optsFix(SERIES), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(TURNOS), req: 1 }, { k: 'ano', l: 'Ano letivo', t: 'number', req: 1 }, { k: 'sala', l: 'Sala', t: 'select', outro: 1, o: optsFix([...Array.from({ length: 30 }, (_, i) => `Sala ${i + 1}`), 'Laboratório', 'Sala de informática', 'Auditório']) }];
+ENT.turmas.fields = () => [{ k: 'nome', l: 'Nome da turma', req: 1, help: 'Ex.: 2º ano A' }, ...(escSessao() ? [] : [{ k: 'escolaId', l: 'Escola', t: 'select', o: () => DADOS.escolas.filter(e => isLocal(e.id)).map(e => [e.id, e.nome]), req: 1 }]), { k: 'serie', l: 'Série', t: 'select', o: L('series'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: L('turnos'), req: 1 }, { k: 'ano', l: 'Ano letivo', t: 'number', req: 1 }, { k: 'sala', l: 'Sala', t: 'select', outro: 1, o: L('salas') }];
 const alunoFields = ENT.alunos.fields;
-ENT.alunos.fields = () => [...alunoFields(), { k: 'bolsaFamilia', l: 'Recebe Bolsa Família', t: 'select', o: optsFix(['Não', 'Sim']), help: 'Usado no acompanhamento de frequência do programa.' }, { k: 'rotaId', l: 'Transporte escolar', t: 'select', o: () => DADOS.rotas.map(r => [r.id, r.nome]), help: 'Deixe em branco se não usa.' }, { k: 'restricao', l: 'Restrição alimentar', t: 'select', outro: 1, vazio: 'Nenhuma', o: optsFix(['Intolerância à lactose', 'Doença celíaca (sem glúten)', 'Alergia a amendoim', 'Alergia a frutos do mar', 'Alergia a ovo', 'Diabetes', 'Dieta vegetariana']) }];
+ENT.alunos.fields = () => [...alunoFields(), { k: 'bolsaFamilia', l: 'Recebe Bolsa Família', t: 'select', o: optsFix(['Não', 'Sim']), help: 'Usado no acompanhamento de frequência do programa.' }, { k: 'rotaId', l: 'Transporte escolar', t: 'select', o: () => DADOS.rotas.map(r => [r.id, r.nome]), help: 'Deixe em branco se não usa.' }, { k: 'restricao', l: 'Restrição alimentar', t: 'select', outro: 1, vazio: 'Nenhuma', o: L('restricoesAlimentares') }];
 const alunoDefaults = ENT.alunos.defaults;
 ENT.alunos.defaults = () => Object.assign(alunoDefaults(), { bolsaFamilia: 'Não', rotaId: '', restricao: '' });
 ENT.alunos.title = 'Alunos';
@@ -68,11 +64,11 @@ Object.assign(ENT, {
   vagas: {
     coll: 'vagas', title: 'Vagas da rede', singular: 'oferta de vagas', plural: 'ofertas', fem: true, newLabel: 'Cadastrar vagas',
     desc: 'Vagas por escola, série e turno. Pais, responsáveis e outras escolas veem essas vagas na hora de pedir matrícula ou transferência.',
-    fields: () => [{ k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1, wide: 1 }, { k: 'serie', l: 'Série', t: 'select', o: optsFix(SERIES), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(TURNOS), req: 1 }, { k: 'total', l: 'Total de vagas', t: 'number', req: 1, attrs: 'min="0"' }, { k: 'ocupadasExt', l: 'Vagas ocupadas', t: 'number', attrs: 'min="0"', help: 'Só para escolas que enviam por API ou planilha. Nas escolas do Entrelaço o sistema conta os alunos matriculados.' }],
+    fields: () => [{ k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1, wide: 1 }, { k: 'serie', l: 'Série', t: 'select', o: L('series'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: L('turnos'), req: 1 }, { k: 'total', l: 'Total de vagas', t: 'number', req: 1, attrs: 'min="0"' }, { k: 'ocupadasExt', l: 'Vagas ocupadas', t: 'number', attrs: 'min="0"', help: 'Só para escolas que enviam por API ou planilha. Nas escolas do Entrelaço o sistema conta os alunos matriculados.' }],
     defaults: () => ({ total: 35, ocupadasExt: 0, escolaId: escSessao() || undefined }),
     rows: () => DADOS.vagas.filter(v => naEscola(v.escolaId)),
     filter: { k: 'escolaId', l: 'Escola', o: optsOf('escolas'), scoped: true },
-    sort: (a, b) => escNome(a.escolaId).localeCompare(escNome(b.escolaId)) || SERIES.indexOf(a.serie) - SERIES.indexOf(b.serie),
+    sort: (a, b) => escNome(a.escolaId).localeCompare(escNome(b.escolaId)) || nomes('series').indexOf(a.serie) - nomes('series').indexOf(b.serie),
     cols: [['Escola', r => `${esc(escNome(r.escolaId))}${caption2(esc(byId('escolas', r.escolaId)?.bairro || ''))}`], ['Série', r => esc(r.serie)], ['Turno', r => esc(r.turno)], ['Total', r => r.total, 'n'], ['Ocupadas', r => ocupadas(r), 'n'], ['Disponíveis', r => vagasHTML(disp(r))], ['Lista de espera', r => { const n = fila(r.escolaId, r.serie, r.turno).length; return n ? `${n} na fila` : '<span class="muted">—</span>'; }]],
     check: (v, id) => DADOS.vagas.some(x => x.id !== id && x.escolaId === v.escolaId && x.serie === v.serie && x.turno === v.turno) ? 'Essa escola já tem vagas cadastradas para essa série e turno. Edite a oferta existente.' : '',
     name: r => `${escNome(r.escolaId)}, ${r.serie}, ${r.turno}`
@@ -80,7 +76,7 @@ Object.assign(ENT, {
   rotas: {
     coll: 'rotas', title: 'Transporte escolar', singular: 'rota', plural: 'rotas', fem: true, newLabel: 'Cadastrar rota',
     desc: 'Rotas do transporte escolar (PNATE), com motorista, veículo, pontos de parada e alunos atendidos. Para colocar um aluno numa rota, edite o cadastro do aluno.',
-    fields: () => [{ k: 'nome', l: 'Nome da rota', req: 1, wide: 1 }, { k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: optsFix(TURNOS), req: 1 }, { k: 'motorista', l: 'Motorista', req: 1 }, { k: 'veiculo', l: 'Veículo e placa' }, { k: 'capacidade', l: 'Lugares', t: 'number', attrs: 'min="1"' }, { k: 'pontos', l: 'Pontos de parada', t: 'textarea', help: 'Um ponto por linha, com o horário. Ex.: 06:20 Praça da Várzea' }],
+    fields: () => [{ k: 'nome', l: 'Nome da rota', req: 1, wide: 1 }, { k: 'escolaId', l: 'Escola', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'turno', l: 'Turno', t: 'select', o: L('turnos'), req: 1 }, { k: 'motorista', l: 'Motorista', req: 1 }, { k: 'veiculo', l: 'Veículo e placa' }, { k: 'capacidade', l: 'Lugares', t: 'number', attrs: 'min="1"' }, { k: 'pontos', l: 'Pontos de parada', t: 'textarea', help: 'Um ponto por linha, com o horário. Ex.: 06:20 Praça da Várzea' }],
     cols: [['Rota', r => `${esc(r.nome)}${caption2(esc(r.veiculo || ''))}`], ['Escola', r => esc(escNome(r.escolaId))], ['Turno', r => esc(r.turno)], ['Motorista', r => esc(r.motorista)], ['Alunos', r => `${DADOS.alunos.filter(a => a.rotaId === r.id).length} de ${r.capacidade || '—'}`, 'n'], ['Paradas', r => (r.pontos || '').split('\n').filter(Boolean).length, 'n']],
     rows: () => DADOS.rotas.filter(r => naEscola(r.escolaId)),
     defaults: () => ({ escolaId: escSessao() || undefined }),
@@ -108,13 +104,13 @@ Object.assign(ACT, {
   'pm-analisar': el => {
     const p = byId('prematriculas', el.dataset.id);
     const turmas = [p.escola1, p.escola2].filter(Boolean).flatMap(eid => isLocal(eid)
-      ? DADOS.turmas.filter(t => t.escolaId === eid && t.serie === p.serie && t.turno === p.turno).map(t => { const v = DADOS.vagas.find(x => x.escolaId === eid && x.serie === p.serie && x.turno === p.turno); const n = v ? disp(v) : 0; return [t.id, `${t.nome}, ${escNome(eid)}: ${n ? n + ' vaga' + (n > 1 ? 's' : '') : 'sem vagas'}`, n === 0]; })
+      ? DADOS.turmas.filter(t => t.escolaId === eid && t.serie === p.serie && t.turno === p.turno).map(t => { const v = DADOS.vagas.find(x => x.escolaId === eid && x.serie === p.serie && x.turno === p.turno); const n = v ? disp(v) + (p.status === 'Vaga reservada' && p.escolaId === eid ? 1 : 0) : 0; return [t.id, `${t.nome}, ${escNome(eid)}: ${n ? n + ' vaga' + (n > 1 ? 's' : '') : 'sem vagas'}`, n === 0]; })
       : [['ext:' + eid, `${escNome(eid)} (encaminhar pela integração)`, !DADOS.vagas.some(v => v.escolaId === eid && v.serie === p.serie && v.turno === p.turno && disp(v) > 0)]]);
     const decs = ['Matrícula confirmada', 'Lista de espera', 'Documentos pendentes', 'Indeferida'];
     openDialog({
       title: `Pré-matrícula ${p.protocolo}`, wide: true,
       body: `<dl class="dl"><dt>Estudante</dt><dd>${esc(p.estudante)}, ${idade(p.nascimento)} anos</dd><dt>Série e turno</dt><dd>${esc(p.serie)}, ${esc(p.turno.toLowerCase())}</dd><dt>Escolas pedidas</dt><dd>1ª opção: ${esc(escNome(p.escola1))}${p.escola2 ? `<br>2ª opção: ${esc(escNome(p.escola2))}` : ''}</dd><dt>Responsável</dt><dd>${esc(p.responsavel)}, ${esc(p.telefone)}</dd><dt>Bairro</dt><dd>${esc(p.bairro || '—')}</dd><dt>Acessibilidade</dt><dd>${esc(p.acess || 'Nenhuma')}</dd></dl>
-        <section><h3 class="lbl" style="margin-bottom:.5rem">Documentos</h3><ul class="list">${DOCS.map(d => `<li>${p.docs.includes(d) ? st(d, 'ok') : st(d + ' (não enviado)', 'err')}</li>`).join('')}</ul></section>
+        <section><h3 class="lbl" style="margin-bottom:.5rem">Documentos</h3><ul class="list">${nomes('documentosMatricula').map(d => `<li>${p.docs.includes(d) ? st(d, 'ok') : st(d + ' (não enviado)', 'err')}</li>`).join('')}</ul></section>
         <fieldset class="field"><legend>Decisão</legend><div class="seg">${decs.map(d => `<label><input type="radio" name="pm-dec" value="${d}" ${d === (p.status === 'Em análise' ? decs[0] : p.status) ? 'checked' : ''}>${d === 'Matrícula confirmada' ? 'Confirmar matrícula' : d}</label>`).join('')}</div></fieldset>
         <div class="field"><label for="pm-turma">Turma ou escola de destino</label><select id="pm-turma">${optHTML(turmas, '')}</select><p class="help">Usado só para confirmar a matrícula. Se não houver turma dessa série e turno, crie a turma antes.</p></div>
         <div class="field"><label for="pm-obs">Mensagem para o responsável</label><textarea id="pm-obs">${esc(p.obs)}</textarea></div>`,
@@ -198,13 +194,13 @@ Object.assign(ACT, {
   },
   contato: el => {
     const a = byId('alunos', el.dataset.id);
-    openDialog({ title: `Registrar contato: ${a.nome}`, body: `<div class="form-grid">${fieldHTML({ k: 'ct-data', l: 'Data', t: 'date', req: 1 }, TODAY_ISO)}${fieldHTML({ k: 'ct-meio', l: 'Como foi o contato', t: 'select', o: optsFix(['Telefone', 'WhatsApp', 'Visita domiciliar', 'Reunião na escola']), req: 1 }, 'Telefone')}${fieldHTML({ k: 'ct-enc', l: 'Encaminhamento', t: 'select', o: optsFix(['Nenhum', 'Conselho Tutelar', 'CRAS', 'Unidade de saúde', 'Assistência social da rede']) }, 'Nenhum')}${fieldHTML({ k: 'ct-res', l: 'O que foi combinado', t: 'textarea', req: 1 }, '')}</div>`,
+    openDialog({ title: `Registrar contato: ${a.nome}`, body: `<div class="form-grid">${fieldHTML({ k: 'ct-data', l: 'Data', t: 'date', req: 1 }, TODAY_ISO)}${fieldHTML({ k: 'ct-meio', l: 'Como foi o contato', t: 'select', o: L('meiosContato'), req: 1 }, 'Telefone')}${fieldHTML({ k: 'ct-enc', l: 'Encaminhamento', t: 'select', o: L('encaminhamentos') }, 'Nenhum')}${fieldHTML({ k: 'ct-res', l: 'O que foi combinado', t: 'textarea', req: 1 }, '')}</div>`,
       onSubmit: () => { DADOS.contatos.push({ id: uid(), alunoId: a.id, data: $('#f-ct-data').value, meio: $('#f-ct-meio').value, encaminhamento: $('#f-ct-enc').value || 'Nenhum', resultado: $('#f-ct-res').value.trim() }); save(); rerender(); toast('Contato registrado.'); } });
   },
   pei: el => {
     const a = byId('alunos', el.dataset.id); const p = a.pei || { recursos: [], sala: '', apoio: '', obs: '' };
     openDialog({ title: `Plano educacional (PEI): ${a.nome}`, wide: true,
-      body: `<p class="muted">${esc(turmaLong(a.turmaId))}. Necessidade: <b>${esc(a.acess)}</b>. Os professores da turma veem estes recursos no painel deles.</p><div class="form-grid">${fieldHTML({ k: 'pei-rec', l: 'Recursos e adaptações', t: 'checks', o: optsFix(RECURSOS_PEI) }, p.recursos)}${fieldHTML({ k: 'pei-sala', l: 'Atendimento na sala de recursos', help: 'Dias e horários no contraturno.' }, p.sala)}${fieldHTML({ k: 'pei-apoio', l: 'Profissional de apoio' }, p.apoio)}${fieldHTML({ k: 'pei-obs', l: 'Orientações para os professores', t: 'textarea' }, p.obs)}</div>`,
+      body: `<p class="muted">${esc(turmaLong(a.turmaId))}. Necessidade: <b>${esc(a.acess)}</b>. Os professores da turma veem estes recursos no painel deles.</p><div class="form-grid">${fieldHTML({ k: 'pei-rec', l: 'Recursos e adaptações', t: 'checks', o: L('recursosPEI') }, p.recursos)}${fieldHTML({ k: 'pei-sala', l: 'Atendimento na sala de recursos', help: 'Dias e horários no contraturno.' }, p.sala)}${fieldHTML({ k: 'pei-apoio', l: 'Profissional de apoio' }, p.apoio)}${fieldHTML({ k: 'pei-obs', l: 'Orientações para os professores', t: 'textarea' }, p.obs)}</div>`,
       onSubmit: f => { a.pei = { recursos: new FormData(f).getAll('pei-rec'), sala: $('#f-pei-sala').value.trim(), apoio: $('#f-pei-apoio').value.trim(), obs: $('#f-pei-obs').value.trim() }; save(); rerender(); toast('Plano educacional salvo.'); } });
   }
 });
@@ -224,7 +220,7 @@ Object.assign(CHG, {
       UI.csv = lines.slice(1).map(l => {
         const c = l.split(sep).map(x => x.trim()); const e = DADOS.escolas.find(x => x.inep === c[ix('inep')]);
         const r = { inep: c[ix('inep')], serie: c[ix('serie')], turno: c[ix('turno')], total: Number(c[ix('total')]), ocupadas: Number(c[ix('ocupadas')]) || 0, escolaId: e?.id };
-        if (!e) r.erro = 'INEP não encontrado na rede'; else if (!SERIES.includes(r.serie)) r.erro = 'Série não reconhecida'; else if (!TURNOS.includes(r.turno)) r.erro = 'Turno não reconhecido'; else if (isNaN(r.total)) r.erro = 'Total inválido';
+        if (!e) r.erro = 'INEP não encontrado na rede'; else if (!nomes('series').includes(r.serie)) r.erro = 'Série não reconhecida'; else if (!nomes('turnos').includes(r.turno)) r.erro = 'Turno não reconhecido'; else if (isNaN(r.total)) r.erro = 'Total inválido';
         return r;
       });
       rerender(); alertSR(`${UI.csv.length} linhas lidas da planilha.`);
@@ -236,7 +232,7 @@ Object.assign(FORMS, {
   merenda: f => { [1, 2, 3, 4, 5].forEach(d => { DADOS.cardapio[d] = $('#mer-' + d).value.trim(); }); DADOS.cardapio.obs = $('#mer-obs').value.trim(); save(); toast('Cardápio da semana salvo.'); },
   prematricula: f => {
     if (!$('#pm-decl').checked) { alertSR('Confirme que as informações são verdadeiras.'); toast('Confirme que as informações são verdadeiras.', 'err'); $('#pm-decl').focus(); return; }
-    const docs = DOCS.filter((d, i) => $('#pm-doc-' + i).files.length);
+    const docs = nomes('documentosMatricula').filter((d, i) => $('#pm-doc-' + i).files.length);
     const g = id => $('#' + id).value.trim();
     const n = 39 + DADOS.prematriculas.length;
     const p = { id: uid(), protocolo: `PM-2026-${String(n).padStart(5, '0')}`, responsavelId: SESSION.userId, responsavel: g('pm-resp'), telefone: g('pm-tel'), estudante: g('pm-nome'), nascimento: g('pm-nasc'), serie: g('pm-serie'), turno: g('pm-turno'), escola1: g('pm-e1'), escola2: g('pm-e2'), escolaId: g('pm-e1'), bairro: g('pm-bairro'), acess: g('pm-acess') || 'Nenhuma', docs, status: 'Em análise', data: TODAY_ISO, obs: '' };
@@ -285,7 +281,7 @@ function gPrematriculas() {
   const ord = { 'Em análise': 0, 'Documentos pendentes': 1, 'Lista de espera': 2 };
   const list = DADOS.prematriculas.filter(p => naEscola(p.escola1, p.escola2)).sort((a, b) => (ord[a.status] ?? 3) - (ord[b.status] ?? 3) || a.data.localeCompare(b.data));
   return pageHead('Pré-matrículas', 'Pedidos de matrícula feitos pelos responsáveis no portal. Confira os documentos, confirme a vaga, coloque na lista de espera ou peça o que falta.') +
-    (list.length ? `<div class="tbl-wrap"><table class="tbl stack"><caption class="sr-only">Pré-matrículas</caption><thead><tr><th scope="col">Estudante</th><th scope="col">Série e turno</th><th scope="col">Escolas pedidas</th><th scope="col" class="n">Documentos</th><th scope="col">Situação</th><th scope="col" class="n">Ação</th></tr></thead><tbody>${list.map(p => `<tr><th scope="row">${esc(p.estudante)}${caption2(`${esc(p.protocolo)}, enviado em ${fmtD(p.data)}`)}</th><td data-label="Série e turno">${esc(p.serie)}${caption2(esc(p.turno))}</td><td data-label="Escolas pedidas">1ª: ${esc(escNome(p.escola1))}${p.escola2 ? caption2('2ª: ' + esc(escNome(p.escola2))) : ''}</td><td class="n" data-label="Documentos">${p.docs.length} de ${DOCS.length}</td><td data-label="Situação">${pedHTML(p.status)}${p.status === 'Lista de espera' ? caption2(`${posEspera(p)}º da fila`) : ''}</td><td class="n"><div class="acts"><button class="btn ${p.status === 'Em análise' ? 'primary' : 'ghost'} sm" data-act="pm-analisar" data-id="${p.id}" aria-label="Analisar pré-matrícula de ${esc(p.estudante)}">${p.status === 'Em análise' ? 'Analisar' : 'Revisar'}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhuma pré-matrícula.</p>');
+    (list.length ? `<div class="tbl-wrap"><table class="tbl stack"><caption class="sr-only">Pré-matrículas</caption><thead><tr><th scope="col">Estudante</th><th scope="col">Série e turno</th><th scope="col">Escolas pedidas</th><th scope="col" class="n">Documentos</th><th scope="col">Situação</th><th scope="col" class="n">Ação</th></tr></thead><tbody>${list.map(p => `<tr><th scope="row">${esc(p.estudante)}${caption2(`${esc(p.protocolo)}, enviado em ${fmtD(p.data)}`)}</th><td data-label="Série e turno">${esc(p.serie)}${caption2(esc(p.turno))}</td><td data-label="Escolas pedidas">1ª: ${esc(escNome(p.escola1))}${p.escola2 ? caption2('2ª: ' + esc(escNome(p.escola2))) : ''}</td><td class="n" data-label="Documentos">${p.docs.length} de ${nomes('documentosMatricula').length}</td><td data-label="Situação">${pedHTML(p.status)}${p.status === 'Lista de espera' ? caption2(`${posEspera(p)}º da fila`) : ''}</td><td class="n"><div class="acts"><button class="btn ${p.status === 'Em análise' ? 'primary' : 'ghost'} sm" data-act="pm-analisar" data-id="${p.id}" aria-label="Analisar pré-matrícula de ${esc(p.estudante)}">${p.status === 'Em análise' ? 'Analisar' : 'Revisar'}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhuma pré-matrícula.</p>');
 }
 function gTransferencias() {
   const list = DADOS.transferencias.filter(t => naEscola(t.origemId, t.destinoId)).sort((a, b) => (a.status.startsWith('Aguardando') ? 0 : 1) - (b.status.startsWith('Aguardando') ? 0 : 1) || b.data.localeCompare(a.data));
@@ -351,7 +347,7 @@ function gMerenda() {
 function rInicio() {
   const r = me(); const fs = filhos();
   const peds = [...DADOS.prematriculas.filter(p => p.responsavelId === r.id), ...DADOS.transferencias.filter(t => t.responsavelId === r.id)];
-  const abertos = peds.filter(p => !/confirmada|Concluída|Indeferida|Recusada|Encaminhada/.test(p.status));
+  const abertos = peds.filter(p => !/confirmada|Concluída|Indeferida|Recusada|Encaminhada|Cancelada/.test(p.status));
   const prox = DADOS.eventos.filter(e => e.data >= TODAY_ISO).sort((a, b) => a.data.localeCompare(b.data))[0];
   return pageHead(`Olá, ${firstName(r.nome)}.`, 'Acompanhe seus filhos, encontre vagas nas escolas da rede e faça a matrícula pela internet.', `<button class="btn outline" data-act="go" data-route="vagas">${icon('search')}Procurar vagas</button><button class="btn primary" data-act="go" data-route="matricula">${icon('plus')}Pedir matrícula</button>`, 'hello') +
     `<section class="stats" aria-label="Resumo">
@@ -373,7 +369,7 @@ function rVagas() {
   const escolas = uniq(offers.map(v => v.escolaId)).map(id => byId('escolas', id)).sort((x, y) => offers.filter(v => v.escolaId === y.id).reduce((n, v) => n + disp(v), 0) - offers.filter(v => v.escolaId === x.id).reduce((n, v) => n + disp(v), 0));
   const total = offers.reduce((n, v) => n + disp(v), 0);
   return pageHead('Vagas na rede', 'Veja quais escolas públicas têm vagas para a série do seu filho. As vagas são atualizadas pelas próprias escolas.') +
-    `<div class="toolbar">${selectCtl('vs-serie', 'Série', [['', 'Todas'], ...serieOpts()], s, 'vsSerie')}${selectCtl('vs-turno', 'Turno', [['', 'Todos'], ...TURNOS.map(x => [x, x])], t, 'vsTurno')}${selectCtl('vs-bairro', 'Bairro', [['', 'Todos'], ...uniq(DADOS.escolas.map(e => e.bairro).filter(Boolean)).sort().map(x => [x, x])], b, 'vsBairro')}</div>
+    `<div class="toolbar">${selectCtl('vs-serie', 'Série', [['', 'Todas'], ...serieOpts()], s, 'vsSerie')}${selectCtl('vs-turno', 'Turno', [['', 'Todos'], ...nomes('turnos').map(x => [x, x])], t, 'vsTurno')}${selectCtl('vs-bairro', 'Bairro', [['', 'Todos'], ...uniq(DADOS.escolas.map(e => e.bairro).filter(Boolean)).sort().map(x => [x, x])], b, 'vsBairro')}</div>
     <p aria-live="polite" class="muted">${escolas.length} escola${escolas.length === 1 ? '' : 's'} encontrada${escolas.length === 1 ? '' : 's'}, ${total} vaga${total === 1 ? '' : 's'} livre${total === 1 ? '' : 's'}.</p>
     ${escolas.length ? `<div class="grid g2">${escolas.map(e => `<article class="card" aria-labelledby="es-${e.id}"><div><h2 id="es-${e.id}">${esc(e.nome)}</h2><p class="muted">${icon('pin')} ${esc(enderecoTxt(e))}, ${esc(regionalService.nomeMunicipio(e.municipioId) || e.cidade || '')}. Telefone ${esc(e.telefone || '—')}</p></div>
       <p class="caption">${infraestruturaService.recursosSync(e.id).length ? 'Acessibilidade: ' + esc(infraestruturaService.recursosSync(e.id).join(', ')) : 'A escola não informou recursos de acessibilidade.'}</p>
@@ -389,11 +385,11 @@ function rMatricula() {
       <fieldset class="grid" style="gap:1rem"><legend><h3>1. Estudante</h3></legend><div class="form-grid">
         <div class="field wide"><label for="pm-nome">Nome completo do estudante <span class="req" aria-hidden="true">*</span></label><input id="pm-nome" required autocomplete="off"></div>
         <div class="field"><label for="pm-nasc">Data de nascimento <span class="req" aria-hidden="true">*</span></label><input id="pm-nasc" type="date" required></div>
-        <div class="field"><label for="pm-acess">Necessidade de acessibilidade</label><select id="pm-acess">${ACESSOS.map(a => `<option>${a}</option>`).join('')}</select><p class="help">A escola usa essa informação para preparar o atendimento.</p></div>
+        <div class="field"><label for="pm-acess">Necessidade de acessibilidade</label><select id="pm-acess">${nomes('necessidades').map(a => `<option>${a}</option>`).join('')}</select><p class="help">A escola usa essa informação para preparar o atendimento.</p></div>
       </div></fieldset>
       <fieldset class="grid" style="gap:1rem"><legend><h3>2. Escola</h3></legend><div class="form-grid">
         <div class="field"><label for="pm-serie">Série <span class="req" aria-hidden="true">*</span></label><select id="pm-serie" required data-change="pmOpts">${optHTML(serieOpts(), pre.serie)}</select></div>
-        <div class="field"><label for="pm-turno">Turno <span class="req" aria-hidden="true">*</span></label><select id="pm-turno" required data-change="pmOpts">${optHTML(TURNOS.map(x => [x, x]), pre.turno)}</select></div>
+        <div class="field"><label for="pm-turno">Turno <span class="req" aria-hidden="true">*</span></label><select id="pm-turno" required data-change="pmOpts">${optHTML(nomes('turnos').map(x => [x, x]), pre.turno)}</select></div>
         <div class="field wide"><label for="pm-e1">Escola de 1ª opção <span class="req" aria-hidden="true">*</span></label><select id="pm-e1" required>${eOpts.length ? optHTML(eOpts, pre.escolaId) : '<option value="">Escolha a série e o turno</option>'}</select><p class="help">Se a escola não tiver vaga, o pedido entra na lista de espera.</p></div>
         <div class="field wide"><label for="pm-e2">Escola de 2ª opção</label><select id="pm-e2">${eOpts.length ? optHTML(eOpts, '', 'Sem segunda opção') : '<option value="">Escolha a série e o turno</option>'}</select></div>
       </div></fieldset>
@@ -402,7 +398,7 @@ function rMatricula() {
         <div class="field"><label for="pm-tel">Telefone <span class="req" aria-hidden="true">*</span></label><input id="pm-tel" type="tel" required value="${esc(r.telefone || '')}" autocomplete="tel"></div>
         <div class="field"><label for="pm-bairro">Bairro onde mora <span class="req" aria-hidden="true">*</span></label><input id="pm-bairro" required value="${esc(r.bairro || '')}"></div>
       </div></fieldset>
-      <fieldset class="grid" style="gap:1rem"><legend><h3>4. Documentos</h3></legend><p class="muted">Envie foto ou PDF. Você pode mandar depois, mas a matrícula só é confirmada com todos.</p><div class="form-grid">${DOCS.map(docInput).join('')}</div></fieldset>
+      <fieldset class="grid" style="gap:1rem"><legend><h3>4. Documentos</h3></legend><p class="muted">Envie foto ou PDF. Você pode mandar depois, mas a matrícula só é confirmada com todos.</p><div class="form-grid">${nomes('documentosMatricula').map(docInput).join('')}</div></fieldset>
       <label class="check" style="align-self:flex-start"><input type="checkbox" id="pm-decl"> Declaro que as informações são verdadeiras.</label>
       <div class="row"><button class="btn primary" type="submit">${icon('send')}Enviar pedido de matrícula</button></div>
     </form>`;
@@ -423,7 +419,7 @@ function rPedidos() {
   const trs = DADOS.transferencias.filter(t => t.responsavelId === r.id).sort((a, b) => b.data.localeCompare(a.data));
   const steps = (s, fim) => { const done = s !== 'Em análise' && !s.startsWith('Aguardando'); return `<ol class="steps"><li class="done">Pedido enviado</li><li class="${done ? 'done' : 'cur'}">${fim === 'tr' && s === 'Aguardando escola de origem' ? 'Escola atual analisando' : fim === 'tr' && s === 'Aguardando escola de destino' ? 'Nova escola analisando' : 'Em análise'}</li><li class="${done ? 'cur' : ''}">${done ? esc(s) : 'Resultado'}</li></ol>`; };
   return pageHead('Meus pedidos', 'Acompanhe os pedidos de matrícula e de transferência.') +
-    `<section aria-labelledby="pm-h" class="grid"><h2 id="pm-h">Matrículas</h2>${pms.length ? `<div class="grid g2">${pms.map(p => `<article class="post" aria-labelledby="p-${p.id}"><div class="row sp"><h3 id="p-${p.id}">${esc(p.estudante)}</h3>${pedHTML(p.status)}</div><p class="meta">Protocolo ${esc(p.protocolo)}, enviado em ${fmtD(p.data)}</p>${steps(p.status)}<dl class="dl"><dt>Série</dt><dd>${esc(p.serie)}, ${esc(p.turno.toLowerCase())}</dd><dt>Escola</dt><dd>${esc(escNome(p.escolaId))}</dd><dt>Documentos</dt><dd>${p.docs.length} de ${DOCS.length} enviados</dd>${p.status === 'Lista de espera' ? `<dt>Lista de espera</dt><dd>${posEspera(p)}º lugar</dd>` : ''}</dl>${p.obs ? `<p class="quote"><b>Mensagem da escola:</b> ${esc(p.obs)}</p>` : ''}</article>`).join('')}</div>` : '<p class="empty">Nenhum pedido de matrícula. <button class="btn primary sm" data-act="go" data-route="matricula">Pedir matrícula</button></p>'}</section>
+    `<section aria-labelledby="pm-h" class="grid"><h2 id="pm-h">Matrículas</h2>${pms.length ? `<div class="grid g2">${pms.map(p => `<article class="post" aria-labelledby="p-${p.id}"><div class="row sp"><h3 id="p-${p.id}">${esc(p.estudante)}</h3>${pedHTML(p.status)}</div><p class="meta">Protocolo ${esc(p.protocolo)}, enviado em ${fmtD(p.data)}</p>${steps(p.status)}${botaoCancelar(p)}<dl class="dl"><dt>Série</dt><dd>${esc(p.serie)}, ${esc(p.turno.toLowerCase())}</dd><dt>Escola</dt><dd>${esc(escNome(p.escolaId))}</dd><dt>Documentos</dt><dd>${p.docs.length} de ${nomes('documentosMatricula').length} enviados</dd>${p.status === 'Lista de espera' ? `<dt>Lista de espera</dt><dd>${posEspera(p)}º lugar</dd>` : ''}</dl>${p.obs ? `<p class="quote"><b>Mensagem da escola:</b> ${esc(p.obs)}</p>` : ''}</article>`).join('')}</div>` : '<p class="empty">Nenhum pedido de matrícula. <button class="btn primary sm" data-act="go" data-route="matricula">Pedir matrícula</button></p>'}</section>
     <section aria-labelledby="tp-h" class="grid"><h2 id="tp-h">Transferências</h2>${trs.length ? `<div class="grid g2">${trs.map(t => `<article class="post" aria-labelledby="t-${t.id}"><div class="row sp"><h3 id="t-${t.id}">${esc(t.alunoNome || alunoNome(t.alunoId))}</h3>${pedHTML(t.status)}</div><p class="meta">Pedido em ${fmtD(t.data)}</p>${steps(t.status, 'tr')}<dl class="dl"><dt>De</dt><dd>${esc(escNome(t.origemId))}</dd><dt>Para</dt><dd>${esc(escNome(t.destinoId))}, ${esc(t.turno.toLowerCase())}</dd></dl>${t.resposta ? `<p class="quote"><b>Resposta:</b> ${esc(t.resposta)}</p>` : ''}</article>`).join('')}</div>` : '<p class="empty">Nenhum pedido de transferência.</p>'}</section>`;
 }
 function rBoletim() {

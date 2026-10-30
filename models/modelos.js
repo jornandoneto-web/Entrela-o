@@ -65,13 +65,24 @@ const Modelos = {
   formacao: (o = {}) => Object.assign({}, o, { id: novoId(o.id), nome: txt(o.nome), disciplinas: lista(o.disciplinas) }),
   /** @returns {Vinculo} Carga horária padrão de 25 h; integral, 40 h. */
   vinculo: (o = {}) => ({
-    id: novoId(o.id), cargo: txt(o.cargo) || 'Professor', formacoes: lista(o.formacoes), disciplinas: lista(o.disciplinas),
+    id: novoId(o.id), cargo: txt(o.cargo) || 'Professor', disciplinas: lista(o.disciplinas),
     ingresso: txt(o.ingresso) || 'Concurso', orgaoOrigem: txt(o.orgaoOrigem), dataInicio: txt(o.dataInicio), dataFim: txt(o.dataFim),
     cargaHoraria: numero(o.cargaHoraria, 25) || 25, anexoContrato: txt(o.anexoContrato)
   }),
   /** @returns {Professor} */
   professor: (o = {}) => Object.assign({}, o, {
-    id: novoId(o.id), pessoa: Modelos.pessoa(o.pessoa || {}), dependentes: lista(o.dependentes).map(Modelos.dependente), vinculos: lista(o.vinculos).map(Modelos.vinculo)
+    id: novoId(o.id), pessoa: Modelos.pessoa(o.pessoa || {}), habilitacoes: lista(o.habilitacoes).map(Modelos.habilitacao), dependentes: lista(o.dependentes).map(Modelos.dependente), vinculos: lista(o.vinculos).map(Modelos.vinculo)
+  }),
+  /** Item de uma lista gerenciável (Cadastros auxiliares). */
+  itemLista: (o = {}) => ({ id: novoId(o.id), tipo: txt(o.tipo), nome: txt(o.nome), ativo: o.ativo !== false, ordem: numero(o.ordem) }),
+  /** Faixa de horário de um turno (1º horário, 2º horário...). */
+  faixaHorario: (o = {}) => ({ id: novoId(o.id), turno: txt(o.turno), ordem: numero(o.ordem), inicio: txt(o.inicio), fim: txt(o.fim) }),
+  /** Formação de um professor: o curso (cadastro de Formações), onde e quando concluiu. */
+  habilitacao: (o = {}) => ({ id: novoId(o.id), formacaoId: txt(o.formacaoId), instituicao: txt(o.instituicao), anoConclusao: txt(o.anoConclusao) }),
+  /** Cadastro básico do estudante (matrícula). A senha nunca é guardada no mock. */
+  estudante: (o = {}) => ({
+    id: novoId(o.id), responsavelId: txt(o.responsavelId), nome: txt(o.nome), nascimento: txt(o.nascimento), sexo: txt(o.sexo), filiacao: txt(o.filiacao), cpf: txt(o.cpf).replace(/\D/g, ''), nis: txt(o.nis), cartaoSUS: txt(o.cartaoSUS),
+    corRaca: txt(o.corRaca), bolsaFamilia: txt(o.bolsaFamilia), termoVacinacao: txt(o.termoVacinacao) || 'Não assinado', rg: txt(o.rg), rgOrgao: txt(o.rgOrgao), rgUF: txt(o.rgUF), rgEmissao: txt(o.rgEmissao), email: txt(o.email), telefone: txt(o.telefone), necessidade: txt(o.necessidade) || 'Nenhuma'
   }),
   /** @returns {Lotacao} */
   lotacao: (o = {}) => ({ id: novoId(o.id), professorId: txt(o.professorId), vinculoId: txt(o.vinculoId), escolaId: txt(o.escolaId), cargaHoraria: numero(o.cargaHoraria), dataInicio: txt(o.dataInicio), dataFim: txt(o.dataFim) })

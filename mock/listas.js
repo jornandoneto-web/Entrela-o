@@ -1,0 +1,36 @@
+/* Mock: valores iniciais das listas gerenciáveis. Depois de carregados, são editados nas telas de Cadastros auxiliares. */
+'use strict';
+// tipo → { rótulo, perfil responsável, valores iniciais, valores usados por regras do sistema (não podem ser renomeados nem excluídos) }
+const LISTAS_DEF = {
+  recursosAcessibilidade: { l: 'Recursos de acessibilidade', dono: 'gestao', v: ['Rampa de acesso', 'Banheiro adaptado', 'Piso tátil', 'Elevador', 'Sala de recursos multifuncionais', 'Corrimão', 'Sinalização em braille', 'Aparelhos auditivos', 'Intérprete de Libras'] },
+  necessidades: { l: 'Necessidades de acessibilidade do aluno', dono: 'gestao', v: ['Nenhuma', 'Baixa visão', 'Deficiência visual', 'Daltonismo', 'Surdez ou deficiência auditiva', 'Deficiência física', 'TEA', 'TDAH', 'Dislexia', 'Outra'], sistema: ['Nenhuma', 'Baixa visão', 'Deficiência visual', 'Daltonismo'] },
+  recursosPEI: { l: 'Recursos do plano educacional (PEI)', dono: 'gestao', v: ['Material ampliado', 'Material em braille', 'Ledor nas provas', 'Transcritor', 'Tempo adicional em provas', 'Leitor de tela', 'Intérprete de Libras', 'Profissional de apoio', 'Mobiliário adaptado', 'Comunicação alternativa'] },
+  restricoesAlimentares: { l: 'Restrições alimentares', dono: 'gestao', v: ['Intolerância à lactose', 'Doença celíaca (sem glúten)', 'Alergia a amendoim', 'Alergia a frutos do mar', 'Alergia a ovo', 'Diabetes', 'Dieta vegetariana'] },
+  tiposLaboratorio: { l: 'Tipos de laboratório', dono: 'gestao', v: ['Ciências', 'Química', 'Física', 'Biologia', 'Matemática', 'Informática', 'Robótica', 'Línguas', 'Maker'] },
+  series: { l: 'Séries', dono: 'gestao', v: ['1º ano — Fundamental', '2º ano — Fundamental', '3º ano — Fundamental', '4º ano — Fundamental', '5º ano — Fundamental', '6º ano — Fundamental', '7º ano — Fundamental', '8º ano — Fundamental', '9º ano — Fundamental', '1º ano — Ensino médio', '2º ano — Ensino médio', '3º ano — Ensino médio'] },
+  turnos: { l: 'Turnos', dono: 'gestao', v: ['Manhã', 'Tarde', 'Noite', 'Integral'], sistema: ['Manhã', 'Tarde', 'Noite', 'Integral'] },
+  salas: { l: 'Salas', dono: 'gestao', v: [...Array.from({ length: 30 }, (_, i) => `Sala ${i + 1}`), 'Laboratório', 'Sala de informática', 'Auditório'] },
+  tiposEvento: { l: 'Tipos de evento do calendário', dono: 'calendario', v: ['Avaliação', 'Reunião', 'Evento', 'Feriado', 'Recesso', 'Prazo'] },
+  escoposEvento: { l: 'Público dos eventos', dono: 'calendario', v: ['Todas as turmas', 'Ensino fundamental', 'Ensino médio', '1º ano', '2º ano', '3º ano', 'Professores', 'Responsáveis', 'Sem aulas'] },
+  assinaturas: { l: 'Assinaturas de comunicados', dono: 'gestao', v: ['Secretaria escolar', 'Coordenação pedagógica', 'Direção da escola', 'Secretaria de Educação', 'Diretoria Regional'] },
+  tiposOcorrencia: { l: 'Tipos de ocorrência', dono: 'gestao', v: ['Elogio', 'Atraso', 'Comportamento', 'Material', 'Saúde', 'Outro'], sistema: ['Elogio'] },
+  tiposSolicitacao: { l: 'Tipos de solicitação', dono: 'gestao', v: ['Declaração de matrícula', 'Histórico escolar', 'Atestado médico', 'Revisão de nota', 'Segunda chamada de prova', 'Transferência', 'Carteirinha estudantil', 'Outro'] },
+  documentosMatricula: { l: 'Documentos da matrícula', dono: 'gestao', v: ['Certidão de nascimento', 'Comprovante de residência', 'Histórico escolar ou declaração', 'Cartão de vacina', 'CPF do estudante'] },
+  motivosTransferencia: { l: 'Motivos de transferência', dono: 'gestao', v: ['Mudança de endereço', 'Mudança de turno', 'Aluno começou a trabalhar ou estagiar', 'Proximidade da casa ou do trabalho dos responsáveis', 'Motivo de saúde', 'Oferta de curso que a escola atual não tem', 'Questões de convivência'] },
+  motivosAusencia: { l: 'Motivos de ausência no transporte', dono: 'gestao', v: ['Consulta médica', 'Doença', 'Vai de carona', 'Viagem da família', 'Atividade fora da escola'] },
+  meiosContato: { l: 'Meios de contato da busca ativa', dono: 'gestao', v: ['Telefone', 'WhatsApp', 'Visita domiciliar', 'Reunião na escola'] },
+  encaminhamentos: { l: 'Encaminhamentos da busca ativa', dono: 'gestao', v: ['Nenhum', 'Conselho Tutelar', 'CRAS', 'Unidade de saúde', 'Assistência social da rede'] },
+  coresRacas: { l: 'Cor/Raça', dono: 'gestao', v: ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Não declarada'] },
+  orgaosEmissores: { l: 'Órgãos emissores de RG', dono: 'gestao', v: ['SSP', 'SSP/SE', 'Detran', 'Polícia Federal', 'Polícia Civil', 'Outro'] },
+  sexos: { l: 'Sexo', dono: 'gestao', v: ['Feminino', 'Masculino'] },
+  estadosCivis: { l: 'Estados civis', dono: 'rh', v: ['Solteiro(a)', 'Casado(a)', 'União estável', 'Divorciado(a)', 'Viúvo(a)'] },
+  parentescos: { l: 'Parentescos de dependentes', dono: 'rh', v: ['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Pai ou mãe', 'Outro'] },
+  cargos: { l: 'Cargos', dono: 'rh', v: ['Professor', 'Professor coordenador de área', 'Coordenador pedagógico', 'Diretor', 'Vice-diretor', 'Secretário escolar', 'Técnico em educação', 'Intérprete de Libras', 'Profissional de apoio'] },
+  formasIngresso: { l: 'Formas de ingresso', dono: 'rh', v: ['Concurso', 'Contrato', 'Cedido', 'Seleção simplificada'], sistema: ['Concurso', 'Contrato', 'Cedido'] },
+  instituicoes: { l: 'Instituições de ensino', dono: 'rh', v: ['Universidade Tiradentes', 'Universidade Federal de Sergipe', 'Instituto Federal de Sergipe', 'Universidade Federal de Pernambuco', 'Universidade de Pernambuco', 'Universidade Federal Rural de Pernambuco'] },
+  orgaosCedentes: { l: 'Órgãos de origem de cedidos', dono: 'rh', v: ['Governo Federal', 'Governo de outro estado', 'Prefeitura de Aracaju', 'Prefeitura de Nossa Senhora do Socorro', 'Prefeitura de São Cristóvão', 'Prefeitura do Recife'] },
+  processosSeletivos: { l: 'Processos seletivos', dono: 'rh', v: ['Seleção Simplificada SEE 2025, professor temporário'] },
+  unidadesMedida: { l: 'Unidades de medida', dono: 'dae', v: ['kg', 'L', 'dz', 'un', 'g'] },
+  etapas: { l: 'Etapas de ensino', dono: 'ded', v: ['Educação Infantil', 'Ensino Fundamental', 'Ensino Médio', 'Educação Profissional', 'Educação de Jovens e Adultos'] },
+  areasConhecimento: { l: 'Áreas do conhecimento', dono: 'ded', v: ['Linguagens', 'Matemática', 'Ciências da Natureza', 'Ciências Humanas', 'Formação técnica', 'Itinerário formativo'] }
+};

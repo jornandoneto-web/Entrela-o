@@ -5,44 +5,51 @@
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const opt = (lista, v, ph = 'Selecione…') => `<option value="">${ph}</option>` + lista.map(x => { const [val, l] = Array.isArray(x) ? x : [x, x]; return `<option value="${esc(val)}" ${String(val) === String(v ?? '') ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
 let seqLinha = 0;
-const CARGOS = ['Professor', 'Professor coordenador de área', 'Coordenador pedagógico', 'Diretor', 'Vice-diretor', 'Secretário escolar', 'Técnico em educação', 'Intérprete de Libras', 'Profissional de apoio'];
 
 // ---------- Linhas repetíveis ----------
 function linhaDependente(d = Modelos.dependente()) {
   const i = ++seqLinha;
   return `<fieldset class="dep-linha form-grid" data-id="${esc(d.id)}"><legend class="sr-only">Dependente</legend>
     <div class="field"><label for="dp${i}-n">Nome <span class="req" aria-hidden="true">*</span></label><input id="dp${i}-n" data-k="nome" value="${esc(d.nome)}" required></div>
-    <div class="field"><label for="dp${i}-p">Parentesco <span class="req" aria-hidden="true">*</span></label><select id="dp${i}-p" data-k="parentesco" required>${opt(['Filho(a)', 'Enteado(a)', 'Cônjuge', 'Pai ou mãe', 'Outro'], d.parentesco)}</select></div>
+    <div class="field"><label for="dp${i}-p">Parentesco <span class="req" aria-hidden="true">*</span></label><select id="dp${i}-p" data-k="parentesco" required>${opt(nomes('parentescos'), d.parentesco)}</select></div>
     <div class="field"><label for="dp${i}-d">Data de nascimento</label><input id="dp${i}-d" type="date" data-k="nascimento" value="${esc(d.nascimento)}"></div>
     <div class="field" style="justify-content:flex-end"><button type="button" class="btn ghost sm" data-act="dep-rem" aria-label="Remover este dependente">${icon('trash')}Remover</button></div></fieldset>`;
 }
-function linhaVinculo(v = Modelos.vinculo(), n = 1) {
+function linhaFormacao(h = Modelos.habilitacao()) {
   const i = ++seqLinha;
-  const hab = uniq(v.formacoes.flatMap(f => DADOS.formacoes.find(x => x.id === f)?.disciplinas || []));
+  return `<fieldset class="hab-linha form-grid" data-id="${esc(h.id)}"><legend class="sr-only">Formação</legend>
+    <div class="field"><label for="fm${i}-f">Formação <span class="req" aria-hidden="true">*</span></label><select id="fm${i}-f" data-k="formacaoId" required data-change="vincForm">${opt(DADOS.formacoes.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(f => [f.id, f.nome]), h.formacaoId)}</select></div>
+    ${listaOutroHTML(`fm${i}-i`, 'Instituição', nomes('instituicoes'), h.instituicao, { req: true }).replace('<select ', '<select data-k="instituicao" ')}
+    <div class="field"><label for="fm${i}-a">Ano de conclusão <span class="req" aria-hidden="true">*</span></label><input id="fm${i}-a" data-k="anoConclusao" value="${esc(h.anoConclusao)}" inputmode="numeric" maxlength="4" placeholder="2012" required></div>
+    <div class="field" style="justify-content:flex-end"><button type="button" class="btn ghost sm" data-act="hab-rem" aria-label="Remover esta formação">${icon('trash')}Remover</button></div></fieldset>`;
+}
+const habDoForm = () => uniq($$('#habs [data-k="formacaoId"]').flatMap(s => DADOS.formacoes.find(f => f.id === s.value)?.disciplinas || []));
+function linhaVinculo(v = Modelos.vinculo(), n = 1, hab = []) {
+  const i = ++seqLinha;
   return `<fieldset class="vinc card" data-id="${esc(v.id)}" style="padding:1.25rem"><legend class="lbl" style="padding:0 .25rem">Vínculo ${n}</legend>
     <div class="form-grid">
-      ${listaOutroHTML(`vc${i}-cargo`, 'Cargo', CARGOS, v.cargo, { req: true }).replace('<select ', '<select data-k="cargo" ')}
-      <div class="field"><label for="vc${i}-ing">Forma de ingresso <span class="req" aria-hidden="true">*</span></label><select id="vc${i}-ing" data-k="ingresso" required>${opt(['Concurso', 'Contrato', 'Cedido', 'Seleção simplificada'], v.ingresso)}</select></div>
-      ${listaOutroHTML(`vc${i}-org`, 'Órgão de origem (se cedido)', municipioService.orgaosCedentes(), v.orgaoOrigem, { vazio: 'Não se aplica' }).replace('<select ', '<select data-k="orgaoOrigem" ')}
+      ${listaOutroHTML(`vc${i}-cargo`, 'Cargo', nomes('cargos'), v.cargo, { req: true }).replace('<select ', '<select data-k="cargo" ')}
+      <div class="field"><label for="vc${i}-ing">Forma de ingresso <span class="req" aria-hidden="true">*</span></label><select id="vc${i}-ing" data-k="ingresso" required>${opt(nomes('formasIngresso'), v.ingresso)}</select></div>
+      ${listaOutroHTML(`vc${i}-org`, 'Órgão de origem (se cedido)', nomes('orgaosCedentes'), v.orgaoOrigem, { vazio: 'Não se aplica' }).replace('<select ', '<select data-k="orgaoOrigem" ')}
       <div class="field"><label for="vc${i}-ch">Carga horária semanal (h) <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-ch" data-k="cargaHoraria" type="number" min="1" max="60" list="ch-padrao" value="${v.cargaHoraria}" required><p class="help">Padrão 25 h; integral 40 h.</p></div>
       <div class="field"><label for="vc${i}-ini">Data de início <span class="req" aria-hidden="true">*</span></label><input id="vc${i}-ini" type="date" data-k="dataInicio" value="${esc(v.dataInicio)}" required></div>
       <div class="field"><label for="vc${i}-fim">Data de fim (opcional)</label><input id="vc${i}-fim" type="date" data-k="dataFim" value="${esc(v.dataFim)}"></div>
     </div>
-    <fieldset class="field wide"><legend>Formações <span class="req" aria-hidden="true">*</span></legend><div class="checks">${DADOS.formacoes.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(f => `<label class="check"><input type="checkbox" data-k="formacoes" value="${f.id}" data-change="vincForm" ${v.formacoes.includes(f.id) ? 'checked' : ''}>${esc(f.nome)}</label>`).join('')}</div></fieldset>
-    <fieldset class="field wide"><legend>Disciplinas que leciona</legend><div class="checks">${DADOS.disciplinas.map(d => `<label class="check"><input type="checkbox" data-k="disciplinas" value="${d.id}" ${v.disciplinas.includes(d.id) ? 'checked' : ''} ${hab.includes(d.id) ? '' : 'disabled'}>${esc(d.nome)}</label>`).join('')}</div><p class="help">Só ficam disponíveis as disciplinas habilitadas pelas formações marcadas.</p></fieldset>
+    <fieldset class="field wide"><legend>Disciplinas que leciona</legend><div class="checks">${DADOS.disciplinas.map(d => `<label class="check"><input type="checkbox" data-k="disciplinas" value="${d.id}" ${v.disciplinas.includes(d.id) ? 'checked' : ''} ${hab.includes(d.id) ? '' : 'disabled'}>${esc(d.nome)}</label>`).join('')}</div><p class="help">Só ficam disponíveis as disciplinas habilitadas pelas formações da aba Formação.</p></fieldset>
     <div class="row" style="align-items:flex-end;justify-content:space-between"><div class="field" style="flex:1 1 16rem"><label for="vc${i}-anx">Anexo do contrato</label><input id="vc${i}-anx" type="file" data-k="anexo" accept=".pdf,image/*"><p class="help" data-anexo="${esc(v.anexoContrato)}">${v.anexoContrato ? 'Arquivo atual: ' + esc(v.anexoContrato) : 'PDF ou imagem do contrato ou portaria.'}</p></div>
       <button type="button" class="btn ghost sm" data-act="vinc-rem" aria-label="Remover vínculo ${n}">${icon('trash')}Remover vínculo</button></div>
   </fieldset>`;
 }
-CHG.vincForm = el => {
-  const fs = el.closest('.vinc'); const marc = $$('[data-k="formacoes"]:checked', fs).map(x => x.value);
-  const hab = uniq(marc.flatMap(f => DADOS.formacoes.find(x => x.id === f)?.disciplinas || []));
-  $$('[data-k="disciplinas"]', fs).forEach(c => { c.disabled = !hab.includes(c.value); if (c.disabled) c.checked = false; });
+CHG.vincForm = () => {
+  const hab = habDoForm();
+  $$('#vincs [data-k="disciplinas"]').forEach(c => { c.disabled = !hab.includes(c.value); if (c.disabled) c.checked = false; });
 };
 const renumerarVinculos = () => $$('#vincs .vinc').forEach((f, k) => { f.querySelector('legend').textContent = `Vínculo ${k + 1}`; });
+ACT['hab-add'] = () => { $('#habs').insertAdjacentHTML('beforeend', linhaFormacao()); $('#habs .hab-linha:last-child select').focus(); };
+ACT['hab-rem'] = el => { if ($$('#habs .hab-linha').length === 1) { toast('O professor precisa de pelo menos uma formação.', 'err'); return; } el.closest('.hab-linha').remove(); CHG.vincForm(); };
 ACT['dep-add'] = () => { $('#deps').insertAdjacentHTML('beforeend', linhaDependente()); $('#deps .dep-linha:last-child input').focus(); $('#deps-vazio').hidden = true; };
 ACT['dep-rem'] = el => { el.closest('.dep-linha').remove(); $('#deps-vazio').hidden = !!$('#deps .dep-linha'); };
-ACT['vinc-add'] = () => { $('#vincs').insertAdjacentHTML('beforeend', linhaVinculo(Modelos.vinculo({ dataInicio: TODAY_ISO }), $$('#vincs .vinc').length + 1)); $('#vincs .vinc:last-child input').focus(); };
+ACT['vinc-add'] = () => { $('#vincs').insertAdjacentHTML('beforeend', linhaVinculo(Modelos.vinculo({ dataInicio: TODAY_ISO }), $$('#vincs .vinc').length + 1, habDoForm())); $('#vincs .vinc:last-child input').focus(); };
 ACT['vinc-rem'] = el => {
   const fs = el.closest('.vinc');
   if ((DADOS.lotacoes || []).some(l => l.vinculoId === fs.dataset.id && lotacaoAtiva(l))) { toast('Este vínculo tem lotação ativa. Encerre a lotação em Gerir lotações antes.', 'err'); return; }
@@ -63,22 +70,26 @@ const abrirAba = nome => { const t = $(`#tab-${nome}`); if (t) ACT.aba(t); };
 
 // ---------- Formulário ----------
 async function abrirProfessor(id) {
-  const p = id ? await professorService.buscarPorId(id) : Modelos.professor({ vinculos: [Modelos.vinculo({ dataInicio: TODAY_ISO })] });
+  const p = id ? await professorService.buscarPorId(id) : Modelos.professor({ habilitacoes: [Modelos.habilitacao()], vinculos: [Modelos.vinculo({ dataInicio: TODAY_ISO })] });
   const pe = p.pessoa; const d = pe.endereco;
   const c = (fid, l, v, at = '', req = false) => `<div class="field"><label for="${fid}">${l}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}</label><input id="${fid}" value="${esc(v)}" ${req ? 'required' : ''} ${at}></div>`;
   const aba = (k, l, on) => `<button type="button" role="tab" id="tab-${k}" aria-controls="pan-${k}" aria-selected="${on}" tabindex="${on ? 0 : -1}" data-act="aba">${l}</button>`;
   openDialog({
     title: id ? `Professor: ${pe.nome}` : 'Novo professor', wide: true,
     body: `<datalist id="ch-padrao"><option value="25"><option value="40"></datalist>
-      <div role="tablist" class="abas" aria-label="Partes do cadastro">${aba('pes', 'Dados pessoais', true)}${aba('dep', `Dependentes (${p.dependentes.length})`, false)}${aba('vin', `Vínculos (${p.vinculos.length})`, false)}</div>
+      <div role="tablist" class="abas" aria-label="Partes do cadastro">${aba('pes', 'Dados pessoais', true)}${aba('for', `Formação (${p.habilitacoes.length})`, false)}${aba('dep', `Dependentes (${p.dependentes.length})`, false)}${aba('vin', `Vínculos (${p.vinculos.length})`, false)}</div>
       <div role="tabpanel" id="pan-pes" aria-labelledby="tab-pes" class="aba-painel">
         <p class="caption">Dados enviados a órgãos como a Receita Federal. Campos com <span class="req">*</span> são obrigatórios.</p>
         <div class="form-grid">${c('pf-nome', 'Nome completo', pe.nome, 'autocomplete="off"', true)}${c('pf-cpf', 'CPF', formatarCPF(pe.cpf), 'inputmode="numeric" maxlength="14" placeholder="000.000.000-00"', true)}${c('pf-nasc', 'Data de nascimento', pe.nascimento, 'type="date"', true)}
-          <div class="field"><label for="pf-sexo">Sexo</label><select id="pf-sexo">${opt(['Feminino', 'Masculino', 'Prefiro não informar'], pe.sexo)}</select></div>
-          <div class="field"><label for="pf-civil">Estado civil</label><select id="pf-civil">${opt(['Solteiro(a)', 'Casado(a)', 'União estável', 'Divorciado(a)', 'Viúvo(a)'], pe.estadoCivil)}</select></div>
+          <div class="field"><label for="pf-sexo">Sexo</label><select id="pf-sexo">${opt(nomes('sexos'), pe.sexo)}</select></div>
+          <div class="field"><label for="pf-civil">Estado civil</label><select id="pf-civil">${opt(nomes('estadosCivis'), pe.estadoCivil)}</select></div>
           ${c('pf-tel1', 'Telefone principal', pe.telefones[0] || '', 'type="tel"')}${c('pf-tel2', 'Outro telefone', pe.telefones[1] || '', 'type="tel"')}${c('pf-email', 'E-mail', pe.email, 'type="email"')}
           ${ufCidadeHTML('pf-nat', pe.naturalidade.uf, pe.naturalidade.cidade, { rotuloUF: 'Naturalidade: estado', rotuloCidade: 'Naturalidade: cidade' })}</div>
         <fieldset class="form-grid" style="margin-top:1rem"><legend class="lbl">Endereço</legend>${c('pf-cep', 'CEP', d.cep, 'inputmode="numeric" maxlength="9"')}${c('pf-log', 'Logradouro', d.logradouro)}${c('pf-num', 'Número', d.numero)}${c('pf-comp', 'Complemento', d.complemento)}${c('pf-bairro', 'Bairro', d.bairro)}${ufCidadeHTML('pf', d.uf, d.cidade, { rotuloUF: 'Estado', rotuloCidade: 'Cidade' })}</fieldset>
+      </div>
+      <div role="tabpanel" id="pan-for" aria-labelledby="tab-for" class="aba-painel aba-oculta">
+        <p class="muted">As formações definem quais disciplinas o professor pode lecionar. Cada uma vem do cadastro de Formações.</p><div id="habs" class="grid" style="gap:.75rem">${p.habilitacoes.map(linhaFormacao).join('')}</div>
+        <div class="row"><button type="button" class="btn outline" data-act="hab-add">${icon('plus')}Adicionar formação</button></div>
       </div>
       <div role="tabpanel" id="pan-dep" aria-labelledby="tab-dep" class="aba-painel aba-oculta">
         <p class="muted">Filhos e outros dependentes do professor.</p><div id="deps" class="grid" style="gap:.75rem">${p.dependentes.map(linhaDependente).join('')}</div>
@@ -87,7 +98,7 @@ async function abrirProfessor(id) {
       </div>
       <div role="tabpanel" id="pan-vin" aria-labelledby="tab-vin" class="aba-painel aba-oculta">
         <p class="muted">Um professor pode ter mais de um vínculo. A escola onde ele trabalha é definida em Gerir lotações.</p>
-        <div id="vincs" class="grid" style="gap:1rem">${p.vinculos.map((v, k) => linhaVinculo(v, k + 1)).join('')}</div>
+        <div id="vincs" class="grid" style="gap:1rem">${p.vinculos.map((v, k) => linhaVinculo(v, k + 1, habilitadas(p))).join('')}</div>
         <div class="row"><button type="button" class="btn outline" data-act="vinc-add">${icon('plus')}Adicionar vínculo</button></div>
       </div>`,
     onSubmit: () => {
@@ -95,12 +106,13 @@ async function abrirProfessor(id) {
         telefones: [$('#pf-tel1').value, $('#pf-tel2').value], email: $('#pf-email').value, naturalidade: { cidade: $('#pf-nat-cid').value, uf: $('#pf-nat-uf').value },
         endereco: { cep: $('#pf-cep').value, logradouro: $('#pf-log').value, numero: $('#pf-num').value, complemento: $('#pf-comp').value, bairro: $('#pf-bairro').value, cidade: $('#pf-cid').value, uf: $('#pf-uf').value } });
       const ler = (fs, k) => { const el = fs.querySelector(`[data-k="${k}"]`); return el.tagName === 'SELECT' && el.value === '__outro' ? valorOutro(el.id) : el.value; };
+      const habilitacoes = $$('#habs .hab-linha').map(fs => Modelos.habilitacao({ id: fs.dataset.id, formacaoId: ler(fs, 'formacaoId'), instituicao: ler(fs, 'instituicao'), anoConclusao: ler(fs, 'anoConclusao') }));
       const dependentes = $$('#deps .dep-linha').map(fs => Modelos.dependente({ id: fs.dataset.id, nome: ler(fs, 'nome'), parentesco: ler(fs, 'parentesco'), nascimento: ler(fs, 'nascimento') }));
       const vinculos = $$('#vincs .vinc').map(fs => { const arq = fs.querySelector('[data-k="anexo"]').files[0]; return Modelos.vinculo({ id: fs.dataset.id, cargo: ler(fs, 'cargo'), ingresso: ler(fs, 'ingresso'), orgaoOrigem: ler(fs, 'orgaoOrigem'), cargaHoraria: ler(fs, 'cargaHoraria'), dataInicio: ler(fs, 'dataInicio'), dataFim: ler(fs, 'dataFim'),
-        formacoes: $$('[data-k="formacoes"]:checked', fs).map(x => x.value), disciplinas: $$('[data-k="disciplinas"]:checked', fs).map(x => x.value), anexoContrato: arq ? arq.name : fs.querySelector('[data-anexo]').dataset.anexo }); });
-      const obj = Modelos.professor(Object.assign({}, p, { pessoa, dependentes, vinculos }));
+        disciplinas: $$('[data-k="disciplinas"]:checked', fs).map(x => x.value), anexoContrato: arq ? arq.name : fs.querySelector('[data-anexo]').dataset.anexo }); });
+      const obj = Modelos.professor(Object.assign({}, p, { pessoa, habilitacoes, dependentes, vinculos }));
       professorService.salvar(obj).then(() => { closeDialog(); rerender(); toast(id ? 'Cadastro do professor atualizado.' : 'Professor cadastrado. Defina a lotação em Gerir lotações.'); })
-        .catch(e => { abrirAba(/^Dados pessoais/.test(e.message) ? 'pes' : /^Dependentes/.test(e.message) ? 'dep' : /^Vínculo/.test(e.message) ? 'vin' : 'pes'); toast(e.message, 'err'); alertSR(e.message); });
+        .catch(e => { abrirAba(/^Dados pessoais/.test(e.message) ? 'pes' : /^Dependentes/.test(e.message) ? 'dep' : /^Formação/.test(e.message) ? 'for' : /^Vínculo/.test(e.message) ? 'vin' : 'pes'); toast(e.message, 'err'); alertSR(e.message); });
       return false;
     }
   });
@@ -126,8 +138,8 @@ ACT.chamar = el => {
   const locais = DADOS.escolas.filter(e => DADOS.turmas.some(x => x.escolaId === e.id));
   openDialog({ title: `Chamar ${t.nome}`, body: `<p class="muted">${esc(formNome(t.formacaoId))}, ${t.classificacao}º lugar em ${esc(t.processo)}.</p><div class="form-grid">${fieldHTML({ k: 'ch-cpf', l: 'CPF', req: 1, attrs: 'inputmode="numeric" maxlength="14"' }, '')}${fieldHTML({ k: 'ch-nasc', l: 'Data de nascimento', t: 'date', req: 1 }, '')}${fieldHTML({ k: 'ch-esc', l: 'Primeira lotação', t: 'select', o: locais.map(e => [e.id, e.nome]), req: 1 }, '')}${fieldHTML({ k: 'ch-carga', l: 'Carga horária do vínculo (h)', t: 'number', req: 1 }, 25)}${fieldHTML({ k: 'ch-ini', l: 'Início do contrato', t: 'date', req: 1 }, TODAY_ISO)}${fieldHTML({ k: 'ch-fim', l: 'Fim do contrato', t: 'date', req: 1 }, `${TODAY.getFullYear()}-12-18`)}</div>`,
     onSubmit: () => {
-      const v = Modelos.vinculo({ cargo: 'Professor', formacoes: [t.formacaoId], disciplinas: DADOS.formacoes.find(f => f.id === t.formacaoId)?.disciplinas || [], ingresso: 'Contrato', dataInicio: $('#f-ch-ini').value, dataFim: $('#f-ch-fim').value, cargaHoraria: $('#f-ch-carga').value });
-      const p = Modelos.professor({ pessoa: { nome: t.nome, cpf: $('#f-ch-cpf').value.replace(/\D/g, ''), nascimento: $('#f-ch-nasc').value, telefones: [t.telefone], email: t.email }, vinculos: [v] });
+      const v = Modelos.vinculo({ cargo: 'Professor', disciplinas: DADOS.formacoes.find(f => f.id === t.formacaoId)?.disciplinas || [], ingresso: 'Contrato', dataInicio: $('#f-ch-ini').value, dataFim: $('#f-ch-fim').value, cargaHoraria: $('#f-ch-carga').value });
+      const p = Modelos.professor({ habilitacoes: [{ formacaoId: t.formacaoId }], pessoa: { nome: t.nome, cpf: $('#f-ch-cpf').value.replace(/\D/g, ''), nascimento: $('#f-ch-nasc').value, telefones: [t.telefone], email: t.email }, vinculos: [v] });
       professorService.salvar(p).then(pr => lotacaoService.salvar(Modelos.lotacao({ professorId: pr.id, vinculoId: pr.vinculos[0].id, escolaId: $('#f-ch-esc').value, cargaHoraria: pr.vinculos[0].cargaHoraria, dataInicio: v.dataInicio })))
         .then(() => { t.situacao = 'Chamado'; save(); closeDialog(); rerender(); toast(`${t.nome} foi chamado e já está lotado.`); })
         .catch(e => { toast(e.message, 'err'); alertSR(e.message); });
