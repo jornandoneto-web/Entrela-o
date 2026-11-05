@@ -701,10 +701,8 @@ function openForm(key, id, defaults = {}) {
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ---------- Shell ----------
-// Dois fios entrelaçados sob o título: a assinatura visual do Entrelaço
-const FIO_TITULO = '<svg class="ph-fio" viewBox="0 0 160 12" aria-hidden="true" focusable="false"><path class="a" pathLength="1" d="M0 6 C 10 0, 20 0, 30 6 S 50 12, 60 6 S 80 0, 90 6 S 110 12, 120 6 S 140 0, 160 6"/><path class="b" pathLength="1" d="M0 6 C 10 12, 20 12, 30 6 S 50 0, 60 6 S 80 12, 90 6 S 110 0, 120 6 S 140 12, 160 6"/></svg>';
 function pageHead(title, desc, actions = '', h1cls = '') {
-  return `<header class="ph"><div><h1 id="page-title" tabindex="-1" class="${h1cls}">${title}</h1>${FIO_TITULO}${desc ? `<p class="lead">${desc}</p>` : ''}</div>${actions ? `<div class="ph-actions">${actions}</div>` : ''}</header>`;
+  return `<header class="ph"><div><h1 id="page-title" tabindex="-1" class="${h1cls}">${title}</h1>${desc ? `<p class="lead">${desc}</p>` : ''}</div>${actions ? `<div class="ph-actions">${actions}</div>` : ''}</header>`;
 }
 function renderShell() {
   const u = me(); const nav = navFor(SESSION.role);
@@ -787,7 +785,7 @@ function renderLogin() {
       <div class="principles"><div><b>Acolhedor</b><span>Tons calmos e cantos arredondados.</span></div><div><b>Claro</b><span>Um destaque por tela e contraste mínimo AA.</span></div><div><b>Acessível</b><span>Leitura em voz alta, alto contraste e atalhos.</span></div></div></section>
     <main class="login-main" id="content" tabindex="-1">
       <div class="login-top">${a11yBar()}</div>
-      <div><h2 id="page-title" tabindex="-1" style="font-size:var(--t-h1)">Como você quer entrar?</h2>${FIO_TITULO}<p class="muted" style="margin-top:.25rem">Protótipo com dados de exemplo.</p></div>
+      <div><h2 id="page-title" tabindex="-1" style="font-size:var(--t-h1)">Como você quer entrar?</h2><p class="muted" style="margin-top:.25rem">Protótipo com dados de exemplo.</p></div>
       <form id="login-form" class="roles" aria-labelledby="page-title">
         ${LOGIN_GRUPOS.map(([g, roles]) => `<fieldset class="role-group"><legend>${g}</legend><div class="role-grid">${roles.map(v => { const [l, d, ic] = LOGIN_PERFIS[v]; return `<label class="role"><input type="radio" name="role" value="${v}" ${role === v ? 'checked' : ''} data-change="login-role"><span class="ico">${icon(ic)}</span><span><b>${l}</b><span>${d}</span></span></label>`; }).join('')}</div></fieldset>`).join('')}
         <div class="field"><label for="login-who">Entrar como</label><select id="login-who" name="who">${people.map(([v, l]) => `<option value="${v}" ${(role === 'aluno' && v === 'a1') || (role === 'professor' && v === 'p1') ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select><p class="help">No protótipo não há senha. Escolha quem vai usar o portal.</p></div>

@@ -2,6 +2,9 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v20 — Sem o enfeite sob os títulos
+- Removidos os dois fios entrelaçados que apareciam sob o título de cada página e na tela de entrada.
+
 ## v19 — Mentoria de 29/10/2026
 - Regra "tudo que está em tela deve ser gerenciado": as opções de selects e caixas vêm de listas gerenciáveis, com tela de Cadastros auxiliares no menu do perfil responsável. Novas telas de Faixas de horário e Alimentos.
 - Diretorias Regionais DEA e DR1 a DR10 com os 75 municípios de Sergipe. Só a DEA está confirmada; o restante está marcado como TODO em `mock/sergipe.js`.
