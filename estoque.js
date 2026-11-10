@@ -83,10 +83,10 @@ function daePainel() {
   const mes = TODAY_ISO.slice(0, 7);
   return pageHead('Estoque da merenda na rede', 'Saldo de alimentos em todas as escolas, alertas e consumo para planejar compras e redistribuição.', '', 'hello') +
     `<section class="stats" aria-label="Resumo">
-      ${statCard('rose', 'Alertas ativos', al.length, rotuloAlerta())}
-      ${statCard('peach', 'Itens zerados', al.filter(x => x.zerado).length, 'precisam de entrega urgente')}
-      ${statCard('lilac', 'Escolas acompanhadas', escolasEstoque().length, `${DADOS.alimentos.length} alimentos`)}
-      ${statCard('mint', 'Entregas no mês', DADOS.entradas.filter(x => x.data.startsWith(mes)).length, 'registradas pela Seduc', 'entradas')}
+      ${statCard('peach', 'Alertas ativos', al.length, rotuloAlerta())}
+      ${statCard('rose', 'Itens zerados', al.filter(x => x.zerado).length, 'precisam de entrega urgente')}
+      ${statCard('mint', 'Escolas acompanhadas', escolasEstoque().length, `${DADOS.alimentos.length} alimentos`)}
+      ${statCard('peri', 'Entregas no mês', DADOS.entradas.filter(x => x.data.startsWith(mes)).length, 'registradas pela Seduc', 'entradas')}
     </section>
     <form class="card" data-form="alerta-pct" novalidate aria-labelledby="pct-h"><h2 id="pct-h">Regra do alerta</h2><div class="row" style="align-items:flex-end"><div class="field" style="max-width:16rem"><label for="pct-v">Avisar quando o saldo chegar a</label><div class="row" style="gap:.5rem;flex-wrap:nowrap"><input id="pct-v" class="input" type="number" min="5" max="95" step="5" value="${pctAlerta()}" style="max-width:6rem"><span>% da última entrada</span></div></div><button class="btn outline" type="submit">${icon('check')}Salvar regra</button></div><p class="caption">O alerta vai para o DAE, para a secretaria da rede e para a escola.</p></form>
     <section class="card" aria-labelledby="al-h"><h2 id="al-h">Alertas ativos</h2>${al.length ? `<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Escola e alimento</th><th scope="col" class="n">Saldo</th><th scope="col" class="n">Da última entrada</th><th scope="col" class="n">Dura</th><th scope="col">Sugestão</th></tr></thead><tbody>${al.map(x => `<tr><th scope="row">${esc(alimento(x.a).nome)}${caption2(esc(escNome(x.e)))}</th><td class="n" data-label="Saldo">${sitEstHTML(x)}${caption2(qtd(Math.max(0, x.s), x.a))}</td><td class="n" data-label="Da última entrada">${num(Math.max(0, x.pct), 0)}% de ${qtd(x.u.quantidade, x.a)}</td><td class="n" data-label="Dura">${x.dias == null ? '—' : `${x.dias} dia${x.dias === 1 ? '' : 's'}`}</td><td data-label="Sugestão">${esc(remanejar(x) || 'Programar nova entrega')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhum item em alerta.</p>'}</section>

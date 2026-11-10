@@ -102,10 +102,10 @@ function dInicio() {
   return pageHead(`${greet()}, ${firstName(g.nome)}.`, `Direção da ${esc(e?.nome || 'rede')}. O calendário escolar é responsabilidade da direção.`, can('calendario.editar') ? `<button class="btn primary" data-act="new" data-ent="eventos">${icon('plus')}Adicionar evento</button>` : '', 'hello') +
     fioSemana() +
     `<section class="stats" aria-label="Resumo">
-      ${statCard('lilac', 'Eventos no mês', evMes.length, cap(TODAY.toLocaleDateString('pt-BR', { month: 'long' })), 'calendario')}
-      ${statCard('peach', 'Próxima avaliação', prova ? fmtD(prova.data).slice(0, 5) : '—', prova ? esc(prova.titulo) : 'Nenhuma marcada', 'calendario')}
+      ${statCard('peach', 'Eventos no mês', evMes.length, cap(TODAY.toLocaleDateString('pt-BR', { month: 'long' })), 'calendario')}
+      ${statCard('rose', 'Próxima avaliação', prova ? fmtD(prova.data).slice(0, 5) : '—', prova ? esc(prova.titulo) : 'Nenhuma marcada', 'calendario')}
       ${statCard('mint', 'Alunos', alunosEsc().length, `${turmasEsc().length} turmas`)}
-      ${statCard('rose', 'Feriados e recessos', prox.filter(x => ['Feriado', 'Recesso'].includes(x.tipo)).length, 'até o fim do ano')}
+      ${statCard('peri', 'Feriados e recessos', prox.filter(x => ['Feriado', 'Recesso'].includes(x.tipo)).length, 'até o fim do ano')}
     </section>
     ${hrowOpen('painel-dir')}
       <section class="card" aria-labelledby="dev-h"><div class="card-h"><h2 id="dev-h">Próximos eventos</h2><button class="btn ghost sm" data-act="go" data-route="calendario">Abrir calendário</button></div><ul class="list">${prox.slice(0, 6).map(x => evItem(x, can('calendario.editar'))).join('')}</ul></section>
@@ -166,10 +166,10 @@ function rhPainel() {
   };
   return pageHead('Necessidade de professores', 'Carga horária necessária pela grade de cada escola, quanto está coberto e quanto falta. Horas contam aulas semanais de 50 minutos. Quando um contrato termina, as aulas daquele professor viram necessidade em aberto.', '', 'hello') +
     `<section class="stats" aria-label="Resumo">
-      ${statCard('rose', 'Horas sem professor', falta.reduce((n, r) => n + r.saldo, 0), `${falta.length} disciplina${falta.length === 1 ? '' : 's'} com falta`)}
-      ${statCard('peach', 'Contratos vencendo', vence30.length, 'nos próximos 30 dias', 'contratos')}
+      ${statCard('peach', 'Horas sem professor', falta.reduce((n, r) => n + r.saldo, 0), `${falta.length} disciplina${falta.length === 1 ? '' : 's'} com falta`)}
+      ${statCard('rose', 'Contratos vencendo', vence30.length, 'nos próximos 30 dias', 'contratos')}
       ${statCard('mint', 'Professores com horas livres', comLivres.length, `${comLivres.reduce((n, p) => n + livres(p), 0)}h disponíveis no total`, 'professores')}
-      ${statCard('lilac', 'Banco de talentos', (DADOS.talentos || []).filter(t => t.situacao === 'Aguardando chamada').length, 'candidatos aguardando chamada', 'talentos')}
+      ${statCard('peri', 'Banco de talentos', (DADOS.talentos || []).filter(t => t.situacao === 'Aguardando chamada').length, 'candidatos aguardando chamada', 'talentos')}
     </section>
     <label class="check" style="align-self:flex-start"><input type="checkbox" id="rh-so" data-change="rhSo" ${so ? 'checked' : ''}> Mostrar só onde falta professor ou vai faltar</label>
     ${uniq(vis.map(r => r.e)).map(e => `<section class="card" aria-labelledby="nec-${e}"><h2 id="nec-${e}">${esc(escNome(e))}</h2>

@@ -259,7 +259,7 @@ function notifsRede(r, add) {
 }
 function redeStat() {
   const livres = DADOS.vagas.reduce((s, v) => s + disp(v), 0);
-  return statCard('peri', 'Vagas livres na rede', livres, `${DADOS.prematriculas.filter(p => p.status === 'Em análise').length} pré-matrículas e ${DADOS.transferencias.filter(t => t.status.startsWith('Aguardando')).length} transferências aguardando`, 'vagas');
+  return statCard('peach', 'Vagas livres na rede', livres, `${DADOS.prematriculas.filter(p => p.status === 'Em análise').length} pré-matrículas e ${DADOS.transferencias.filter(t => t.status.startsWith('Aguardando')).length} transferências aguardando`, 'vagas');
 }
 function redeCard() {
   const pm = DADOS.prematriculas.filter(p => p.status === 'Em análise' && naEscola(p.escola1, p.escola2)); const tr = DADOS.transferencias.filter(t => t.status.startsWith('Aguardando') && naEscola(t.origemId, t.destinoId));
@@ -270,9 +270,9 @@ function redeCard() {
 function gVagas() {
   const livres = DADOS.vagas.reduce((s, v) => s + disp(v), 0); const tot = DADOS.vagas.reduce((s, v) => s + (Number(v.total) || 0), 0);
   const top = `<section class="stats" aria-label="Resumo de vagas">
-    ${statCard('mint', 'Vagas livres', livres, `de ${tot} vagas oferecidas`)}
-    ${statCard('lilac', 'Escolas com vagas', uniq(DADOS.vagas.filter(v => disp(v) > 0).map(v => v.escolaId)).length, `de ${DADOS.escolas.length} escolas da rede`)}
-    ${statCard('peach', 'Lista de espera', DADOS.prematriculas.filter(p => p.status === 'Lista de espera').length, 'estudantes aguardando vaga', 'prematriculas')}
+    ${statCard('peach', 'Vagas livres', livres, `de ${tot} vagas oferecidas`)}
+    ${statCard('rose', 'Escolas com vagas', uniq(DADOS.vagas.filter(v => disp(v) > 0).map(v => v.escolaId)).length, `de ${DADOS.escolas.length} escolas da rede`)}
+    ${statCard('mint', 'Lista de espera', DADOS.prematriculas.filter(p => p.status === 'Lista de espera').length, 'estudantes aguardando vaga', 'prematriculas')}
     ${statCard('peri', 'Pré-matrículas', DADOS.prematriculas.filter(p => p.status === 'Em análise').length, 'aguardando análise', 'prematriculas')}
   </section>`;
   return crudPage('vagas', top);
@@ -295,7 +295,7 @@ function gIntegracoes() {
   const exemplo = `GET /v1/vagas?serie=1º ano — Ensino médio&turno=Manhã\n\n[\n  {\n    "inep": "26140011",\n    "escola": "Escola Estadual Jardim das Acácias",\n    "serie": "1º ano — Ensino médio",\n    "turno": "Manhã",\n    "total": 45,\n    "ocupadas": 41,\n    "disponiveis": 4\n  }\n]`;
   const prev = UI.csv;
   return pageHead('Integrações', 'Conecte outras escolas da rede para compartilhar vagas, receber transferências e pré-matrículas. Escolas com outro sistema usam a API; as demais enviam uma planilha.') +
-    `<section class="stats" aria-label="Resumo">${statCard('lilac', 'Escolas conectadas', DADOS.escolas.length, `${DADOS.escolas.filter(e => isLocal(e.id)).length} no Entrelaço, ${api.length} por API ou planilha`)}${statCard('mint', 'Vagas livres publicadas', DADOS.vagas.reduce((s, v) => s + disp(v), 0), 'somando todas as escolas')}${statCard('peach', 'Desatualizadas', DADOS.escolas.filter(e => e.ultimaSync && (Date.now() - new Date(e.ultimaSync)) > 864e5).length, 'escolas sem envio há mais de 24 horas')}</section>
+    `<section class="stats" aria-label="Resumo">${statCard('peach', 'Escolas conectadas', DADOS.escolas.length, `${DADOS.escolas.filter(e => isLocal(e.id)).length} no Entrelaço, ${api.length} por API ou planilha`)}${statCard('rose', 'Vagas livres publicadas', DADOS.vagas.reduce((s, v) => s + disp(v), 0), 'somando todas as escolas')}${statCard('mint', 'Desatualizadas', DADOS.escolas.filter(e => e.ultimaSync && (Date.now() - new Date(e.ultimaSync)) > 864e5).length, 'escolas sem envio há mais de 24 horas')}</section>
     <div class="tbl-wrap"><table class="tbl stack"><caption>Escolas da rede</caption><thead><tr><th scope="col">Escola</th><th scope="col">Forma de integração</th><th scope="col">Última atualização</th><th scope="col" class="n">Vagas livres</th><th scope="col" class="n">Ação</th></tr></thead><tbody>${DADOS.escolas.map(e => { const old = e.ultimaSync && (Date.now() - new Date(e.ultimaSync)) > 864e5; return `<tr><th scope="row">${esc(e.nome)}${caption2('INEP ' + esc(e.inep || '—'))}</th><td data-label="Integração">${esc(e.integracao || '—')}</td><td data-label="Atualizado">${e.ultimaSync ? (old ? st(fmtHora(e.ultimaSync), 'warn') : fmtHora(e.ultimaSync)) : '—'}</td><td class="n" data-label="Vagas livres">${DADOS.vagas.filter(v => v.escolaId === e.id).reduce((s, v) => s + disp(v), 0)}</td><td class="n"><div class="acts">${e.integracao === 'API' ? `<button class="btn outline sm" data-act="sync" data-id="${e.id}" aria-label="Sincronizar vagas da ${esc(e.nome)}">Sincronizar agora</button>` : e.integracao === 'Planilha CSV' ? '<span class="caption">Envio por planilha</span>' : '<span class="caption">Automático</span>'}</div></td></tr>`; }).join('')}</tbody></table></div>
     <div class="grid g2">
       <section class="card" aria-labelledby="api-h"><h2 id="api-h">API da rede</h2><p class="muted">Sistemas de outras escolas usam estes endereços para publicar vagas e trocar pedidos com o Entrelaço. Entregue a chave só para a equipe técnica da escola.</p>
@@ -351,10 +351,10 @@ function rInicio() {
   const prox = DADOS.eventos.filter(e => e.data >= TODAY_ISO).sort((a, b) => a.data.localeCompare(b.data))[0];
   return pageHead(`Olá, ${firstName(r.nome)}.`, 'Acompanhe seus filhos, encontre vagas nas escolas da rede e faça a matrícula pela internet.', `<button class="btn outline" data-act="go" data-route="vagas">${icon('search')}Procurar vagas</button><button class="btn primary" data-act="go" data-route="matricula">${icon('plus')}Pedir matrícula</button>`, 'hello') +
     `<section class="stats" aria-label="Resumo">
-      ${statCard('lilac', 'Filhos na rede', fs.length, fs.length ? fs.map(a => firstName(a.nome)).join(', ') : 'Nenhum matriculado ainda', fs.length ? 'boletim' : 'matricula')}
-      ${statCard('peri', 'Pedidos em andamento', abertos.length, 'Matrículas e transferências', 'pedidos')}
+      ${statCard('peach', 'Filhos na rede', fs.length, fs.length ? fs.map(a => firstName(a.nome)).join(', ') : 'Nenhum matriculado ainda', fs.length ? 'boletim' : 'matricula')}
+      ${statCard('rose', 'Pedidos em andamento', abertos.length, 'Matrículas e transferências', 'pedidos')}
       ${statCard('mint', 'Vagas livres na rede', DADOS.vagas.reduce((s, v) => s + disp(v), 0), `em ${uniq(DADOS.vagas.filter(v => disp(v) > 0).map(v => v.escolaId)).length} escolas`, 'vagas')}
-      ${statCard('peach', 'Próximo evento', prox ? fmtD(prox.data).slice(0, 5) : '—', prox ? esc(prox.titulo) : 'Nada marcado', 'calendario')}
+      ${statCard('peri', 'Próximo evento', prox ? fmtD(prox.data).slice(0, 5) : '—', prox ? esc(prox.titulo) : 'Nada marcado', 'calendario')}
     </section>
     ${hrowOpen('painel-resp')}
       ${fs.map(a => `<section class="card c4" aria-labelledby="fi-${a.id}"><div class="row"><span class="avatar lg" aria-hidden="true">${initials(a.nome)}</span><div><h2 id="fi-${a.id}">${esc(a.nome)}</h2><p class="muted">${esc(turmaLong(a.turmaId))}</p></div></div><dl class="dl"><dt>Média geral</dt><dd>${num(mediaGeral(a.id))}</dd><dt>Faltas</dt><dd>${freqInfo(a.id).faltas}</dd><dt>Situação</dt><dd>${sitHTML(mediaGeral(a.id))}</dd></dl><div class="row"><button class="btn outline sm" data-act="filho-bol" data-id="${a.id}" aria-label="Ver boletim de ${esc(a.nome)}">Ver boletim</button></div></section>`).join('')}

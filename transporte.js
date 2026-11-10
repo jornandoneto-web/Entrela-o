@@ -1,7 +1,7 @@
 /* Portal Entrelaço — transporte escolar: mapa das rotas (Leaflet + OpenStreetMap), ponto mais próximo, QR de embarque, avisos de ausência e tela do motorista */
 'use strict';
 
-const CORES_ROTA = ['#7C3AED', '#EB6834', '#1BAF7A', '#2A78D6'];
+const CORES_ROTA = ['#726CF0', '#EB6834', '#1BAF7A', '#2A78D6'];
 const corRota = id => CORES_ROTA[Math.max(0, DADOS.rotas.findIndex(r => r.id === id)) % CORES_ROTA.length];
 // Uma parada por linha: "06:20 Praça da Várzea | -8.0466, -34.9573" (coordenadas opcionais)
 function parseParadas(txt) {
@@ -40,7 +40,7 @@ Object.assign(ENT.rotas, {
 function mapaHTML(id, o) {
   const rotas = o.rotas.map(x => byId('rotas', x)).filter(Boolean);
   return `<div class="mapa-wrap"><div class="mapa" id="${id}" data-map="${esc(JSON.stringify(o))}" role="img" aria-label="Mapa de ${esc(rotas.map(r => r.nome).join(' e '))}. A lista de paradas está logo abaixo."></div>
-    <ul class="legend" style="margin-top:.5rem">${rotas.map(r => `<li><span class="sw" style="background:${corRota(r.id)}"></span>${esc(r.nome)}</li>`).join('')}${o.destaque ? '<li><span class="sw" style="background:#7C3AED;border-radius:999px;box-shadow:0 0 0 3px #DDD6FE"></span>Seu ponto</li>' : ''}${o.casa ? '<li><span class="sw" style="background:#1F6B47;border-radius:999px"></span>Sua casa</li>' : ''}<li><span class="sw" style="background:#3A3938"></span>Destino</li></ul>
+    <ul class="legend" style="margin-top:.5rem">${rotas.map(r => `<li><span class="sw" style="background:${corRota(r.id)}"></span>${esc(r.nome)}</li>`).join('')}${o.destaque ? '<li><span class="sw" style="background:#726CF0;border-radius:999px;box-shadow:0 0 0 3px #D5D2FD"></span>Seu ponto</li>' : ''}${o.casa ? '<li><span class="sw" style="background:#1F6B47;border-radius:999px"></span>Sua casa</li>' : ''}<li><span class="sw" style="background:#13113E"></span>Destino</li></ul>
     <p class="caption mapa-aviso" hidden>O mapa de fundo não carregou nesta visualização. As rotas e paradas aparecem mesmo assim.</p></div>`;
 }
 function initMapa(el) {
@@ -59,7 +59,7 @@ function initMapa(el) {
       L.polyline(ps.map(p => [p.lat, p.lng]), { color: cor, weight: 4, opacity: .85 }).addTo(map);
       ps.forEach(p => {
         const dest = p.id === o.destaque && r.id === o.rotas[0];
-        L.circleMarker([p.lat, p.lng], { radius: dest ? 10 : p.escola ? 8 : 6, color: dest ? '#DDD6FE' : '#fff', weight: dest ? 4 : 2, fillColor: p.escola ? '#3A3938' : dest ? '#7C3AED' : cor, fillOpacity: 1 })
+        L.circleMarker([p.lat, p.lng], { radius: dest ? 10 : p.escola ? 8 : 6, color: dest ? '#D5D2FD' : '#fff', weight: dest ? 4 : 2, fillColor: p.escola ? '#13113E' : dest ? '#726CF0' : cor, fillOpacity: 1 })
           .bindTooltip(`${p.hora} ${p.nome}`, { direction: 'top', permanent: dest }).addTo(map);
       });
     });
@@ -74,7 +74,7 @@ function initMapa(el) {
   const [a0, a1, o0, o1] = [Math.min(...la), Math.max(...la), Math.min(...lo), Math.max(...lo)];
   const W = 600, H = 300, P = 30; const sx = (o1 - o0) || 1, sy = (a1 - a0) || 1, k = Math.min((W - 2 * P) / sx, (H - 2 * P) / sy);
   const X = g => P + (g - o0) * k, Y = t => H - P - (t - a0) * k;
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" aria-hidden="true">${rotas.map(r => { const ps = (r.paradas || []).filter(p => p.lat != null); return `<polyline points="${ps.map(p => `${X(p.lng)},${Y(p.lat)}`).join(' ')}" fill="none" stroke="${corRota(r.id)}" stroke-width="4" stroke-linejoin="round"/>${ps.map(p => `<circle cx="${X(p.lng)}" cy="${Y(p.lat)}" r="${p.id === o.destaque ? 10 : 6}" fill="${p.escola ? '#3A3938' : p.id === o.destaque ? '#7C3AED' : corRota(r.id)}" stroke="#fff" stroke-width="2"/><text x="${X(p.lng) + 10}" y="${Y(p.lat) - 8}" font-size="12" fill="#3A3938">${esc(p.nome)}</text>`).join('')}`; }).join('')}${o.casa ? `<circle cx="${X(o.casa.lng)}" cy="${Y(o.casa.lat)}" r="7" fill="#1F6B47" stroke="#fff" stroke-width="2"/>` : ''}</svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" aria-hidden="true">${rotas.map(r => { const ps = (r.paradas || []).filter(p => p.lat != null); return `<polyline points="${ps.map(p => `${X(p.lng)},${Y(p.lat)}`).join(' ')}" fill="none" stroke="${corRota(r.id)}" stroke-width="4" stroke-linejoin="round"/>${ps.map(p => `<circle cx="${X(p.lng)}" cy="${Y(p.lat)}" r="${p.id === o.destaque ? 10 : 6}" fill="${p.escola ? '#13113E' : p.id === o.destaque ? '#726CF0' : corRota(r.id)}" stroke="#fff" stroke-width="2"/><text x="${X(p.lng) + 10}" y="${Y(p.lat) - 8}" font-size="12" fill="#13113E">${esc(p.nome)}</text>`).join('')}`; }).join('')}${o.casa ? `<circle cx="${X(o.casa.lng)}" cy="${Y(o.casa.lat)}" r="7" fill="#1F6B47" stroke="#fff" stroke-width="2"/>` : ''}</svg>`;
 }
 HYDRATORS.push(root => root.querySelectorAll('[data-map]').forEach(initMapa));
 // QR code individual (qrcodejs). Sem a biblioteca, mostra só o código.
