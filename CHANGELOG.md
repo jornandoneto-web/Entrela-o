@@ -12,6 +12,7 @@ As versões seguem a numeração em que o protótipo foi publicado.
 - Novo Fechamento do ano: conferência por turma (componente, previstas, ministradas, situação), finalizar turma só com tudo completo, resultado Aprovado/Reprovado com a origem do cálculo, encerramento do ano e abertura do seguinte.
 - Nova Rematrícula: alunos das turmas finalizadas com o destino sugerido, confirmação em lote na turma escolhida, respeitando as vagas. Aprovado na última série fica com o curso concluído.
 - Novos `services/anoLetivoService.js`, `services/turmaService.js` e `services/fechamentoService.js`; novas telas `telas/turmas.js` e `telas/fechamento.js`.
+- Cores dos cartões de indicadores revisadas em vários painéis (contribuição da Julia).
 - Migração para a versão 12 dos dados. Nos dados de exemplo, as turmas da Unidade Centro têm o diário do ano completo, para demonstrar o fechamento.
 
 ## v20 — Sem o enfeite sob os títulos
