@@ -414,10 +414,10 @@ function gInicio() {
   return pageHead(`${greet()}, ${firstName(g.nome)}.`, `Resumo da ${esc(escN)} para ${esc(fmtLong(TODAY_ISO))}.`, `<button class="btn outline" data-act="go" data-route="alunos">${icon('users')}Ver alunos</button>${ENT.alunos.canNew() ? `<button class="btn primary" data-act="new" data-ent="alunos">${icon('plus')}Matricular aluno</button>` : ''}`, 'hello') +
     fioSemana() +
     `<section class="stats" aria-label="Indicadores">
-      ${statCard('lilac', 'Alunos matriculados', AL.length, escSessao() ? `${turmasEsc().length} turmas` : `${DADOS.turmas.length} turmas em ${uniq(DADOS.turmas.map(t => t.escolaId)).length} escolas`, 'alunos')}
+      ${statCard('peach', 'Alunos matriculados', AL.length, escSessao() ? `${turmasEsc().length} turmas` : `${DADOS.turmas.length} turmas em ${uniq(DADOS.turmas.map(t => t.escolaId)).length} escolas`, 'alunos')}
       ${statCard('rose', escSessao() ? 'Média geral da escola' : 'Média geral da rede', `${num(avg(AL.map(a => mediaGeral(a.id))))}<small> /10</small>`, `Mínima para aprovação: ${num(DADOS.config.mediaMin)}`, 'relatorios')}
       ${statCard('mint', 'Frequência média', `${num(avg(AL.map(a => freqPct(a.id))), 0)}<small>%</small>`, `Mínima exigida: ${DADOS.config.freqMin}%`, 'frequencia')}
-      ${statCard('peach', 'Solicitações pendentes', pend.length, 'Documentos e revisões aguardando', 'solicitacoes')}
+      ${statCard('peri', 'Solicitações pendentes', pend.length, 'Documentos e revisões aguardando', 'solicitacoes')}
       ${typeof redeStat === 'function' ? redeStat() : ''}
     </section>
     ${hrowOpen('painel-gestao')}
@@ -486,7 +486,7 @@ function gRelatorios() {
   return pageHead('Relatórios', `Situação do ${DADOS.config.bimestreAtual}º bimestre de ${DADOS.config.anoLetivo}. ${fe ? esc(byId('escolas', fe)?.nome) : 'Todas as escolas da rede'}.`) +
     `<nav class="rel-nav" aria-label="Seções do relatório">${secs.map(([id, l]) => `<a href="#${id}" data-act="rel-ir" data-id="${id}">${l}</a>`).join('')}</nav>
     <section class="stats" aria-label="Resumo">
-      ${statCard('lilac', 'Alunos', alunos.length, `${turmas.length} turmas`)}
+      ${statCard('peach', 'Alunos', alunos.length, `${turmas.length} turmas`)}
       ${statCard('rose', 'Média geral', `${num(mg)}<small> /10</small>`, `Mínima para aprovação: ${num(mn)}`)}
       ${statCard('mint', 'Frequência média', `${num(fq, 0)}<small>%</small>`, `${baixaFreq} aluno${baixaFreq === 1 ? '' : 's'} abaixo de ${fm}%`)}
       ${statCard('peri', 'Aprovados até agora', `${num(sits.Aprovado / tot * 100, 0)}<small>%</small>`, `${sits['Recuperação']} em recuperação, ${sits.Reprovado} reprovados`)}
@@ -540,10 +540,10 @@ function pInicio() {
   return pageHead(`${greet()}, ${firstName(p.nome)}.`, `${mt.length} turmas, ${esc(discs.map(discNome).join(' e '))}`, `<button class="btn outline" data-act="go" data-route="notas">${icon('pencil')}Lançar notas</button><button class="btn primary" data-act="go" data-route="chamada">${icon('check2')}Fazer chamada</button>`, 'hello') +
     fioDia(myAulas(), 'professor') +
     `<section class="stats" aria-label="Indicadores">
-      ${statCard('lilac', 'Minhas turmas', mt.length, `${myAlunos().length} alunos no total`, 'turmas')}
-      ${statCard('peach', 'Aulas hoje', myAulas().filter(a => a.dia === dia).length, esc(DAYS[dia]), 'horario')}
-      ${statCard('peri', 'Entregas para corrigir', corrigir, `${ats.length} atividades publicadas`, 'atividades')}
-      ${statCard('rose', 'Abaixo da média', atencao.length, `Média menor que ${num(DADOS.config.mediaMin)} nas suas disciplinas`, 'turmas')}
+      ${statCard('peach', 'Minhas turmas', mt.length, `${myAlunos().length} alunos no total`, 'turmas')}
+      ${statCard('rose', 'Aulas hoje', myAulas().filter(a => a.dia === dia).length, esc(DAYS[dia]), 'horario')}
+      ${statCard('mint', 'Entregas para corrigir', corrigir, `${ats.length} atividades publicadas`, 'atividades')}
+      ${statCard('peri', 'Abaixo da média', atencao.length, `Média menor que ${num(DADOS.config.mediaMin)} nas suas disciplinas`, 'turmas')}
     </section>
     ${hrowOpen('painel-prof')}
       <section class="card c4" aria-labelledby="hoje-h"><div class="card-h"><h2 id="hoje-h">Suas aulas de hoje</h2><span class="caption">${esc(DAYS[TODAY.getDay()])}</span></div>${hoje.length ? `<ul class="list">${hoje.map(a => `<li><span class="time">${esc(slotRange(byId('turmas', a.turmaId)?.turno, a.slot))}</span><span class="grow"><span class="t">${esc(discNome(a.disciplinaId))}</span><br><span class="m">${esc(turmaNome(a.turmaId))}</span></span>${registrada(a) ? st('Registrada', 'ok') : ''}<button class="btn ${registrada(a) ? 'ghost' : 'outline'} sm" data-act="abrir-aula" data-id="${a.id}" aria-label="Abrir a aula de ${esc(discNome(a.disciplinaId))}, ${esc(turmaNome(a.turmaId))}">${registrada(a) ? 'Ver' : 'Abrir aula'}</button></li>`).join('')}</ul>` : '<p class="empty">Hoje não há aulas na sua grade.</p>'}</section>
@@ -628,10 +628,10 @@ function aInicio() {
     fioDia(DADOS.aulas.filter(x => x.turmaId === a.turmaId), 'aluno') +
     (sugest && isDefault ? `<section class="card" style="background:var(--bg-brand-subtle);border-color:transparent" aria-labelledby="sug-h"><div class="row sp"><div><h2 id="sug-h" style="font-size:1.125rem">Seu cadastro indica ${esc(a.acess.toLowerCase())}</h2><p class="muted">Podemos aplicar o modo recomendado: ${esc(PRESETS[sugest][0].toLowerCase())}. Você pode mudar depois em Acessibilidade.</p></div><button class="btn primary" data-act="preset-need" data-id="${sugest}">Aplicar modo recomendado</button></div></section>` : '') +
     `<section class="stats" aria-label="Seu resumo">
-      ${statCard('rose', 'Média geral', `${num(mg)}<small> /10</small>`, mg != null && mg >= DADOS.config.mediaMin ? 'Acima da média mínima' : `Média mínima: ${num(DADOS.config.mediaMin)}`, 'boletim')}
-      ${statCard('mint', 'Aulas hoje', DADOS.aulas.filter(x => x.turmaId === a.turmaId && x.dia === TODAY.getDay()).length, TODAY.getDay() % 6 ? esc(DAYS[TODAY.getDay()]) : 'Fim de semana', 'horario')}
-      ${statCard('peri', 'Próximas entregas', ats.length, ats[0] ? `${esc(ats[0].titulo)}, ${fmtD(ats[0].prazo)}` : 'Nada pendente', 'atividades')}
-      ${statCard('peach', 'Próxima avaliação', prova ? fmtD(prova.data).slice(0, 5) : '—', prova ? esc(prova.titulo) : 'Nenhuma marcada', 'calendario')}
+      ${statCard('peach', 'Média geral', `${num(mg)}<small> /10</small>`, mg != null && mg >= DADOS.config.mediaMin ? 'Acima da média mínima' : `Média mínima: ${num(DADOS.config.mediaMin)}`, 'boletim')}
+      ${statCard('rose', 'Aulas hoje', DADOS.aulas.filter(x => x.turmaId === a.turmaId && x.dia === TODAY.getDay()).length, TODAY.getDay() % 6 ? esc(DAYS[TODAY.getDay()]) : 'Fim de semana', 'horario')}
+      ${statCard('mint', 'Próximas entregas', ats.length, ats[0] ? `${esc(ats[0].titulo)}, ${fmtD(ats[0].prazo)}` : 'Nada pendente', 'atividades')}
+      ${statCard('peri', 'Próxima avaliação', prova ? fmtD(prova.data).slice(0, 5) : '—', prova ? esc(prova.titulo) : 'Nenhuma marcada', 'calendario')}
     </section>
     ${hrowOpen('painel-aluno')}
       <section class="card c8" aria-labelledby="perf-h"><div class="card-h"><h2 id="perf-h">Seu desempenho</h2><button class="btn ghost sm" data-act="go" data-route="boletim">Ver boletim</button></div>${perfChart(a.id)}</section>
