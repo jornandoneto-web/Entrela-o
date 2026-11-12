@@ -2,6 +2,18 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v21 — Mentoria de 12/11/2026
+- Ano letivo no topo, ao lado do nome da escola ("Ano letivo 2026"), com seletor. Turmas, alunos, horários, notas e diário passam a mostrar o ano escolhido. Novo modelo `AnoLetivo { id, ano, escolaId, status }`, com um ano ativo por escola. O bimestre saiu do topo.
+- Perfis separados: a Secretaria de Educação (SEDUC, perfil Secretário) é a única que cadastra escolas. A Secretaria escolar perdeu o cadastro de escolas e ficou com turmas, horários, alunos, fechamento e rematrícula.
+- Cadastro de turma: ano letivo preenchido pelo topo e bloqueado, série vinda da matriz do curso, identificador sem a palavra "Turma" e nome montado na hora ("1º ano B"), quantidade de vagas e bloqueio de turma repetida. Depois de criar, o sistema oferece montar o horário.
+- Notas do professor: seletor de bimestre no topo, só a coluna do bimestre escolhido editável, média recalculada enquanto digita, com a conta e a regra na tela, e validação de 0 a 10 com uma casa decimal.
+- Alunos com atendimento especializado aparecem nas listas do professor só com uma estrela roxa e o texto "Aluno com atendimento especializado — consulte a coordenação". O diagnóstico fica só no cadastro, para a Secretaria escolar.
+- Início do professor com as aulas do dia; o diário mostra quantas aulas da disciplina já foram ministradas e quantas a matriz prevê.
+- Novo Fechamento do ano: conferência por turma (componente, previstas, ministradas, situação), finalizar turma só com tudo completo, resultado Aprovado/Reprovado com a origem do cálculo, encerramento do ano e abertura do seguinte.
+- Nova Rematrícula: alunos das turmas finalizadas com o destino sugerido, confirmação em lote na turma escolhida, respeitando as vagas. Aprovado na última série fica com o curso concluído.
+- Novos `services/anoLetivoService.js`, `services/turmaService.js` e `services/fechamentoService.js`; novas telas `telas/turmas.js` e `telas/fechamento.js`.
+- Migração para a versão 12 dos dados. Nos dados de exemplo, as turmas da Unidade Centro têm o diário do ano completo, para demonstrar o fechamento.
+
 ## v20 — Sem o enfeite sob os títulos
 - Removidos os dois fios entrelaçados que apareciam sob o título de cada página e na tela de entrada.
 

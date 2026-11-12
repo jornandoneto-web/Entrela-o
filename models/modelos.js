@@ -20,6 +20,10 @@
 /** @typedef {{ id: string, cargo: string, formacoes: string[], disciplinas: string[], ingresso: string, orgaoOrigem: string, dataInicio: string, dataFim: string, cargaHoraria: number, anexoContrato: string }} Vinculo */
 /** @typedef {{ id: string, pessoa: Pessoa, dependentes: Dependente[], vinculos: Vinculo[] }} Professor */
 /** @typedef {{ id: string, professorId: string, vinculoId: string, escolaId: string, cargaHoraria: number, dataInicio: string, dataFim: string }} Lotacao */
+/** @typedef {{ id: string, ano: number, escolaId: string, status: 'ativo'|'encerrado' }} AnoLetivo */
+/** @typedef {{ alunoId: string, nome: string, situacao: 'Aprovado'|'Reprovado', media: number|null, freq: number|null, motivos: string[], componentes: { nome: string, media: number|null }[], destino: string }} ResultadoFinal */
+/** @typedef {{ data: string, mediaMin: number, freqMin: number, resultados: ResultadoFinal[] }} Finalizacao */
+/** @typedef {{ id: string, escolaId: string, ano: number, cursoId: string, serieId: string, serieNome: string, identificador: string, nome: string, serie: string, turno: string, vagas: number, sala: string, finalizada: Finalizacao|null }} Turma */
 
 const txt = v => v == null ? '' : String(v).trim();
 const numero = (v, padrao = 0) => { const n = Number(v); return isNaN(n) ? padrao : n; };
@@ -85,7 +89,14 @@ const Modelos = {
     corRaca: txt(o.corRaca), bolsaFamilia: txt(o.bolsaFamilia), termoVacinacao: txt(o.termoVacinacao) || 'Não assinado', rg: txt(o.rg), rgOrgao: txt(o.rgOrgao), rgUF: txt(o.rgUF), rgEmissao: txt(o.rgEmissao), email: txt(o.email), telefone: txt(o.telefone), necessidade: txt(o.necessidade) || 'Nenhuma'
   }),
   /** @returns {Lotacao} */
-  lotacao: (o = {}) => ({ id: novoId(o.id), professorId: txt(o.professorId), vinculoId: txt(o.vinculoId), escolaId: txt(o.escolaId), cargaHoraria: numero(o.cargaHoraria), dataInicio: txt(o.dataInicio), dataFim: txt(o.dataFim) })
+  lotacao: (o = {}) => ({ id: novoId(o.id), professorId: txt(o.professorId), vinculoId: txt(o.vinculoId), escolaId: txt(o.escolaId), cargaHoraria: numero(o.cargaHoraria), dataInicio: txt(o.dataInicio), dataFim: txt(o.dataFim) }),
+  /** @returns {AnoLetivo} Cada escola tem um único ano ativo. */
+  anoLetivo: (o = {}) => ({ id: novoId(o.id), ano: numero(o.ano), escolaId: txt(o.escolaId), status: o.status === 'encerrado' ? 'encerrado' : 'ativo' }),
+  /** @returns {Turma} O usuário digita só o identificador ("B"); o nome completo ("1º ano B") é montado pelo serviço com a série da matriz. */
+  turma: (o = {}) => Object.assign({}, o, {
+    id: novoId(o.id), escolaId: txt(o.escolaId), ano: numero(o.ano), cursoId: txt(o.cursoId), serieId: txt(o.serieId), serieNome: txt(o.serieNome),
+    identificador: txt(o.identificador).replace(/^turma\s+/i, ''), nome: txt(o.nome), serie: txt(o.serie), turno: txt(o.turno), vagas: numero(o.vagas), sala: txt(o.sala), finalizada: o.finalizada || null
+  })
 };
 
 // Regras simples usadas por mais de uma tela

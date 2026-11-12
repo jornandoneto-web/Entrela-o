@@ -4,15 +4,21 @@
 // ---------- Opções compartilhadas ----------
 const PUBLICOS = () => [['Todos', 'Toda a comunidade'], ['Alunos', 'Alunos'], ['Professores', 'Professores'], ['Responsáveis', 'Responsáveis'], ...DADOS.turmas.map(t => ['turma:' + t.id, 'Turma ' + turmaLong(t.id)])];
 const publicoLabel = p => p && p.startsWith('turma:') ? 'Turma ' + turmaNome(p.slice(6)) : p === 'Todos' ? 'Toda a comunidade' : p;
-const turmasEsc = () => DADOS.turmas.filter(t => naEscola(t.escolaId));
-const alunosEsc = () => DADOS.alunos.filter(a => naEscola(byId('turmas', a.turmaId)?.escolaId));
+// Turmas e alunos da escola do usuário no ano letivo escolhido no topo
+const turmasEsc = () => DADOS.turmas.filter(t => naEscola(t.escolaId) && noAno(t));
+const alunosEsc = () => { const ts = new Set(turmasEsc().map(t => t.id)); return DADOS.alunos.filter(a => ts.has(a.turmaId)); };
 const optTurmas = () => turmasEsc().map(t => [t.id, turmaLong(t.id)]);
 const optAlunos = () => alunosEsc().map(a => [a.id, `${a.nome} — ${turmaNome(a.turmaId)}`]).sort((a, b) => a[1].localeCompare(b[1]));
 const DIAS = [[1, 'Segunda-feira'], [2, 'Terça-feira'], [3, 'Quarta-feira'], [4, 'Quinta-feira'], [5, 'Sexta-feira']];
 const caption2 = t => `<div class="caption">${t}</div>`;
 
 // ---------- Contexto do professor ----------
-const myAulas = () => DADOS.aulas.filter(a => a.professorId === SESSION.userId);
+const myAulas = () => DADOS.aulas.filter(a => a.professorId === SESSION.userId && noAno(byId('turmas', a.turmaId)));
+// Aluno com atendimento especializado: nas listas do professor aparece só um sinal neutro (estrela roxa).
+// O diagnóstico nunca vai para essas telas: elas são usadas em sala e podem ser fotografadas.
+const TXT_AEE = 'Aluno com atendimento especializado — consulte a coordenação';
+const temAEE = a => !!a && !!a.acess && a.acess !== 'Nenhuma';
+const marcaAEE = a => temAEE(a) ? ` <span class="aee-sinal" tabindex="0" role="img" aria-label="${TXT_AEE}" data-tip="${TXT_AEE}">${icon('star')}</span>` : '';
 const myTurmas = () => uniq(myAulas().map(a => a.turmaId)).sort((a, b) => turmaNome(a).localeCompare(turmaNome(b)));
 const myPairs = () => uniq(myAulas().map(a => a.turmaId + '|' + a.disciplinaId)).map(k => { const [t, d] = k.split('|'); return { k, t, d, l: `${turmaLong(t)} — ${discNome(d)}` }; }).sort((a, b) => a.l.localeCompare(b.l));
 const myAlunos = () => DADOS.alunos.filter(a => myTurmas().includes(a.turmaId));
@@ -39,13 +45,14 @@ Object.assign(ENT, {
   },
   alunos: {
     coll: 'alunos', title: 'Alunos e matrículas', singular: 'aluno', plural: 'alunos', newLabel: 'Matricular aluno',
+    canNew: () => !escSessao() || anoAberto(), // matrícula só no ano letivo ativo
     desc: 'Matrícula, transferência de turma e dados do responsável. Informe necessidades de acessibilidade para que os professores adaptem o material.',
     fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'matricula', l: 'Nº de matrícula', req: 1 }, { k: 'nascimento', l: 'Data de nascimento', t: 'date' }, { k: 'turmaId', l: 'Turma', t: 'select', o: optTurmas, req: 1 }, { k: 'email', l: 'E-mail do aluno', t: 'email' }, { k: 'responsavel', l: 'Responsável', req: 1 }, { k: 'telResp', l: 'Telefone do responsável', t: 'tel' }, { k: 'acess', l: 'Necessidade de acessibilidade', t: 'select', o: L('necessidades'), help: 'Aparece para os professores da turma.' }],
     defaults: () => ({ matricula: '2026' + String(DADOS.alunos.length + 1).padStart(4, '0'), acess: 'Nenhuma' }),
     rows: () => alunosEsc(),
     filter: { k: 'turmaId', l: 'Turma', o: optTurmas },
     sort: (a, b) => a.nome.localeCompare(b.nome),
-    cols: [['Aluno', r => `${esc(r.nome)}${caption2('Matrícula ' + esc(r.matricula))}`], ['Turma', r => esc(turmaNome(r.turmaId))], ['Responsável', r => `${esc(r.responsavel)}${caption2(esc(r.telResp || ''))}`], ['Acessibilidade', r => r.acess && r.acess !== 'Nenhuma' ? st(r.acess, 'info', 'access') : '<span class="muted">—</span>'], ['Média', r => num(mediaGeral(r.id)), 'n'], ['Frequência', r => freqHTML(freqPct(r.id)), 'n']],
+    cols: [['Aluno', r => `${esc(r.nome)}${caption2('Matrícula ' + esc(r.matricula))}`], ['Turma', r => esc(turmaNome(r.turmaId))], ['Responsável', r => `${esc(r.responsavel)}${caption2(esc(r.telResp || ''))}`], ['Acessibilidade', r => !temAEE(r) ? '<span class="muted">—</span>' : can('alunos.necessidades') ? st(r.acess, 'info', 'access') : marcaAEE(r)], ['Média', r => num(mediaGeral(r.id)), 'n'], ['Frequência', r => freqHTML(freqPct(r.id)), 'n']],
     rowActs: r => `<button class="btn ghost sm" data-act="ver-boletim" data-id="${r.id}" aria-label="Ver boletim de ${esc(r.nome)}">Boletim</button>`,
     check: (v, id) => DADOS.alunos.some(a => a.id !== id && a.matricula === v.matricula) ? 'Esse número de matrícula já está em uso.' : ''
   },
@@ -351,7 +358,7 @@ Object.assign(ACT, {
   'chamada-de': el => { UI.sel.ch = el.dataset.pair; UI.sel.chData = TODAY_ISO; go('chamada'); },
   entregas: el => {
     const at = byId('atividades', el.dataset.id); const al = alunosDaTurma(at.turmaId);
-    openDialog({ title: `Entregas — ${at.titulo}`, wide: true, body: `<p class="muted">${esc(turmaLong(at.turmaId))}, ${esc(discNome(at.disciplinaId))}, Prazo ${fmtD(at.prazo)}, Vale ${num(at.valor)} ponto(s)</p><ul class="list">${al.map(a => { const e = DADOS.entregas.find(x => x.atividadeId === at.id && x.alunoId === a.id); return `<li style="align-items:flex-start;flex-wrap:wrap"><span class="grow" style="min-width:12rem"><span class="t">${esc(a.nome)}</span>${a.acess !== 'Nenhuma' ? ` <span class="st info">${icon('access')}${esc(a.acess)}</span>` : ''}<br>${e ? `<span class="m">Entregue em ${fmtD(e.data)}${e.arquivo ? ', arquivo ' + esc(e.arquivo) : ''}</span><p class="quote" style="margin-top:.5rem">${esc(e.texto)}</p>` : '<span class="st neutral">Não entregou</span>'}</span>${e ? `<div class="field" style="width:7rem"><label for="en-n-${e.id}">Nota</label><input id="en-n-${e.id}" class="input" inputmode="decimal" data-nota data-eid="${e.id}" value="${e.nota == null ? '' : num(e.nota)}"></div><div class="field" style="flex:1 1 14rem"><label for="en-f-${e.id}">Comentário</label><input id="en-f-${e.id}" class="input" data-fb="${e.id}" value="${esc(e.feedback)}"></div>` : ''}</li>`; }).join('')}</ul>`,
+    openDialog({ title: `Entregas — ${at.titulo}`, wide: true, body: `<p class="muted">${esc(turmaLong(at.turmaId))}, ${esc(discNome(at.disciplinaId))}, Prazo ${fmtD(at.prazo)}, Vale ${num(at.valor)} ponto(s)</p><ul class="list">${al.map(a => { const e = DADOS.entregas.find(x => x.atividadeId === at.id && x.alunoId === a.id); return `<li style="align-items:flex-start;flex-wrap:wrap"><span class="grow" style="min-width:12rem"><span class="t">${esc(a.nome)}</span>${marcaAEE(a)}<br>${e ? `<span class="m">Entregue em ${fmtD(e.data)}${e.arquivo ? ', arquivo ' + esc(e.arquivo) : ''}</span><p class="quote" style="margin-top:.5rem">${esc(e.texto)}</p>` : '<span class="st neutral">Não entregou</span>'}</span>${e ? `<div class="field" style="width:7rem"><label for="en-n-${e.id}">Nota</label><input id="en-n-${e.id}" class="input" inputmode="decimal" data-nota data-eid="${e.id}" value="${e.nota == null ? '' : num(e.nota)}"></div><div class="field" style="flex:1 1 14rem"><label for="en-f-${e.id}">Comentário</label><input id="en-f-${e.id}" class="input" data-fb="${e.id}" value="${esc(e.feedback)}"></div>` : ''}</li>`; }).join('')}</ul>`,
       onSubmit: f => { let n = 0; $$('[data-eid]', f).forEach(i => { const e = DADOS.entregas.find(x => x.id === i.dataset.eid); const v = i.value.trim(); e.nota = v === '' ? null : Number(v.replace(',', '.')); e.feedback = $(`[data-fb="${e.id}"]`, f).value.trim(); if (v) n++; }); save(); rerender(); toast(`Correção salva (${n} com nota).`); } });
   },
   entregar: el => {
@@ -380,9 +387,11 @@ Object.assign(CHG, {
 });
 Object.assign(FORMS, {
   config: f => { const fd = new FormData(f); Object.assign(DADOS.config, { escolaNome: fd.get('escolaNome').trim(), anoLetivo: Number(fd.get('anoLetivo')), bimestreAtual: Number(fd.get('bimestreAtual')), mediaMin: Number(String(fd.get('mediaMin')).replace(',', '.')), freqMin: Number(fd.get('freqMin')) }); save(); renderShell(); renderPage(); $('#page-title').focus(); toast('Configurações salvas.'); },
+  // Salva só o bimestre selecionado; os outros bimestres não são tocados
   notas: f => {
-    const p = curPair('nt'); const b = UI.sel.ntBim || DADOS.config.bimestreAtual; let n = 0;
-    $$('input[data-aid]', f).forEach(i => { const k = `${i.dataset.aid}|${p.d}|${b}`; const v = i.value.trim(); if (v === '') delete DADOS.notas[k]; else { DADOS.notas[k] = Math.round(Number(v.replace(',', '.')) * 10) / 10; n++; } });
+    const p = curPair('nt'); const b = UI.sel.ntBim || DADOS.config.bimestreAtual; const t = byId('turmas', p.t); let n = 0;
+    if (!notasAbertas(t)) { toast('Este ano letivo está encerrado ou a turma já foi finalizada. As notas ficam só para consulta.', 'err'); return; }
+    $$('input[data-aid]', f).forEach(i => { const k = `${i.dataset.aid}|${p.d}|${b}`; const r = lerNota(i.value); if (r.vazio) delete DADOS.notas[k]; else { DADOS.notas[k] = r.v; n++; } });
     save(); rerender(); toast(`Notas do ${b}º bimestre salvas para ${n} aluno${n === 1 ? '' : 's'}.`);
   },
   chamada: f => {
@@ -402,7 +411,7 @@ function gInicio() {
   const AL = alunosEsc(); const g = me(); const escN = escSessao() ? byId('escolas', escSessao())?.nome : 'rede estadual';
   const risco = AL.map(a => ({ a, m: mediaGeral(a.id), f: freqPct(a.id) })).filter(x => (x.m != null && x.m < DADOS.config.mediaMin) || (x.f != null && x.f < DADOS.config.freqMin)).sort((x, y) => (x.m ?? 10) - (y.m ?? 10));
   const pend = DADOS.solicitacoes.filter(s => s.status === 'Em análise' && AL.some(a => a.id === s.alunoId));
-  return pageHead(`${greet()}, ${firstName(g.nome)}.`, `Resumo da ${esc(escN)} para ${esc(fmtLong(TODAY_ISO))}.`, `<button class="btn outline" data-act="go" data-route="alunos">${icon('users')}Ver alunos</button><button class="btn primary" data-act="new" data-ent="alunos">${icon('plus')}Matricular aluno</button>`, 'hello') +
+  return pageHead(`${greet()}, ${firstName(g.nome)}.`, `Resumo da ${esc(escN)} para ${esc(fmtLong(TODAY_ISO))}.`, `<button class="btn outline" data-act="go" data-route="alunos">${icon('users')}Ver alunos</button>${ENT.alunos.canNew() ? `<button class="btn primary" data-act="new" data-ent="alunos">${icon('plus')}Matricular aluno</button>` : ''}`, 'hello') +
     fioSemana() +
     `<section class="stats" aria-label="Indicadores">
       ${statCard('lilac', 'Alunos matriculados', AL.length, escSessao() ? `${turmasEsc().length} turmas` : `${DADOS.turmas.length} turmas em ${uniq(DADOS.turmas.map(t => t.escolaId)).length} escolas`, 'alunos')}
@@ -524,7 +533,9 @@ function pInicio() {
   const corrigir = DADOS.entregas.filter(e => e.nota == null && ats.some(a => a.id === e.atividadeId)).length;
   const discs = uniq(myAulas().map(a => a.disciplinaId));
   const atencao = myAlunos().map(a => ({ a, m: avg(discs.map(d => mediaDisc(a.id, d))) })).filter(x => x.m != null && x.m < DADOS.config.mediaMin);
-  const nec = myAlunos().filter(a => a.acess !== 'Nenhuma');
+  const nec = myAlunos().filter(temAEE);
+  const hoje = myAulas().filter(a => a.dia === TODAY.getDay()).sort((x, y) => x.slot - y.slot);
+  const registrada = a => DADOS.chamadas.some(c => c.turmaId === a.turmaId && c.disciplinaId === a.disciplinaId && c.data === TODAY_ISO && (c.slot === a.slot || c.slot == null));
   let dia = TODAY.getDay(); if (dia === 0 || dia === 6) dia = 1;
   return pageHead(`${greet()}, ${firstName(p.nome)}.`, `${mt.length} turmas, ${esc(discs.map(discNome).join(' e '))}`, `<button class="btn outline" data-act="go" data-route="notas">${icon('pencil')}Lançar notas</button><button class="btn primary" data-act="go" data-route="chamada">${icon('check2')}Fazer chamada</button>`, 'hello') +
     fioDia(myAulas(), 'professor') +
@@ -535,7 +546,8 @@ function pInicio() {
       ${statCard('rose', 'Abaixo da média', atencao.length, `Média menor que ${num(DADOS.config.mediaMin)} nas suas disciplinas`, 'turmas')}
     </section>
     ${hrowOpen('painel-prof')}
-      <section class="card c4" aria-labelledby="nec-h"><h2 id="nec-h">Adaptações para seus alunos</h2>${nec.length ? `<ul class="list">${nec.map(a => `<li><span class="avatar" aria-hidden="true">${initials(a.nome)}</span><span class="grow"><span class="t">${esc(a.nome)}</span><br><span class="m">${esc(turmaNome(a.turmaId))}, ${esc(a.acess)} — ${esc(a.pei?.recursos?.length ? a.pei.recursos.join(', ') : dica(a.acess))}</span></span></li>`).join('')}</ul>` : '<p class="empty">Nenhum aluno com necessidade registrada.</p>'}</section>
+      <section class="card c4" aria-labelledby="hoje-h"><div class="card-h"><h2 id="hoje-h">Suas aulas de hoje</h2><span class="caption">${esc(DAYS[TODAY.getDay()])}</span></div>${hoje.length ? `<ul class="list">${hoje.map(a => `<li><span class="time">${esc(slotRange(byId('turmas', a.turmaId)?.turno, a.slot))}</span><span class="grow"><span class="t">${esc(discNome(a.disciplinaId))}</span><br><span class="m">${esc(turmaNome(a.turmaId))}</span></span>${registrada(a) ? st('Registrada', 'ok') : ''}<button class="btn ${registrada(a) ? 'ghost' : 'outline'} sm" data-act="abrir-aula" data-id="${a.id}" aria-label="Abrir a aula de ${esc(discNome(a.disciplinaId))}, ${esc(turmaNome(a.turmaId))}">${registrada(a) ? 'Ver' : 'Abrir aula'}</button></li>`).join('')}</ul>` : '<p class="empty">Hoje não há aulas na sua grade.</p>'}</section>
+      <section class="card c4" aria-labelledby="nec-h"><h2 id="nec-h">Atendimento especializado</h2>${nec.length ? `<p class="muted">Estes alunos aparecem com uma estrela nas suas listas. A coordenação orienta as adaptações.</p><ul class="list">${nec.map(a => `<li><span class="avatar" aria-hidden="true">${initials(a.nome)}</span><span class="grow"><span class="t">${esc(a.nome)}</span>${marcaAEE(a)}<br><span class="m">${esc(turmaNome(a.turmaId))}</span></span></li>`).join('')}</ul>` : '<p class="empty">Nenhum aluno com atendimento especializado nas suas turmas.</p>'}</section>
       <section class="card c4" aria-labelledby="com-h"><div class="card-h"><h2 id="com-h">Comunicados recentes</h2><button class="btn ghost sm" data-act="go" data-route="comunicados">Ver todos</button></div><ul class="list">${visibleCom().sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3).map(c => `<li><span class="grow"><span class="t">${esc(c.titulo)}</span><br><span class="m">${esc(c.autor)}, ${fmtD(c.data)}</span></span></li>`).join('')}</ul></section>
     </div>`;
 }
@@ -547,18 +559,43 @@ function pTurmas() {
   const al = alunosDaTurma(p.t); const b = DADOS.config.bimestreAtual;
   return pageHead('Minhas turmas', 'Alunos, notas e frequência na sua disciplina.') +
     `<div class="toolbar">${selectCtl('pt-pair', 'Turma e disciplina', myPairs().map(x => [x.k, x.l]), p.k, 'ptPair')}<p class="caption" style="padding-bottom:.75rem">${al.length} alunos, média da turma ${num(avg(al.map(a => mediaDisc(a.id, p.d))))}</p></div>
-    <div class="tbl-wrap"><table class="tbl"><caption>${esc(p.l)}</caption><thead><tr><th scope="col">Aluno</th><th scope="col">Acessibilidade</th>${[1, 2, 3, 4].slice(0, Math.max(b, 1)).map(i => `<th scope="col" class="n">${i}º bim.</th>`).join('')}<th scope="col" class="n">Média</th><th scope="col" class="n">Frequência</th><th scope="col">Situação</th></tr></thead><tbody>${al.map(a => { const m = mediaDisc(a.id, p.d); return `<tr><th scope="row">${esc(a.nome)}${caption2('Matrícula ' + esc(a.matricula))}</th><td>${a.acess !== 'Nenhuma' ? st(a.acess, 'info', 'access') : '<span class="muted">—</span>'}</td>${[1, 2, 3, 4].slice(0, Math.max(b, 1)).map(i => `<td class="n">${num(nota(a.id, p.d, i))}</td>`).join('')}<td class="n"><b>${num(m)}</b></td><td class="n">${freqHTML(freqPct(a.id, p.d))}</td><td>${sitHTML(m)}</td></tr>`; }).join('')}</tbody></table></div>`;
+    <div class="tbl-wrap"><table class="tbl"><caption>${esc(p.l)}</caption><thead><tr><th scope="col">Aluno</th>${[1, 2, 3, 4].slice(0, Math.max(b, 1)).map(i => `<th scope="col" class="n">${i}º bim.</th>`).join('')}<th scope="col" class="n">Média</th><th scope="col" class="n">Frequência</th><th scope="col">Situação</th></tr></thead><tbody>${al.map(a => { const m = mediaDisc(a.id, p.d); return `<tr><th scope="row">${esc(a.nome)}${marcaAEE(a)}${caption2('Matrícula ' + esc(a.matricula))}</th>${[1, 2, 3, 4].slice(0, Math.max(b, 1)).map(i => `<td class="n">${num(nota(a.id, p.d, i))}</td>`).join('')}<td class="n"><b>${num(m)}</b></td><td class="n">${freqHTML(freqPct(a.id, p.d))}</td><td>${sitHTML(m)}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
+// Notas: só o bimestre escolhido no topo fica editável. A média é recalculada enquanto o professor digita.
+const notasAbertas = t => !!t && !t.finalizada && anoAberto(t.escolaId);
+function mediaExplicada(ns) {
+  const v = ns.filter(x => x != null);
+  if (!v.length) return { m: null, conta: 'Sem notas lançadas' };
+  const m = Math.round(v.reduce((a, x) => a + x, 0) / v.length * 10) / 10;
+  return { m, conta: v.length === 1 ? `${num(v[0])} ÷ 1` : `(${v.map(x => num(x)).join(' + ')}) ÷ ${v.length}` };
+}
+const mediaCelula = ns => { const r = mediaExplicada(ns); return `<b class="num" style="color:${r.m != null && r.m < DADOS.config.mediaMin ? 'var(--err)' : 'inherit'}">${num(r.m)}</b><span class="caption">${esc(r.conta)}</span>`; };
 function pNotas() {
-  const p = curPair('nt'); if (!p) return pageHead('Lançar notas', 'Você ainda não tem aulas atribuídas.');
-  const b = UI.sel.ntBim || DADOS.config.bimestreAtual; const al = alunosDaTurma(p.t);
-  return pageHead('Lançar notas', 'Digite as notas de 0 a 10 (use vírgula ou ponto). Use Tab para ir ao próximo aluno. Deixe em branco para não lançar.') +
-    `<div class="toolbar">${selectCtl('nt-pair', 'Turma e disciplina', myPairs().map(x => [x.k, x.l]), p.k, 'ntPair')}
-      <fieldset class="field"><legend class="lbl">Bimestre</legend><div class="seg">${[1, 2, 3, 4].map(i => `<label><input type="radio" id="nt-bim-${i}" name="nt-bim" value="${i}" data-change="ntBim" ${b === i ? 'checked' : ''}>${i}º Bim</label>`).join('')}</div></fieldset></div>
+  const p = curPair('nt'); if (!p) return pageHead('Lançar notas', 'Você não tem aulas atribuídas no ano letivo selecionado.');
+  const b = UI.sel.ntBim || DADOS.config.bimestreAtual; const al = alunosDaTurma(p.t); const t = byId('turmas', p.t);
+  const aberto = notasAbertas(t);
+  const cel = (a, i) => {
+    const v = nota(a.id, p.d, i);
+    if (i === b && aberto) return `<td class="n bim-atual" data-label="${i}º bimestre"><label class="sr-only" for="nota-${a.id}">Nota do ${i}º bimestre de ${esc(a.nome)}</label><input id="nota-${a.id}" class="input" inputmode="decimal" autocomplete="off" maxlength="4" data-nota data-aid="${a.id}" data-input="notaViva" value="${v == null ? '' : num(v)}" placeholder="—"></td>`;
+    return `<td class="n bloq" data-label="${i}º bimestre" data-v="${v ?? ''}"><span class="sr-only">Bloqueada: </span>${num(v)}</td>`;
+  };
+  return pageHead('Lançar notas', 'Escolha o bimestre. Só a coluna dele fica aberta para digitar; as outras ficam visíveis, mas bloqueadas.') +
+    `<fieldset class="field bim-topo"><legend class="lbl">Bimestre</legend><div class="seg">${[1, 2, 3, 4].map(i => `<label><input type="radio" id="nt-bim-${i}" name="nt-bim" value="${i}" data-change="ntBim" ${b === i ? 'checked' : ''}>${i}º bimestre</label>`).join('')}</div></fieldset>
+    <div class="toolbar">${selectCtl('nt-pair', 'Turma e disciplina', myPairs().map(x => [x.k, x.l]), p.k, 'ntPair')}</div>
+    ${aberto ? '' : `<p class="notice">${icon('lock')}${t?.finalizada ? 'Esta turma já foi finalizada.' : `O ano letivo ${t?.ano} está encerrado.`} As notas ficam só para consulta.</p>`}
     <form data-form="notas" novalidate class="card" aria-labelledby="nt-cap"><div class="card-h"><h2 id="nt-cap">${esc(p.l)}, ${b}º bimestre</h2><span class="caption">${al.filter(a => nota(a.id, p.d, b) != null).length} de ${al.length} lançadas</span></div>
-      <div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Aluno</th>${[1, 2, 3, 4].filter(i => i !== b).map(i => `<th scope="col" class="n">${i}º</th>`).join('')}<th scope="col" class="n">Nota do ${b}º bim.</th><th scope="col" class="n">Média atual</th></tr></thead><tbody>${al.map(a => { const v = nota(a.id, p.d, b); return `<tr><th scope="row">${esc(a.nome)}${a.acess !== 'Nenhuma' ? caption2(esc(a.acess)) : ''}</th>${[1, 2, 3, 4].filter(i => i !== b).map(i => `<td class="n muted" data-label="${i}º bimestre">${num(nota(a.id, p.d, i))}</td>`).join('')}<td class="n" data-label="Nota do ${b}º bimestre"><label class="sr-only" for="nota-${a.id}">Nota do ${b}º bimestre de ${esc(a.nome)}</label><input id="nota-${a.id}" class="input" inputmode="decimal" autocomplete="off" data-nota data-aid="${a.id}" value="${v == null ? '' : num(v)}" placeholder="—"></td><td class="n" data-label="Média atual">${num(mediaDisc(a.id, p.d))}</td></tr>`; }).join('')}</tbody></table></div>
-      <div class="row"><button class="btn primary" type="submit">${icon('check')}Salvar notas</button><span class="caption">As notas aparecem na hora no boletim do aluno.</span></div></form>`;
+      <p class="caption">Regra da média: média aritmética dos bimestres lançados, ou seja, a soma das notas dividida pelo número de bimestres com nota. Mínima para aprovação: ${num(DADOS.config.mediaMin)}. Notas de 0 a 10, com até uma casa decimal.</p>
+      <div class="tbl-wrap"><table class="tbl stack notas"><thead><tr><th scope="col">Aluno</th>${[1, 2, 3, 4].map(i => `<th scope="col" class="n ${i === b && aberto ? 'bim-atual' : ''}">${i}º bim.${i === b && aberto ? '' : `<span class="sr-only"> (bloqueado)</span>`}</th>`).join('')}<th scope="col" class="n">Média</th></tr></thead><tbody>${al.map(a => `<tr data-aluno="${a.id}"><th scope="row">${esc(a.nome)}${marcaAEE(a)}</th>${[1, 2, 3, 4].map(i => cel(a, i)).join('')}<td class="n media" data-label="Média" id="med-${a.id}" aria-live="polite">${mediaCelula([1, 2, 3, 4].map(i => nota(a.id, p.d, i)))}</td></tr>`).join('')}</tbody></table></div>
+      ${aberto ? `<div class="row"><button class="btn primary" type="submit">${icon('check')}Salvar notas do ${b}º bimestre</button><span class="caption">As notas aparecem na hora no boletim do aluno.</span></div>` : ''}</form>`;
 }
+// Recalcula a média da linha enquanto o professor digita e avisa se a nota não é válida
+CHG.notaViva = el => {
+  const tr = el.closest('tr'); const r = lerNota(el.value);
+  if (r.erro) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid'); el.title = r.erro || '';
+  const ns = [...tr.querySelectorAll('td[data-label$="bimestre"]')].map(td => { const i = td.querySelector('input'); if (i) { const x = lerNota(i.value); return x.erro || x.vazio ? null : x.v; } return td.dataset.v === '' ? null : Number(td.dataset.v); });
+  $('#med-' + el.dataset.aid).innerHTML = mediaCelula(ns);
+};
+ACT['abrir-aula'] = el => { UI.sel.diaData = TODAY_ISO; UI.sel.diaAula = el.dataset.id; go('chamada'); };
 function pChamada() {
   const p = curPair('ch'); if (!p) return pageHead('Chamada e diário', 'Você ainda não tem aulas atribuídas.');
   const data = UI.sel.chData || TODAY_ISO; const al = alunosDaTurma(p.t);

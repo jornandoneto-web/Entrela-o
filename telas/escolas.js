@@ -45,7 +45,7 @@ async function telaEscolas() {
   const lista = await escolaService.filtrar(f);
   const pode = can('escolas.editar');
   const cursoNome = id => cursos.find(c => c.id === id)?.nome;
-  return pageHead(SESSION.role === 'regional' ? 'Escolas da regional' : 'Escolas', 'Escolas da rede estadual. Filtre por Diretoria Regional, depois por município e por escola.', pode ? `<button class="btn primary" data-act="escola-form">${icon('plus')}Cadastrar escola</button>` : '') +
+  return pageHead(SESSION.role === 'regional' ? 'Escolas da regional' : 'Escolas da rede', `${pode ? 'Cadastro e gestão das escolas da rede estadual, feitos só pela Secretaria de Educação. ' : 'Escolas da rede estadual. '}Filtre por Diretoria Regional, depois por município e por escola.`, pode ? `<button class="btn primary" data-act="escola-form">${icon('plus')}Cadastrar escola</button>` : '') +
     `<div class="toolbar">${cascataHTML('escF', f, { escolas: todas, comEscola: true, filtro: true })}</div>
     <p class="muted" aria-live="polite">${lista.length} escola${lista.length === 1 ? '' : 's'} encontrada${lista.length === 1 ? '' : 's'}.</p>
     ${lista.length ? `<div class="tbl-wrap"><table class="tbl stack"><caption class="sr-only">Escolas</caption><thead><tr><th scope="col">Escola</th><th scope="col">Diretoria e município</th><th scope="col">Endereço</th><th scope="col">Cursos ofertados</th><th scope="col">Diretor</th>${pode ? '<th scope="col" class="n">Ações</th>' : ''}</tr></thead><tbody>${lista.map(e => `<tr><th scope="row">${esc(e.nome)}${caption2('INEP ' + esc(e.inep || '—'))}</th><td data-label="Diretoria e município">${esc(regionalService.siglaDR(e.drId) || '—')}${caption2(esc(regionalService.nomeMunicipio(e.municipioId) || '—'))}</td><td data-label="Endereço">${esc(enderecoTxt(e) || '—')}</td><td data-label="Cursos">${esc(e.cursos.map(cursoNome).filter(Boolean).join('; ') || '—')}</td><td data-label="Diretor">${esc(e.diretor || 'Não definido')}</td>${pode ? `<td class="n"><div class="acts"><button class="icon-btn" data-act="escola-form" data-id="${e.id}" aria-label="Editar ${esc(e.nome)}">${icon('pencil')}</button><button class="icon-btn" data-act="escola-del" data-id="${e.id}" aria-label="Excluir ${esc(e.nome)}">${icon('trash')}</button></div></td>` : ''}</tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhuma escola com esses filtros.</p>'}`;
@@ -55,6 +55,8 @@ async function telaEscolas() {
 const lerEndereco = () => Modelos.endereco({ cep: $('#es-cep').value, logradouro: $('#es-log').value, numero: $('#es-num').value, complemento: $('#es-comp').value, bairro: $('#es-bairro').value });
 const cursoCheck = (c, marcado) => `<label class="check"><input type="checkbox" name="cursos" value="${esc(c.id)}" ${marcado ? 'checked' : ''}>${esc(c.nome)}</label>`;
 ACT['escola-form'] = async el => {
+  // Só a Secretaria de Educação (perfil Secretário) cadastra e edita escolas
+  if (!can('escolas.editar')) { toast('O cadastro de escolas é feito pela Secretaria de Educação.', 'err'); return; }
   const id = el.dataset.id;
   const [drs, cursos, pessoas, e] = await Promise.all([regionalService.listar(), cursoService.listar(), pessoaService.listarTodas(), id ? escolaService.buscarPorId(id) : Modelos.escola()]);
   UI.cache.drs = drs;
@@ -93,6 +95,7 @@ ACT['curso-rapido'] = () => {
   }).catch(err => toast(err.message, 'err'));
 };
 ACT['escola-del'] = el => {
+  if (!can('escolas.editar')) { toast('O cadastro de escolas é feito pela Secretaria de Educação.', 'err'); return; }
   const e = byId('escolas', el.dataset.id);
   if (DADOS.turmas.some(t => t.escolaId === e.id)) { toast('A escola tem turmas. Transfira ou exclua as turmas antes.', 'err'); return; }
   confirmBox('Excluir escola', `Excluir <b>${esc(e.nome)}</b>? Essa ação não pode ser desfeita.`, () => escolaService.remover(e.id).then(() => { rerender(); toast('Escola excluída.'); }));

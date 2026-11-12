@@ -1,6 +1,12 @@
 /* Diário do professor: aulas do dia (vindas da grade), frequência, conteúdo e resumo com o cálculo explicado. */
 'use strict';
 
+// Aulas previstas na matriz para a disciplina na série da turma (o fechamento do ano compara com as aulas salvas)
+function previstasNaMatriz(t, disciplinaId) {
+  const serie = (DADOS.matrizes || []).find(m => m.cursoId === t?.cursoId)?.series.find(s => s.id === t?.serieId);
+  return serie?.componentes.find(c => norm(c.nome) === norm(discNome(disciplinaId)))?.cargaHoraria ?? null;
+}
+
 function telaDiario() {
   const data = UI.sel.diaData || TODAY_ISO; const dia = dOf(data).getDay();
   const aulas = myAulas().filter(a => a.dia === dia).sort((x, y) => x.slot - y.slot);
@@ -12,13 +18,16 @@ function telaDiario() {
   if (a) {
     const al = alunosDaTurma(a.turmaId); const c = reg(a); const fl = c ? c.faltas : [];
     const hist = DADOS.chamadas.filter(x => x.turmaId === a.turmaId && x.disciplinaId === a.disciplinaId);
-    corpo = `<form id="chamada-form" data-form="diario" novalidate class="card" aria-labelledby="dc-h"><div class="card-h"><h2 id="dc-h">Frequência: ${esc(discNome(a.disciplinaId))}, ${esc(turmaNome(a.turmaId))}</h2></div>
+    const t = byId('turmas', a.turmaId); const aberto = notasAbertas(t); const prev = previstasNaMatriz(t, a.disciplinaId);
+    const contagem = `<p class="muted">Aulas ministradas de ${esc(discNome(a.disciplinaId))} nesta turma: <b>${hist.length}</b>${prev != null ? ` de ${prev} previstas na matriz${hist.length >= prev ? ` ${st('Completo', 'ok')}` : `, faltam ${prev - hist.length}`}` : ''}. Cada aula salva conta para o fechamento do ano.</p>`;
+    corpo = `<form id="chamada-form" data-form="diario" novalidate class="card" aria-labelledby="dc-h"><div class="card-h"><h2 id="dc-h">Frequência: ${esc(discNome(a.disciplinaId))}, ${esc(turmaNome(a.turmaId))}</h2>${c ? st('Aula registrada', 'ok') : ''}</div>${contagem}
+      ${aberto ? '' : `<p class="notice">${icon('lock')}${t?.finalizada ? 'Esta turma já foi finalizada.' : `O ano letivo ${t?.ano} está encerrado.`} O diário fica só para consulta.</p>`}
       <div class="row sp"><p id="pres-count" aria-live="polite" class="muted">${al.length - fl.length} presentes e ${fl.length} falta${fl.length === 1 ? '' : 's'}</p><button type="button" class="btn ghost sm" data-act="marcar-todos">Marcar todos presentes</button></div>
-      <ul class="list">${al.map(x => `<li><span class="avatar" aria-hidden="true">${initials(x.nome)}</span><span class="grow"><span class="t" id="nm-${x.id}">${esc(x.nome)}</span></span><fieldset aria-labelledby="nm-${x.id}"><div class="seg presence">${['P', 'F'].map(v => `<label><input type="radio" name="p-${x.id}" value="${v}" data-change="pres" ${(v === 'F') === fl.includes(x.id) ? 'checked' : ''}>${v === 'P' ? 'Presente' : 'Falta'}</label>`).join('')}</div></fieldset></li>`).join('')}</ul>
-      <div class="field"><label for="ch-cont">Conteúdo ministrado <span class="req" aria-hidden="true">*</span></label><textarea id="ch-cont" required>${esc(c?.conteudo || '')}</textarea></div>
-      <div class="row"><button class="btn primary" type="submit">${icon('check')}Salvar aula</button></div></form>
+      <ul class="list">${al.map(x => `<li><span class="avatar" aria-hidden="true">${initials(x.nome)}</span><span class="grow"><span class="t" id="nm-${x.id}">${esc(x.nome)}</span>${marcaAEE(x)}</span><fieldset aria-labelledby="nm-${x.id}" ${aberto ? '' : 'disabled'}><div class="seg presence">${['P', 'F'].map(v => `<label><input type="radio" name="p-${x.id}" value="${v}" data-change="pres" ${(v === 'F') === fl.includes(x.id) ? 'checked' : ''}>${v === 'P' ? 'Presente' : 'Falta'}</label>`).join('')}</div></fieldset></li>`).join('')}</ul>
+      <div class="field"><label for="ch-cont">Conteúdo ministrado <span class="req" aria-hidden="true">*</span></label><textarea id="ch-cont" required ${aberto ? '' : 'disabled'}>${esc(c?.conteudo || '')}</textarea></div>
+      ${aberto ? `<div class="row"><button class="btn primary" type="submit">${icon('check')}Salvar aula</button></div>` : ''}</form>
     <section class="card" aria-labelledby="rs-h"><h2 id="rs-h">Resumo da chamada</h2><p class="muted">${esc(discNome(a.disciplinaId))}, ${esc(turmaNome(a.turmaId))}: ${hist.length} aulas registradas. Frequência = presenças ÷ aulas registradas × 100.</p>
-      <div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Aluno</th><th scope="col" class="n">Aulas</th><th scope="col" class="n">Presenças</th><th scope="col" class="n">Faltas</th><th scope="col">Como foi calculado</th></tr></thead><tbody>${al.map(x => { const f = freqInfo(x.id, a.disciplinaId); const pr = f.aulas - f.faltas; return `<tr><th scope="row">${esc(x.nome)}</th><td class="n" data-label="Aulas">${f.aulas}</td><td class="n" data-label="Presenças">${pr}</td><td class="n" data-label="Faltas">${f.faltas}</td><td data-label="Cálculo">${f.aulas ? `${pr} presenças de ${f.aulas} aulas = <b>${num(f.pct, 0)}%</b>` : 'Sem aulas registradas'}</td></tr>`; }).join('')}</tbody></table></div></section>`;
+      <div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Aluno</th><th scope="col" class="n">Aulas</th><th scope="col" class="n">Presenças</th><th scope="col" class="n">Faltas</th><th scope="col">Como foi calculado</th></tr></thead><tbody>${al.map(x => { const f = freqInfo(x.id, a.disciplinaId); const pr = f.aulas - f.faltas; return `<tr><th scope="row">${esc(x.nome)}${marcaAEE(x)}</th><td class="n" data-label="Aulas">${f.aulas}</td><td class="n" data-label="Presenças">${pr}</td><td class="n" data-label="Faltas">${f.faltas}</td><td data-label="Cálculo">${f.aulas ? `${pr} presenças de ${f.aulas} aulas = <b>${num(f.pct, 0)}%</b>` : 'Sem aulas registradas'}</td></tr>`; }).join('')}</tbody></table></div></section>`;
   }
   return pageHead('Diário de classe', 'Escolha uma aula do dia, lance a frequência e registre o conteúdo. Todos começam como presentes.') +
     `<div class="toolbar"><div class="field" style="max-width:12rem"><label for="dia-data">Dia</label><input id="dia-data" class="input" type="date" value="${data}" max="${TODAY_ISO}" data-change="diaData"></div></div>
@@ -29,6 +38,7 @@ ACT['dia-aula'] = el => { UI.sel.diaAula = el.dataset.id; rerender(); };
 ACT['chamada-de'] = el => { const [t, d] = el.dataset.pair.split('|'); UI.sel.diaData = TODAY_ISO; UI.sel.diaAula = myAulas().find(a => a.turmaId === t && a.disciplinaId === d && a.dia === TODAY.getDay())?.id; go('chamada'); };
 FORMS.diario = f => {
   const data = UI.sel.diaData || TODAY_ISO; const a = byId('aulas', UI.sel.diaAula);
+  if (!notasAbertas(byId('turmas', a.turmaId))) { toast('Este ano letivo está encerrado ou a turma já foi finalizada. O diário fica só para consulta.', 'err'); return; }
   const faltas = $$('input[value="F"]:checked', f).map(i => i.name.slice(2));
   let c = DADOS.chamadas.find(x => x.turmaId === a.turmaId && x.disciplinaId === a.disciplinaId && x.data === data && (x.slot === a.slot || x.slot == null));
   if (!c) { c = { id: uid(), turmaId: a.turmaId, disciplinaId: a.disciplinaId, data }; DADOS.chamadas.push(c); }

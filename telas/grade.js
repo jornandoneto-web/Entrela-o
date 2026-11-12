@@ -16,7 +16,7 @@ CHG.gProf = el => { UI.sel.gProf = el.value; rerender(); };
 
 function pendenciasTurma(t) {
   const m = (DADOS.matrizes || []).find(x => x.cursoId === t.cursoId); const num0 = (t.serie.match(/\d/) || [''])[0];
-  const serie = m?.series.find(s => (s.nome.match(/\d/) || [''])[0] === num0);
+  const serie = m?.series.find(s => s.id === t.serieId) || m?.series.find(s => (s.nome.match(/\d/) || [''])[0] === num0);
   if (!serie) return null;
   const sem = DADOS.config.semanasLetivas || 40;
   return serie.componentes.map(c => {
@@ -30,12 +30,13 @@ function gradeTurma() {
   if (!turmasEsc().some(t => t.id === UI.sel.hTurma)) UI.sel.hTurma = turmasEsc()[0]?.id;
   const t = byId('turmas', UI.sel.hTurma); if (!t) return '<p class="empty">Cadastre uma turma para montar a grade.</p>';
   const faixas = faixasDe(t.turno); const aulas = DADOS.aulas.filter(a => a.turmaId === t.id); const pend = pendenciasTurma(t);
-  const pode = SESSION.role === 'gestao';
+  const pode = SESSION.role === 'gestao' && can('turmas.gerir') && notasAbertas(t);
   const cel = (d, s) => { const a = aulas.find(x => x.dia === d && x.slot === s); const rot = `${DAYS[d]}, ${s + 1}º horário`;
     if (!a) return pode ? `<button class="kan-add" data-act="aula-form" data-dia="${d}" data-slot="${s}" aria-label="Adicionar aula: ${rot}">${icon('plus')}</button>` : '<span class="muted">Livre</span>';
     const p = byId('professores', a.professorId);
     return `<div class="kan-aula"><b>${esc(discNome(a.disciplinaId))}</b><span>${ativo(p) ? esc(p.nome) : `<span class="st warn">${icon('warnc')}Sem professor</span>`}</span>${pode ? `<div class="kan-acts"><button class="icon-btn" data-act="aula-form" data-id="${a.id}" data-dia="${d}" data-slot="${s}" aria-label="Editar ${esc(discNome(a.disciplinaId))}, ${rot}">${icon('pencil')}</button><button class="icon-btn" data-act="aula-del" data-id="${a.id}" aria-label="Remover ${esc(discNome(a.disciplinaId))}, ${rot}">${icon('trash')}</button></div>` : ''}</div>`; };
   return `<div class="toolbar">${selectCtl('g-turma', 'Turma', optTurmas(), t.id, 'gTurma')}<p class="muted" style="padding-bottom:.75rem">${aulas.length} aulas na semana, turno da ${esc(t.turno.toLowerCase())}</p></div>
+    ${pode || SESSION.role !== 'gestao' ? '' : `<p class="notice">${icon('lock')}${t.finalizada ? 'Esta turma já foi finalizada.' : `O ano letivo ${t.ano} está encerrado.`} A grade fica só para consulta.</p>`}
     <div class="kanban">${DIAS.map(([d, l]) => `<section class="kan-col" aria-label="${l}"><h2>${l.split('-')[0]}</h2>${faixas.map((f, s) => `<div class="kan-slot"><span class="kan-h">${s + 1}º horário, ${horaCurta(f.inicio)}</span>${cel(d, s)}</div>`).join('')}</section>`).join('')}</div>
     <section class="card" aria-labelledby="pd-h"><h2 id="pd-h">Falta preencher</h2>${pend == null ? '<p class="empty">Este curso ainda não tem matriz para esta série. O DED cadastra em Gestão de matrizes.</p>' : pend.length ? `<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th scope="col">Disciplina</th><th scope="col" class="n">Na matriz</th><th scope="col" class="n">Aulas por semana</th><th scope="col">Situação</th></tr></thead><tbody>${pend.map(x => `<tr><th scope="row">${esc(x.nome)}</th><td class="n" data-label="Na matriz">${x.ch} h no ano</td><td class="n" data-label="Aulas por semana">${x.lancadas} de ${x.previstas}</td><td data-label="Situação">${x.semProf ? st(`${x.semProf} sem professor`, 'err') : st(`Faltam ${x.previstas - x.lancadas}`, 'warn')}</td></tr>`).join('')}</tbody></table></div><p class="caption">Aulas por semana = carga anual da matriz dividida por ${DADOS.config.semanasLetivas || 40} semanas letivas.</p>` : '<p class="empty">Todas as disciplinas da matriz estão com professor e carga completa.</p>'}</section>`;
 }

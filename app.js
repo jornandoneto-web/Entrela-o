@@ -21,6 +21,13 @@ const fmtD = iso => iso ? dOf(iso).toLocaleDateString('pt-BR') : '—';
 const fmtLong = iso => dOf(iso).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 const daysUntil = iso => Math.round((dOf(iso) - TODAY) / 864e5);
 const num = (n, d = 1) => (n == null || isNaN(n)) ? '—' : n.toFixed(d).replace('.', ',');
+// Nota digitada: de 0 a 10, com no máximo uma casa decimal (vírgula ou ponto)
+function lerNota(texto) {
+  const t = String(texto ?? '').trim().replace(',', '.');
+  if (t === '') return { vazio: true };
+  if (!/^\d{1,2}(\.\d)?$/.test(t)) return { erro: 'Use um número de 0 a 10 com no máximo uma casa decimal, como 7,5.' };
+  const v = Number(t); return v > 10 ? { erro: 'A nota vai de 0 a 10.' } : { v };
+}
 const money = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const initials = n => { const p = String(n).split(' ').filter(Boolean); return ((p[0] || '')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); };
 const firstName = n => String(n).split(' ')[0];
@@ -81,7 +88,9 @@ const IC = {
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
   copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-  refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>'
+  refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="currentColor"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
 };
 const icon = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${IC[n] || ''}</svg>`;
 
@@ -265,7 +274,7 @@ const UI = { route: 'inicio', q: {}, f: {}, sel: {} };
 // Cada perfil tem uma lista de permissões. Para criar uma permissão nova: inclua em PERMISSOES,
 // marque nos perfis que devem tê-la (PERFIS_PADRAO) e use can('chave') na tela ou na entrada do menu (4º item do NAV).
 // A secretaria da rede pode ligar e desligar permissões em Configurações; o resultado fica em DADOS.perfis.
-const ROLE_LABEL = { calendario: 'Calendário escolar', secretario: 'Secretário', ded: 'DED', regional: 'Diretoria Regional', gestao: 'Gestão escolar', diretor: 'Diretor', professor: 'Professor', aluno: 'Aluno', responsavel: 'Responsável', rh: 'RH', dae: 'DAE', motorista: 'Motorista' };
+const ROLE_LABEL = { calendario: 'Calendário escolar', secretario: 'Secretaria de Educação', ded: 'DED', regional: 'Diretoria Regional', gestao: 'Secretaria escolar', diretor: 'Diretor', professor: 'Professor', aluno: 'Aluno', responsavel: 'Responsável', rh: 'RH', dae: 'DAE', motorista: 'Motorista' };
 const PERMISSOES = [
   ['calendario.editar', 'Editar o calendário escolar'],
   ['comunicados.publicar', 'Publicar comunicados'],
@@ -282,15 +291,20 @@ const PERMISSOES = [
   ['infraestrutura.editar', 'Preencher a infraestrutura da escola'],
   ['cursos.gerir', 'Cadastrar cursos e matrizes curriculares'],
   ['lotacoes.gerir', 'Gerir lotações de professores'],
-  ['vagas.editar', 'Cadastrar vagas por série e turma']
+  ['vagas.editar', 'Cadastrar vagas por série e turma'],
+  ['turmas.gerir', 'Cadastrar turmas e montar a grade horária da escola'],
+  ['alunos.necessidades', 'Ver o diagnóstico dos alunos com atendimento especializado'],
+  ['anoletivo.fechar', 'Finalizar turmas, encerrar o ano letivo e rematricular']
 ];
 const PERFIS_PADRAO = {
-  gestao: ['comunicados.publicar', 'relatorios.ver', 'boletins.ver', 'ocorrencias.ver', 'merenda.estoque', 'escolas.editar', 'vagas.editar'],
+  // Secretaria escolar: a secretaria de cada escola. Não cadastra escolas (isso é da Secretaria de Educação).
+  gestao: ['comunicados.publicar', 'relatorios.ver', 'boletins.ver', 'ocorrencias.ver', 'merenda.estoque', 'vagas.editar', 'turmas.gerir', 'alunos.necessidades', 'anoletivo.fechar'],
   diretor: ['comunicados.publicar', 'relatorios.ver', 'infraestrutura.editar', 'vagas.editar'],
   calendario: ['calendario.editar', 'comunicados.publicar'], // TODO: confirmar a sigla do departamento citado na mentoria
   rh: ['professores.editar', 'rh.painel', 'talentos.gerir', 'lotacoes.gerir'],
   ded: ['cursos.gerir'],
-  secretario: ['relatorios.ver'],
+  // Secretário: Secretaria de Estado da Educação (SEDUC), a rede inteira. Só ela cadastra escolas.
+  secretario: ['relatorios.ver', 'escolas.editar'],
   regional: [],
   dae: ['merenda.estoque', 'merenda.rede'],
   motorista: ['transporte.embarque']
@@ -300,7 +314,6 @@ const can = perm => ((DADOS.perfis && DADOS.perfis[SESSION?.role]) || PERFIS_PAD
 const EQUIPE = {
   'g-e1': { role: 'gestao', nome: 'Patrícia Gomes', cargo: 'Secretaria escolar, Unidade Centro', escolaId: 'e1' },
   'g-e2': { role: 'gestao', nome: 'Fábio Lins', cargo: 'Secretaria escolar, Unidade Atalaia', escolaId: 'e2' },
-  'g-rede': { role: 'gestao', nome: 'Ana Ribeiro', cargo: 'Secretaria de Educação, toda a rede', escolaId: '' },
   'd-e1': { role: 'diretor', nome: 'Helena Albuquerque', cargo: 'Direção, Unidade Centro', escolaId: 'e1' },
   'd-e2': { role: 'diretor', nome: 'Rafael Menezes', cargo: 'Direção, Unidade Atalaia', escolaId: 'e2' },
   'sec1': { role: 'secretario', nome: 'Ricardo Matos', cargo: 'Secretário de Estado da Educação', escolaId: '' },
@@ -318,7 +331,27 @@ const GESTORES = Object.fromEntries(equipeDe('gestao'));
 // Escola do usuário: definida na entrada. Vazio = toda a rede.
 const escSessao = () => ['gestao', 'diretor'].includes(SESSION?.role) ? (EQUIPE[SESSION.userId]?.escolaId || '') : '';
 const naEscola = (...ids) => !escSessao() || ids.includes(escSessao());
-const me = () => SESSION?.role === 'professor' ? byId('professores', SESSION.userId) : SESSION?.role === 'aluno' ? byId('alunos', SESSION.userId) : SESSION?.role === 'responsavel' ? byId('responsaveis', SESSION.userId) : (EQUIPE[SESSION?.userId]?.role === SESSION?.role ? EQUIPE[SESSION.userId] : (SESSION?.role === 'gestao' ? EQUIPE['g-rede'] : null));
+const me = () => SESSION?.role === 'professor' ? byId('professores', SESSION.userId) : SESSION?.role === 'aluno' ? byId('alunos', SESSION.userId) : SESSION?.role === 'responsavel' ? byId('responsaveis', SESSION.userId) : (EQUIPE[SESSION?.userId]?.role === SESSION?.role ? EQUIPE[SESSION.userId] : null);
+// ---------- Ano letivo selecionado no topo ----------
+// Escolas do usuário: a da entrada (secretaria escolar e diretor) ou as escolas onde o professor tem aulas. Os perfis da rede não têm seletor.
+const escolasDoUsuario = () => escSessao() ? [escSessao()] : SESSION?.role === 'professor' ? uniq([...DADOS.aulas.filter(a => a.professorId === SESSION.userId).map(a => byId('turmas', a.turmaId)?.escolaId), me()?.escolaId].filter(Boolean)) : [];
+const anosDoUsuario = () => { const es = escolasDoUsuario(); return uniq((DADOS.anosLetivos || []).filter(a => es.includes(a.escolaId)).map(a => a.ano)).sort((a, b) => b - a); };
+const anoEncerrado = ano => { const es = escolasDoUsuario(); return !(DADOS.anosLetivos || []).some(a => es.includes(a.escolaId) && a.ano === ano && a.status === 'ativo'); };
+function anoSel() {
+  const anos = anosDoUsuario(); if (!anos.length) return DADOS.config.anoLetivo;
+  if (!anos.includes(UI.ano)) UI.ano = anos.find(a => !anoEncerrado(a)) || anos[0];
+  return UI.ano;
+}
+const anoLetivoDe = (escolaId, ano = anoSel()) => (DADOS.anosLetivos || []).find(a => a.escolaId === escolaId && a.ano === ano);
+// O ano selecionado está ativo na escola (aceita turmas novas, notas e diário)?
+const anoAberto = (escolaId = escSessao()) => anoLetivoDe(escolaId)?.status === 'ativo';
+// A turma pertence ao ano selecionado (para os perfis da rede, todas as turmas)
+const noAno = t => !!t && (!escolasDoUsuario().length || Number(t.ano) === anoSel());
+function anoTopoHTML() {
+  const anos = anosDoUsuario();
+  if (!anos.length) return `<span class="crumb-sub">Ano letivo ${DADOS.config.anoLetivo}</span>`;
+  return `<label class="ano-topo"><span class="sr-only">Ano letivo. Todas as telas da escola mostram o ano escolhido.</span>${icon('calendar')}<select id="ano-topo" data-change="anoTopo">${anos.map(a => `<option value="${a}" ${a === anoSel() ? 'selected' : ''}>Ano letivo ${a}${anoEncerrado(a) ? ' (encerrado)' : ''}</option>`).join('')}</select></label>`;
+}
 // Disciplinas que o professor pode lecionar: vêm das formações dele
 const habilitadas = p => p ? (p.formacoes?.length ? uniq(p.formacoes.flatMap(f => (DADOS.formacoes || []).find(x => x.id === f)?.disciplinas || [])) : (p.disciplinas || [])) : [];
 
@@ -341,7 +374,8 @@ const navFor = role => (NAV[role] || []).filter(n => !n[3] || can(n[3]));
 const NAV = {
   gestao: [['inicio', 'Início', 'home'], ['relatorios', 'Relatórios', 'chart'],
     ['§', 'Rede e matrículas'], ['vagas', 'Vagas da rede', 'door'], ['prematriculas', 'Pré-matrículas', 'inbox'], ['transferencias', 'Transferências', 'swap'], ['integracoes', 'Integrações', 'plug'],
-    ['§', 'Escola'], ['escolas', 'Escolas', 'building'], ['turmas', 'Turmas', 'layers'], ['alunos', 'Alunos', 'users'], ['professores', 'Professores', 'teacher'], ['disciplinas', 'Disciplinas', 'book'], ['horarios', 'Grade horária', 'clock'],
+    ['§', 'Escola'], ['turmas', 'Turmas', 'layers', 'turmas.gerir'], ['alunos', 'Alunos', 'users'], ['professores', 'Professores', 'teacher'], ['disciplinas', 'Disciplinas', 'book'], ['horarios', 'Grade horária', 'clock', 'turmas.gerir'],
+    ['§', 'Ano letivo'], ['fechamento', 'Fechamento do ano', 'check2', 'anoletivo.fechar'], ['rematricula', 'Rematrícula', 'swap', 'anoletivo.fechar'],
     ['§', 'Pedagógico'], ['boletins', 'Notas e boletins', 'pencil'], ['frequencia', 'Frequência', 'check2'], ['aee', 'Educação especial (AEE)', 'access'], ['ocorrencias', 'Ocorrências', 'alert'],
     ['§', 'Programas e apoio'], ['buscaativa', 'Busca ativa', 'radar'], ['merenda', 'Merenda escolar', 'utensils'], ['transporte', 'Transporte escolar', 'bus'],
     ['§', 'Comunicação'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'],
@@ -354,7 +388,7 @@ const NAV = {
   motorista: [['inicio', 'Embarque', 'bus'], ['rota', 'Minha rota', 'pin']],
   calendario: [['inicio', 'Calendário escolar', 'calendar'], ['comunicados', 'Comunicados', 'bell'], ['cadastros', 'Cadastros auxiliares', 'clip']],
   ded: [['inicio', 'Início', 'home'], ['cursos', 'Cursos e modalidades', 'book', 'cursos.gerir'], ['matrizes', 'Gestão de matrizes', 'layers', 'cursos.gerir'], ['disciplinas', 'Componentes curriculares', 'pencil', 'cursos.gerir'], ['cadastros', 'Cadastros auxiliares', 'clip']],
-  secretario: [['inicio', 'Painel da rede', 'home'], ['escolas', 'Escolas', 'building'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver']],
+  secretario: [['inicio', 'Painel da rede', 'home'], ['escolas', 'Escolas da rede', 'building'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver']],
   regional: [['inicio', 'Escolas da regional', 'building'], ['infraestrutura', 'Infraestrutura das escolas', 'layers']],
   responsavel: [['inicio', 'Início', 'home'], ['vagas', 'Vagas na rede', 'door'], ['matricula', 'Matrícula online', 'inbox'], ['transferencia', 'Pedir transferência', 'swap'], ['pedidos', 'Meus pedidos', 'file'], ['boletim', 'Boletim dos filhos', 'pencil'], ['merenda', 'Merenda', 'utensils'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell']]
 };
@@ -563,7 +597,7 @@ function validate(form) {
     let msg = '';
     if (el.required && !String(el.value).trim()) msg = 'Preencha este campo.';
     else if (el.type === 'email' && el.value && !/^\S+@\S+\.\S+$/.test(el.value)) msg = 'Digite um e-mail válido, como nome@escola.edu.br.';
-    else if (el.dataset.nota !== undefined && el.value.trim()) { const v = parseFloat(el.value.replace(',', '.')); if (isNaN(v) || v < 0 || v > 10) msg = 'Use um valor de 0 a 10.'; }
+    else if (el.dataset.nota !== undefined && el.value.trim()) msg = lerNota(el.value).erro || '';
     if (msg) {
       el.setAttribute('aria-invalid', 'true');
       const id = (el.id || uid()) + '-err';
@@ -716,7 +750,7 @@ function renderShell() {
     </aside>
     <div class="scrim" data-act="close-nav"></div>
     <div class="main">
-      <div class="topbar"><button class="icon-btn menu-btn" data-act="open-nav" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${icon('menu')}</button><span class="top-logo" aria-hidden="true">Entrelaço</span><button class="profile-btn" data-act="perfil-menu" aria-haspopup="dialog" aria-label="Seu perfil: ${esc(u.nome)}. Trocar de perfil"><span class="avatar" aria-hidden="true">${initials(u.nome)}</span></button><p class="crumb">${esc(escSessao() ? byId('escolas', escSessao())?.nome : SESSION.role === 'gestao' ? 'Rede estadual, todas as escolas' : DADOS.config.escolaNome)}<span class="crumb-sub">${DADOS.config.bimestreAtual}º bimestre de ${DADOS.config.anoLetivo}</span></p><div class="row" style="gap:.125rem">${notifBtn()}${a11yBar()}</div></div>
+      <div class="topbar"><button class="icon-btn menu-btn" data-act="open-nav" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${icon('menu')}</button><span class="top-logo" aria-hidden="true">Entrelaço</span><button class="profile-btn" data-act="perfil-menu" aria-haspopup="dialog" aria-label="Seu perfil: ${esc(u.nome)}. Trocar de perfil"><span class="avatar" aria-hidden="true">${initials(u.nome)}</span></button><div class="crumb-box"><p class="crumb">${esc(escSessao() ? byId('escolas', escSessao())?.nome : DADOS.config.escolaNome)}</p>${anoTopoHTML()}</div><div class="row" style="gap:.125rem">${notifBtn()}${a11yBar()}</div></div>
       <main id="content" tabindex="-1"></main>
     </div>
     <nav class="tabbar" aria-label="Atalhos" style="grid-template-columns:repeat(${tabsFor().length + 1},minmax(0,1fr))">${tabsFor().map(([r, l, ic]) => `<a href="#${r}" data-act="go" data-route="${r}">${icon(ic)}<span>${l}</span></a>`).join('')}<button class="tab-more" data-act="open-nav" aria-controls="side" aria-expanded="false">${icon('menu')}<span>Mais</span></button></nav>
@@ -771,9 +805,9 @@ function render() {
 // ---------- Login ----------
 const EQUIPE_ROLES = ['gestao', 'diretor', 'rh', 'dae', 'motorista', 'ded', 'secretario', 'regional', 'calendario'];
 const LOGIN_PERFIS = {
-  gestao: ['Secretaria escolar', 'Matrículas, turmas, vagas e relatórios', 'building'], diretor: ['Diretor', 'Calendário, comunicados e relatórios', 'calendar'], professor: ['Professor', 'Chamada, notas e atividades', 'teacher'],
+  gestao: ['Secretaria escolar', 'A secretaria da escola: turmas, horários, alunos e rematrícula', 'building'], diretor: ['Diretor', 'Calendário, comunicados e relatórios', 'calendar'], professor: ['Professor', 'Chamada, notas e atividades', 'teacher'],
   aluno: ['Aluno', 'Boletim, entregas, horário e transporte', 'cap'], responsavel: ['Responsável', 'Vagas, matrícula online e boletim dos filhos', 'users'],
-  rh: ['RH', 'Professores, vínculos e lotações', 'teacher'], calendario: ['Calendário escolar', 'Eventos, feriados e prazos da rede', 'calendar'], secretario: ['Secretário', 'Painel da rede e relatórios', 'home'], ded: ['DED', 'Cursos e matrizes curriculares', 'book'], regional: ['Diretoria Regional', 'Escolas e infraestrutura da regional', 'pin'], dae: ['DAE', 'Estoque e consumo da merenda', 'utensils'], motorista: ['Motorista', 'Lista de embarque do ônibus', 'bus']
+  rh: ['RH', 'Professores, vínculos e lotações', 'teacher'], calendario: ['Calendário escolar', 'Eventos, feriados e prazos da rede', 'calendar'], secretario: ['Secretário (SEDUC)', 'Toda a rede: cadastro e gestão das escolas', 'home'], ded: ['DED', 'Cursos e matrizes curriculares', 'book'], regional: ['Diretoria Regional', 'Escolas e infraestrutura da regional', 'pin'], dae: ['DAE', 'Estoque e consumo da merenda', 'utensils'], motorista: ['Motorista', 'Lista de embarque do ônibus', 'bus']
 };
 const LOGIN_GRUPOS = [['Escola', ['gestao', 'diretor', 'professor']], ['Estudantes e famílias', ['aluno', 'responsavel']], ['Secretaria de Educação', ['secretario', 'ded', 'rh', 'dae', 'calendario', 'regional']], ['Transporte escolar', ['motorista']]];
 function renderLogin() {
@@ -837,7 +871,9 @@ document.addEventListener('input', e => {
   if (e.target.dataset.input && CHG[e.target.dataset.input]) CHG[e.target.dataset.input](e.target);
 });
 const CHG = Object.assign(CHG_EXTRA, {
-  'login-role': el => { UI.loginRole = el.value; renderLogin(); $(`input[name=role][value="${el.value}"]`).focus(); }
+  'login-role': el => { UI.loginRole = el.value; renderLogin(); $(`input[name=role][value="${el.value}"]`).focus(); },
+  // Trocar o ano no topo: todas as telas da escola passam a mostrar esse ano
+  anoTopo: el => { UI.ano = Number(el.value); UI.sel = {}; renderShell(); renderPage().then(() => $('#ano-topo')?.focus()); toast(`Mostrando o ano letivo ${el.value}${anoEncerrado(UI.ano) ? ', encerrado: só consulta' : ''}.`, 'info'); }
 });
 document.addEventListener('change', e => {
   const el = e.target;
@@ -856,7 +892,7 @@ document.addEventListener('submit', e => {
   e.preventDefault();
   if (f.id === 'login-form') {
     const role = new FormData(f).get('role'); const who = new FormData(f).get('who');
-    SESSION = { role, userId: who }; LS.set('entrelaco.session', SESSION); UI.route = 'inicio'; UI.q = {}; UI.f = {}; UI.sel = {};
+    SESSION = { role, userId: who }; LS.set('entrelaco.session', SESSION); UI.route = 'inicio'; UI.q = {}; UI.f = {}; UI.sel = {}; UI.ano = null;
     render(); $('#page-title')?.focus(); toast(`Olá, ${firstName(me().nome)}. Você entrou como ${ROLE_LABEL[role].toLowerCase()}.`, 'info');
     return;
   }
