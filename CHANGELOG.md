@@ -2,6 +2,12 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v23 — Respostas da mentoria de 19/11/2026
+- A escola de destino escolhe a turma do aluno transferido dentro da rede. Depois do deferimento, o aluno aparece em "Chegando por transferência", na tela Pedidos de transferência da escola de destino. Ela escolhe uma turma da mesma série e do mesmo ano letivo, com as vagas livres de cada uma, ou a fila de espera.
+- Dados de exemplo: Renata Moura, André Siqueira e Patrícia Lemos passam a ter horas livres para lotar. Marina Costa e Juliana Freitas continuam sem saldo, para mostrar o aviso.
+- Confirmadas e registradas no README as regras da integração, das situações de notas externas e da edição de Pessoas.
+- Migração para a versão 14 dos dados.
+
 ## v22 — Mentoria de 19/11/2026
 - Pedido de transferência pelo responsável e pelo aluno. É feito dentro da rede estadual (cidade de Sergipe já preenchida com a do aluno e escolas com as vagas na série) ou fora dela (tipo de escola, UF, cidade e nome), com motivo opcional. O responsável acompanha cada etapa: Pendente, Deferido ou Indeferido, e Concluído.
 - Nova tela Pedidos de transferência na Secretaria escolar:

@@ -1,7 +1,7 @@
 /* Transferências de alunos e vida escolar (histórico).
    Fluxo: o responsável ou o aluno pede (Pendente) → a escola de origem defere ou indefere → Concluído quando o histórico é emitido.
-   Ao deferir: a declaração sai na hora; o histórico tem até 30 dias. Dentro da rede, o aluno vai para a escola de destino
-   (ou para a fila de espera dela, sem vaga) e as notas seguem com ele, porque ficam ligadas ao aluno, não à escola. */
+   Ao deferir: a declaração sai na hora; o histórico tem até 30 dias. Dentro da rede, a escola de destino escolhe a turma
+   (ou põe o aluno na fila de espera dela, sem vaga) e as notas seguem com ele, porque ficam ligadas ao aluno, não à escola. */
 'use strict';
 
 const PRAZO_HISTORICO_DIAS = 30;
@@ -68,19 +68,10 @@ const transferenciaService = Object.assign({}, transfRepo, {
     if (p.tipo === 'rede') {
       const dest = escolaArm(p.escolaDestinoId);
       if (dest?.integracao === 'Sistema Entrelaço') {
-        const ocupacao = t => ARMAZEM.alunos.filter(x => x.turmaId === t.id).length;
-        const candidatas = ARMAZEM.turmas.filter(t => t.escolaId === dest.id && t.serie === tOrig.serie && Number(t.ano) === Number(tOrig.ano) && !t.finalizada && ocupacao(t) < (Number(t.vagas) || 40))
-          .sort((x, y) => (x.turno === tOrig.turno ? 0 : 1) - (y.turno === tOrig.turno ? 0 : 1));
-        if (candidatas.length) {
-          const novaT = candidatas[0]; a.turmaId = novaT.id; a.situacaoMatricula = 'Matriculado';
-          if (a.rotaId && ARMAZEM.rotas.find(r => r.id === a.rotaId)?.escolaId !== dest.id) a.rotaId = '';
-          p.resultado = `Matriculado na turma ${novaT.nome} da ${dest.nome}. As notas do ano seguiram com o aluno.`; p.turmaDestinoId = novaT.id;
-        } else {
-          const pm = { id: uid(), protocolo: `TR-${TODAY.getFullYear()}-${String(ARMAZEM.transferencias.length).padStart(4, '0')}`, alunoId: a.id, estudante: a.nome, nascimento: a.nascimento, responsavel: a.responsavel, telefone: a.telResp || '', serie: tOrig.serie, turno: tOrig.turno, escola1: dest.id, escola2: '', escolaId: dest.id, acess: a.acess || 'Nenhuma', docs: [], status: 'Lista de espera', data: TODAY_ISO, criado: new Date().toISOString(), obs: 'Veio por transferência dentro da rede. Será chamado quando abrir uma vaga.', origemTransferencia: p.id };
-          ARMAZEM.prematriculas.push(pm); a.turmaId = ''; a.situacaoMatricula = 'Aguardando vaga';
-          const pos = ARMAZEM.prematriculas.filter(x => x.status === 'Lista de espera' && x.escolaId === dest.id && x.serie === pm.serie && x.turno === pm.turno).length;
-          p.resultado = `Sem vaga no ${tOrig.serieNome || tOrig.serie} da ${dest.nome}: o aluno entrou na fila de espera (${pos}º lugar). As notas seguem com ele.`;
-        }
+        // A escola de destino escolhe a turma (ou a fila de espera) na tela de pedidos dela.
+        a.turmaId = ''; a.situacaoMatricula = 'Aguardando turma no destino'; p.aguardandoTurma = true; p.turnoOrigem = tOrig.turno;
+        if (a.rotaId && ARMAZEM.rotas.find(r => r.id === a.rotaId)?.escolaId !== dest.id) a.rotaId = '';
+        p.resultado = `Aguardando a ${dest.nome} escolher a turma. As notas do ano seguem com o aluno.`;
       } else {
         const v = ARMAZEM.vagas.find(x => x.escolaId === p.escolaDestinoId && x.serie === tOrig.serie); if (v) v.ocupadasExt = (Number(v.ocupadasExt) || 0) + 1;
         a.turmaId = ''; a.situacaoMatricula = 'Transferido';
@@ -90,6 +81,34 @@ const transferenciaService = Object.assign({}, transfRepo, {
       a.turmaId = ''; a.situacaoMatricula = 'Transferido';
       const d = p.destinoExterno; p.resultado = `Transferido para ${d.escola || d.tipoEscola.toLowerCase()} em ${d.cidade}/${d.uf}.`;
     }
+    persistirArmazem(); return clone(p);
+  },
+  /** Turmas da escola de destino que servem ao aluno: mesma série e ano letivo, abertas, com as vagas livres. */
+  turmasDestino(p) {
+    const ocup = t => ARMAZEM.alunos.filter(x => x.turmaId === t.id).length;
+    return ARMAZEM.turmas.filter(t => t.escolaId === p.escolaDestinoId && t.serie === p.serieOrigem && Number(t.ano) === Number(p.anoOrigem) && !t.finalizada)
+      .map(t => ({ id: t.id, nome: t.nome, turno: t.turno, livres: (Number(t.vagas) || 40) - ocup(t) }))
+      .sort((x, y) => (x.turno === p.turnoOrigem ? 0 : 1) - (y.turno === p.turnoOrigem ? 0 : 1) || x.nome.localeCompare(y.nome));
+  },
+  /** Escola de destino matricula o aluno transferido na turma escolhida. */
+  async alocarTurma(id, turmaId) {
+    await espera();
+    const p = ARMAZEM.transferencias.find(x => x.id === id); if (!p?.aguardandoTurma) throw new Error('Este aluno já foi encaminhado.');
+    const t = this.turmasDestino(p).find(x => x.id === turmaId); if (!t) throw new Error('Escolha uma turma da mesma série e ano letivo.');
+    if (t.livres <= 0) throw new Error(`A turma ${t.nome} não tem vaga. Escolha outra ou coloque o aluno na fila de espera.`);
+    const a = ARMAZEM.alunos.find(x => x.id === p.alunoId); a.turmaId = t.id; a.situacaoMatricula = 'Matriculado';
+    p.aguardandoTurma = false; p.turmaDestinoId = t.id; p.resultado = `Matriculado na turma ${t.nome} da ${escolaArm(p.escolaDestinoId)?.nome}. As notas do ano seguiram com o aluno.`;
+    persistirArmazem(); return clone(p);
+  },
+  /** Sem vaga: o aluno entra na fila de espera da escola de destino. */
+  async enviarFila(id) {
+    await espera();
+    const p = ARMAZEM.transferencias.find(x => x.id === id); if (!p?.aguardandoTurma) throw new Error('Este aluno já foi encaminhado.');
+    const a = ARMAZEM.alunos.find(x => x.id === p.alunoId); const dest = escolaArm(p.escolaDestinoId);
+    const pm = { id: uid(), protocolo: `TR-${TODAY.getFullYear()}-${String(ARMAZEM.transferencias.length).padStart(4, '0')}`, alunoId: a.id, estudante: a.nome, nascimento: a.nascimento, responsavel: a.responsavel, telefone: a.telResp || '', serie: p.serieOrigem, turno: p.turnoOrigem || '', escola1: dest.id, escola2: '', escolaId: dest.id, acess: a.acess || 'Nenhuma', docs: [], status: 'Lista de espera', data: TODAY_ISO, criado: new Date().toISOString(), obs: 'Veio por transferência dentro da rede. Será chamado quando abrir uma vaga.', origemTransferencia: p.id };
+    ARMAZEM.prematriculas.push(pm); a.situacaoMatricula = 'Aguardando vaga'; p.aguardandoTurma = false;
+    const pos = ARMAZEM.prematriculas.filter(x => x.status === 'Lista de espera' && x.escolaId === dest.id && x.serie === pm.serie && x.turno === pm.turno).length;
+    p.resultado = `Sem vaga na ${dest.nome}: o aluno entrou na fila de espera (${pos}º lugar). As notas seguem com ele.`;
     persistirArmazem(); return clone(p);
   },
   async indeferir(id, justificativa) {

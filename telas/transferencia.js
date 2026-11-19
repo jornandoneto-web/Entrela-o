@@ -85,8 +85,11 @@ async function telaPedidosTransf() {
   const lista = fil === 'Todos' ? todos : todos.filter(p => p.status === fil);
   const conta = s => todos.filter(p => s === 'Todos' || p.status === s).length;
   const avisos = todos.filter(p => p.status === 'Deferido' && transferenciaService.prazo(p) != null && transferenciaService.prazo(p) <= 5);
+  const chegando = (await transferenciaService.listar(p => p.aguardandoTurma && naEscola(p.escolaDestinoId))).map(Modelos.transferencia);
+  const blocoChegada = chegando.length ? `<section class="card" aria-labelledby="tf-cheg-h"><h2 id="tf-cheg-h">Chegando por transferência</h2><p class="muted">Alunos deferidos por outra escola da rede. Escolha a turma de cada um.</p>
+    <ul class="list">${chegando.map(p => `<li><div class="grow"><b>${nomeAlunoId(p.alunoId)}</b>${caption2(`${esc(p.serieOrigem)} em ${p.anoOrigem}, turno ${esc((p.turnoOrigem || '—').toLowerCase())}. Vem da ${esc(escNome(p.escolaOrigemId))}, deferido em ${fmtD(p.dataDecisao)}`)}</div><button class="btn primary sm" data-act="tf-chegada" data-id="${p.id}" aria-label="Escolher turma de ${esc(alunoNome(p.alunoId))}">Escolher turma</button></li>`).join('')}</ul></section>` : '';
   return pageHead('Pedidos de transferência', 'Pedidos dos responsáveis e alunos desta escola. Ao deferir, a declaração sai na hora e o histórico tem até 30 dias.', `<button class="btn outline" data-act="tf-nova">${icon('swap')}Registrar pedido</button>`) +
-    (avisos.length ? `<p class="quote" role="note">${st(`${avisos.length} histórico${avisos.length > 1 ? 's' : ''} perto do prazo ou atrasado${avisos.length > 1 ? 's' : ''}`, 'warn')} ${avisos.map(p => esc(alunoNome(p.alunoId))).join(', ')}.</p>` : '') +
+    blocoChegada + (avisos.length ? `<p class="quote" role="note">${st(`${avisos.length} histórico${avisos.length > 1 ? 's' : ''} perto do prazo ou atrasado${avisos.length > 1 ? 's' : ''}`, 'warn')} ${avisos.map(p => esc(alunoNome(p.alunoId))).join(', ')}.</p>` : '') +
     `<fieldset class="field"><legend class="lbl">Mostrar</legend><div class="seg">${['Pendente', 'Deferido', 'Indeferido', 'Concluído', 'Todos'].map(s => `<label><input type="radio" id="tff-${norm(s)}" name="tf-filtro" value="${s}" data-change="tfFiltro" ${fil === s ? 'checked' : ''}>${s} (${conta(s)})</label>`).join('')}</div></fieldset>` +
     (lista.length ? `<div class="tbl-wrap"><table class="tbl stack"><caption class="sr-only">Pedidos de transferência</caption><thead><tr><th scope="col">Aluno</th><th scope="col">Destino</th><th scope="col">Pedido</th><th scope="col">Situação</th><th scope="col" class="n">Ações</th></tr></thead><tbody>${lista.map(p => `<tr>
       <th scope="row">${nomeAlunoId(p.alunoId)}${caption2(esc(p.turmaOrigem || turmaNome(byId('alunos', p.alunoId)?.turmaId)))}</th>
@@ -95,6 +98,21 @@ async function telaPedidosTransf() {
       <td data-label="Situação">${tfStatusHTML(p)}${p.declaracaoEmitida ? caption2(prazoHistHTML(p)) : ''}${p.status === 'Indeferido' ? caption2(esc(p.justificativa)) : ''}</td>
       <td class="n"><div class="acts">${p.status === 'Pendente' ? `<button class="btn primary sm" data-act="trf-analisar" data-id="${p.id}" aria-label="Analisar pedido de ${esc(alunoNome(p.alunoId))}">Analisar</button>` : ''}${p.declaracaoEmitida ? `<button class="btn ghost sm" data-act="tf-declaracao" data-id="${p.id}" aria-label="Declaração de ${esc(alunoNome(p.alunoId))}">Declaração</button>` : ''}${p.status === 'Deferido' ? `<button class="btn outline sm" data-act="tf-historico" data-id="${p.id}" aria-label="Emitir histórico de ${esc(alunoNome(p.alunoId))}">Emitir histórico</button>` : ''}${p.historicoEmitido ? `<button class="btn ghost sm" data-act="hist-abrir" data-id="${p.alunoId}" aria-label="Histórico de ${esc(alunoNome(p.alunoId))}">Histórico</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>` : `<p class="empty">Nenhum pedido ${fil === 'Todos' ? '' : 'com a situação ' + fil.toLowerCase()}.</p>`);
 }
+ACT['tf-chegada'] = el => {
+  const id = el.dataset.id; const p = Modelos.transferencia(byId('transferencias', id));
+  const turmas = transferenciaService.turmasDestino(Object.assign({}, p));
+  const livre = turmas.find(t => t.livres > 0);
+  openDialog({ title: `Turma de ${alunoNome(p.alunoId)}`,
+    body: `<p class="muted">${esc(p.serieOrigem)}, ano letivo ${p.anoOrigem}. Aparecem as turmas desta escola da mesma série e ano.</p>
+      <fieldset class="field"><legend class="lbl">Para onde vai o aluno</legend><div class="opts">${turmas.map(t => `<label class="opt-row"><input type="radio" name="tf-turma" value="${t.id}" ${t.livres <= 0 ? 'disabled' : ''} ${t === livre ? 'checked' : ''}><span><b>${esc(t.nome)}</b>, turno ${esc((t.turno || '—').toLowerCase())}: ${t.livres > 0 ? `${t.livres} vaga${t.livres > 1 ? 's' : ''} livre${t.livres > 1 ? 's' : ''}` : 'sem vaga'}</span></label>`).join('')}
+      <label class="opt-row"><input type="radio" name="tf-turma" value="fila" ${livre ? '' : 'checked'}><span><b>Fila de espera</b>: o aluno é chamado quando abrir vaga</span></label></div></fieldset>
+      ${turmas.length ? '' : '<p class="quote">Esta escola não tem turma dessa série no ano letivo.</p>'}<p class="err-msg" id="tf-erro" role="alert" hidden></p>`,
+    onSubmit: () => {
+      const v = $('input[name="tf-turma"]:checked')?.value; if (!v) { erroForm('Escolha uma turma ou a fila de espera.'); return false; }
+      (v === 'fila' ? transferenciaService.enviarFila(id) : transferenciaService.alocarTurma(id, v)).then(r => { closeDialog(); rerender(); toast(r.resultado); }).catch(e => erroForm(e.message));
+      return false;
+    } });
+};
 CHG.tfFiltro = el => { UI.sel.tfFiltro = el.value; rerender(); };
 ACT['tf-nova'] = () => {
   const alunos = alunosEsc().filter(a => a.turmaId).sort((x, y) => x.nome.localeCompare(y.nome));
@@ -107,7 +125,7 @@ ACT['trf-analisar'] = el => {
   openDialog({ title: `Transferência de ${a?.nome || ''}`, wide: true,
     body: `<dl class="dl"><dt>Turma atual</dt><dd>${esc(turmaLong(a?.turmaId))}</dd><dt>Destino</dt><dd>${esc(destinoTransf(p))} (${p.tipo === 'rede' ? 'dentro da rede' : 'fora da rede'})</dd>${p.tipo === 'rede' ? `<dt>Vagas no destino</dt><dd>${vagas == null ? 'A escola não oferece esta série' : vagas > 0 ? `${vagas} no ${esc(t?.serieNome || t?.serie || '')}` : 'Sem vaga: o aluno entra na fila de espera da escola de destino'}</dd>` : ''}<dt>Pedido por</dt><dd>${esc(p.solicitante)} em ${fmtD(p.dataSolicitacao)}</dd>${p.motivo ? `<dt>Motivo</dt><dd>${esc(p.motivo)}</dd>` : ''}</dl>
       <fieldset class="field"><legend class="lbl">Decisão</legend><div class="seg"><label><input type="radio" name="tf-dec" value="def" checked data-change="tfDec">Deferir</label><label><input type="radio" name="tf-dec" value="ind" data-change="tfDec">Indeferir</label></div></fieldset>
-      <p class="quote" id="tf-ef">${p.tipo === 'rede' ? 'Ao deferir, o aluno sai da turma atual e é matriculado na escola de destino, ou entra na fila dela se não houver vaga. As notas e médias seguem com ele.' : 'Ao deferir, o aluno sai da turma com a situação Transferido.'} A declaração é emitida agora e o histórico tem até ${fmtD(isoOf(new Date(TODAY.getTime() + 30 * 864e5)))} (30 dias).</p>
+      <p class="quote" id="tf-ef">${p.tipo === 'rede' ? 'Ao deferir, o aluno sai da turma atual e a escola de destino escolhe a turma dele, ou o coloca na fila de espera se não houver vaga. As notas e médias seguem com ele.' : 'Ao deferir, o aluno sai da turma com a situação Transferido.'} A declaração é emitida agora e o histórico tem até ${fmtD(isoOf(new Date(TODAY.getTime() + 30 * 864e5)))} (30 dias).</p>
       <div class="field" id="tf-just-box" hidden><label for="tf-just">Justificativa <span class="req" aria-hidden="true">*</span></label><textarea id="tf-just"></textarea><p class="help">Obrigatória ao indeferir. O responsável vê este texto.</p></div>
       <p class="err-msg" id="tf-erro" role="alert" hidden></p>`,
     onSubmit: () => {
