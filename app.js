@@ -373,15 +373,15 @@ const TABS = {
 const navFor = role => (NAV[role] || []).filter(n => !n[3] || can(n[3]));
 const NAV = {
   gestao: [['inicio', 'Início', 'home'], ['relatorios', 'Relatórios', 'chart'],
-    ['§', 'Rede e matrículas'], ['vagas', 'Vagas da rede', 'door'], ['prematriculas', 'Pré-matrículas', 'inbox'], ['transferencias', 'Transferências', 'swap'], ['integracoes', 'Integrações', 'plug'],
+    ['§', 'Rede e matrículas'], ['vagas', 'Vagas da rede', 'door'], ['prematriculas', 'Pré-matrículas', 'inbox'], ['transferencias', 'Pedidos de transferência', 'swap'], ['integracoes', 'Integrações', 'plug'],
     ['§', 'Escola'], ['turmas', 'Turmas', 'layers', 'turmas.gerir'], ['alunos', 'Alunos', 'users'], ['professores', 'Professores', 'teacher'], ['disciplinas', 'Disciplinas', 'book'], ['horarios', 'Grade horária', 'clock', 'turmas.gerir'],
     ['§', 'Ano letivo'], ['fechamento', 'Fechamento do ano', 'check2', 'anoletivo.fechar'], ['rematricula', 'Rematrícula', 'swap', 'anoletivo.fechar'],
-    ['§', 'Pedagógico'], ['boletins', 'Notas e boletins', 'pencil'], ['frequencia', 'Frequência', 'check2'], ['aee', 'Educação especial (AEE)', 'access'], ['ocorrencias', 'Ocorrências', 'alert'],
+    ['§', 'Pedagógico'], ['boletins', 'Notas e boletins', 'pencil'], ['frequencia', 'Frequência', 'check2'], ['aee', 'Educação especial (AEE)', 'access'], ['ocorrencias', 'Ocorrências', 'alert'], ['historico', 'Histórico escolar', 'file'], ['notasExternas', 'Notas externas', 'pencil'],
     ['§', 'Programas e apoio'], ['buscaativa', 'Busca ativa', 'radar'], ['merenda', 'Merenda escolar', 'utensils'], ['transporte', 'Transporte escolar', 'bus'],
     ['§', 'Comunicação'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'],
     ['§', 'Cadastros auxiliares'], ['cadastros', 'Listas do sistema', 'clip'], ['faixas', 'Faixas de horário', 'clock'], ['config', 'Configurações', 'gear']],
   professor: [['inicio', 'Início', 'home'], ['turmas', 'Minhas turmas', 'layers'], ['notas', 'Lançar notas', 'pencil'], ['chamada', 'Diário de classe', 'check2'], ['atividades', 'Atividades', 'clip'], ['ocorrencias', 'Ocorrências', 'alert'], ['horario', 'Meu horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell']],
-  aluno: [['inicio', 'Início', 'home'], ['boletim', 'Boletim', 'pencil'], ['atividades', 'Atividades', 'clip'], ['horario', 'Horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['merenda', 'Merenda', 'utensils'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'], ['perfil', 'Meu perfil', 'user']],
+  aluno: [['inicio', 'Início', 'home'], ['boletim', 'Boletim', 'pencil'], ['atividades', 'Atividades', 'clip'], ['horario', 'Horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['merenda', 'Merenda', 'utensils'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'], ['transferencia', 'Pedir transferência', 'swap'], ['perfil', 'Meu perfil', 'user']],
   diretor: [['inicio', 'Início', 'home'], ['infraestrutura', 'Infraestrutura da escola', 'building', 'infraestrutura.editar'], ['vagas', 'Vagas da escola', 'door', 'vagas.editar'], ['calendario', 'Calendário escolar', 'calendar'], ['comunicados', 'Comunicados', 'bell', 'comunicados.publicar'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver'], ['boletins', 'Notas e boletins', 'pencil', 'boletins.ver'], ['ocorrencias', 'Ocorrências', 'alert', 'ocorrencias.ver']],
   rh: [['inicio', 'Necessidade de professores', 'chart'], ['professores', 'Professores', 'teacher'], ['formacoes', 'Formações', 'cap'], ['lotacoes', 'Gerir lotações', 'swap', 'lotacoes.gerir'], ['contratos', 'Contratos a vencer', 'calendar', 'rh.painel'], ['talentos', 'Banco de talentos', 'users', 'talentos.gerir'], ['cadastros', 'Cadastros auxiliares', 'clip']],
   dae: [['inicio', 'Estoque da rede', 'utensils'], ['alimentos', 'Alimentos', 'clip'], ['entradas', 'Entradas da Seduc', 'inbox', 'merenda.estoque'], ['historico', 'Histórico de consumo', 'chart'], ['cardapio', 'Cardápio', 'book'], ['cadastros', 'Cadastros auxiliares', 'clip']],
@@ -396,7 +396,10 @@ const NAV = {
 // ---------- Anúncios e toast ----------
 let toastT;
 function toast(msg, kind = 'ok') {
-  const t = $('#toast'); t.innerHTML = icon(kind === 'err' ? 'errc' : kind === 'info' ? 'info' : 'okc') + `<span>${esc(msg)}</span>`; t.hidden = false;
+  const t = $('#toast');
+  // Com uma janela aberta, o aviso vai para dentro dela: senão fica escondido atrás da janela
+  const host = $('#dlg').open ? $('#dlg') : document.body; if (t.parentElement !== host) host.appendChild(t);
+  t.innerHTML = icon(kind === 'err' ? 'errc' : kind === 'info' ? 'info' : 'okc') + `<span>${esc(msg)}</span>`; t.hidden = false;
   clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 4200);
   if (A.readFocus || A.readHover) TTS.speak(msg);
 }
@@ -571,6 +574,7 @@ function openDialog({ title, body, foot, onSubmit, wide, sheet }) {
 }
 function closeDialog() { const d = $('#dlg'); if (d.open) d.close(); }
 $('#dlg').addEventListener('close', () => {
+  if ($('#toast').parentElement !== document.body) document.body.appendChild($('#toast'));
   const { returnEl, returnKey } = DLG;
   setTimeout(() => {
     if (returnEl && returnEl.isConnected) return returnEl.focus();
@@ -596,6 +600,7 @@ function validate(form) {
     if (el.type === 'checkbox' || el.type === 'radio' || el.closest('[hidden]')) return;
     let msg = '';
     if (el.required && !String(el.value).trim()) msg = 'Preencha este campo.';
+    else if (el.dataset.cpf !== undefined && el.value && !cpfValido(el.value)) msg = 'CPF inválido: confira os 11 números. Os dois últimos são dígitos verificadores.';
     else if (el.type === 'email' && el.value && !/^\S+@\S+\.\S+$/.test(el.value)) msg = 'Digite um e-mail válido, como nome@escola.edu.br.';
     else if (el.dataset.nota !== undefined && el.value.trim()) msg = lerNota(el.value).erro || '';
     if (msg) {
@@ -863,7 +868,10 @@ document.addEventListener('click', e => {
   const fn = ACT[t.dataset.act]; if (!fn) return;
   e.preventDefault(); fn(t, e);
 });
+// CPF: máscara 000.000.000-00 enquanto digita, em qualquer campo marcado com data-cpf
+const mascaraCPF = v => { const d = String(v).replace(/\D/g, '').slice(0, 11); return d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2'); };
 document.addEventListener('input', e => {
+  if (e.target.dataset && e.target.dataset.cpf !== undefined) { e.target.value = mascaraCPF(e.target.value); return; }
   const s = e.target.dataset.search; if (s) { UI.q[s] = e.target.value; refreshCrud(s); return; }
   const k = e.target.dataset.a11y;
   if (k === 'scale') { A.scale = Number(e.target.value); e.target.setAttribute('aria-valuetext', A.scale + ' por cento'); applyA11y(); }

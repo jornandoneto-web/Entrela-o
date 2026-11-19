@@ -20,6 +20,8 @@ const LISTAS_DEF = {
   motivosAusencia: { l: 'Motivos de ausência no transporte', dono: 'gestao', v: ['Consulta médica', 'Doença', 'Vai de carona', 'Viagem da família', 'Atividade fora da escola'] },
   meiosContato: { l: 'Meios de contato da busca ativa', dono: 'gestao', v: ['Telefone', 'WhatsApp', 'Visita domiciliar', 'Reunião na escola'] },
   encaminhamentos: { l: 'Encaminhamentos da busca ativa', dono: 'gestao', v: ['Nenhum', 'Conselho Tutelar', 'CRAS', 'Unidade de saúde', 'Assistência social da rede'] },
+  parentescosResponsavel: { l: 'Parentescos de responsáveis', dono: 'gestao', v: ['Mãe', 'Pai', 'Avó', 'Avô', 'Tia', 'Tio', 'Irmã', 'Irmão', 'Responsável legal'] },
+  tiposEscolaExterna: { l: 'Tipos de escola fora da rede', dono: 'gestao', v: ['Escola particular', 'Escola municipal', 'Escola de outro estado', 'Escola federal'] },
   coresRacas: { l: 'Cor/Raça', dono: 'gestao', v: ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Não declarada'] },
   orgaosEmissores: { l: 'Órgãos emissores de RG', dono: 'gestao', v: ['SSP', 'SSP/SE', 'Detran', 'Polícia Federal', 'Polícia Civil', 'Outro'] },
   sexos: { l: 'Sexo', dono: 'gestao', v: ['Feminino', 'Masculino'] },

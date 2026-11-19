@@ -673,6 +673,27 @@ fieldset.form-grid>legend{grid-column:1/-1;margin-bottom:.25rem;padding:0}
 .list>li.dest .t{color:var(--tx-brand)}
 .hab-linha{padding:1rem;border:1px solid var(--bd);border-radius:var(--r-lg);margin:0}
 .field>.seg{align-self:flex-start}
+
+/* ===== Documentos (declaração e histórico) ===== */
+.doc{max-width:46rem;line-height:1.6}
+.doc-cab{text-align:center;border-bottom:1.5px solid var(--bd-strong);padding-bottom:.75rem;margin-bottom:1rem}
+.doc-cab p{font-size:var(--t-sm);color:var(--tx-2)}
+.doc-cab h2{font-size:var(--t-xl)}
+.doc-tit{text-align:center;font-size:var(--t-lg);margin:1rem 0}
+.doc p+p{margin-top:.75rem}
+.doc-data{margin-top:1.5rem!important;text-align:right}
+.doc-ass{margin-top:2.5rem!important;text-align:center;border-top:1px solid var(--tx);padding-top:.25rem;width:16rem;margin-inline:auto}
+.hist-ano{border-top:1px solid var(--bd);padding-top:1rem;margin-top:1rem;display:flex;flex-direction:column;gap:.5rem}
+.hist-ano h3{font-size:var(--t-md)}
+.tbl tfoot th,.tbl tfoot td{font-weight:600;border-top:1.5px solid var(--bd-strong)}
+@media print{
+  body>*:not(#dlg){display:none!important}
+  #dlg{position:static!important;margin:0!important;width:auto!important;max-width:none!important;max-height:none!important;height:auto!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+  #dlg::backdrop{display:none}
+  #dlg .dlg>header,#dlg .dlg>footer,#toast{display:none!important}
+  #dlg .dlg,#dlg .dlg-body{max-height:none!important;overflow:visible!important;padding:0!important}
+  .tbl-wrap{overflow:visible!important;border:0}
+}
 </style>
 
 <a class="skip" href="#content">Pular para o conteúdo principal</a>
@@ -714,6 +735,7 @@ fieldset.form-grid>legend{grid-column:1/-1;margin-bottom:.25rem;padding:0}
 <script src="services/anoLetivoService.js"></script>
 <script src="services/turmaService.js"></script>
 <script src="services/fechamentoService.js"></script>
+<script src="services/transferenciaService.js"></script>
 <script src="telas/escolas.js"></script>
 <script src="telas/infraestrutura.js"></script>
 <script src="telas/matrizes.js"></script>
@@ -726,7 +748,11 @@ fieldset.form-grid>legend{grid-column:1/-1;margin-bottom:.25rem;padding:0}
 <script src="telas/matricula.js"></script>
 <script src="telas/turmas.js"></script>
 <script src="telas/fechamento.js"></script>
+<script src="telas/transferencia.js"></script>
+<script src="telas/historico.js"></script>
+<script src="telas/pessoas.js"></script>
 <script src="migracoes-v9.js"></script>
 <script src="migracoes-v11.js"></script>
 <script src="migracoes-v12.js"></script>
+<script src="migracoes-v13.js"></script>
 <script src="migracoes.js"></script>

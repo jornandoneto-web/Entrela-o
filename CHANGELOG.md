@@ -2,6 +2,27 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v22 — Mentoria de 19/11/2026
+- Pedido de transferência pelo responsável e pelo aluno. É feito dentro da rede estadual (cidade de Sergipe já preenchida com a do aluno e escolas com as vagas na série) ou fora dela (tipo de escola, UF, cidade e nome), com motivo opcional. O responsável acompanha cada etapa: Pendente, Deferido ou Indeferido, e Concluído.
+- Nova tela Pedidos de transferência na Secretaria escolar:
+  - filtro por situação;
+  - deferir, ou indeferir com justificativa obrigatória;
+  - declaração de transferência para imprimir, emitida no deferimento;
+  - prazo de 30 dias para o histórico, com aviso quando está perto.
+- No deferimento, um aluno que fica na rede passa para uma turma da mesma série na escola de destino, ou para a fila de espera se não houver vaga. As notas seguem com ele. Para fora da rede, o aluno sai da turma como Transferido.
+- Novo Histórico escolar:
+  - todos os anos do aluno, por série e escola, com componentes, média final, carga horária, frequência e situação;
+  - pode ser aberto para impressão.
+- Nova tela Notas externas, um cadastro das notas de anos cursados fora da rede. Esses lançamentos aparecem no histórico como "Lançamento externo".
+- Lotações: o botão Nova lotação não fica mais desativado sem explicação. A tela avisa quando o vínculo não tem horas livres, e o erro aparece dentro do formulário. As mensagens de aviso agora aparecem por cima das janelas (antes ficavam escondidas atrás delas em todos os formulários).
+- Estrela roxa de atendimento especializado igual em todas as listas de alunos (cadastro, boletins, frequência, busca ativa, fechamento, diário e chamada).
+- CPF com máscara e validação pelos dígitos verificadores em todos os cadastros.
+- Dados pessoais completos:
+  - aluno com CPF, sexo, cor/raça, filiação e parentesco do responsável;
+  - nova tela Pessoas no perfil Secretário, com estado civil;
+  - parentesco também na matrícula.
+- Novos `services/transferenciaService.js`, `telas/transferencia.js`, `telas/historico.js` e `telas/pessoas.js`. Migração para a versão 13 dos dados, testada a partir de um banco da v21.
+
 ## v21 — Mentoria de 12/11/2026
 - Ano letivo no topo, ao lado do nome da escola ("Ano letivo 2026"), com seletor. Turmas, alunos, horários, notas e diário passam a mostrar o ano escolhido. Novo modelo `AnoLetivo { id, ano, escolaId, status }`, com um ano ativo por escola. O bimestre saiu do topo.
 - Perfis separados: a Secretaria de Educação (SEDUC, perfil Secretário) é a única que cadastra escolas. A Secretaria escolar perdeu o cadastro de escolas e ficou com turmas, horários, alunos, fechamento e rematrícula.

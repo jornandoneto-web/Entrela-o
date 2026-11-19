@@ -86,7 +86,21 @@ const Modelos = {
   /** Cadastro básico do estudante (matrícula). A senha nunca é guardada no mock. */
   estudante: (o = {}) => ({
     id: novoId(o.id), responsavelId: txt(o.responsavelId), nome: txt(o.nome), nascimento: txt(o.nascimento), sexo: txt(o.sexo), filiacao: txt(o.filiacao), cpf: txt(o.cpf).replace(/\D/g, ''), nis: txt(o.nis), cartaoSUS: txt(o.cartaoSUS),
-    corRaca: txt(o.corRaca), bolsaFamilia: txt(o.bolsaFamilia), termoVacinacao: txt(o.termoVacinacao) || 'Não assinado', rg: txt(o.rg), rgOrgao: txt(o.rgOrgao), rgUF: txt(o.rgUF), rgEmissao: txt(o.rgEmissao), email: txt(o.email), telefone: txt(o.telefone), necessidade: txt(o.necessidade) || 'Nenhuma'
+    corRaca: txt(o.corRaca), bolsaFamilia: txt(o.bolsaFamilia), termoVacinacao: txt(o.termoVacinacao) || 'Não assinado', rg: txt(o.rg), rgOrgao: txt(o.rgOrgao), rgUF: txt(o.rgUF), rgEmissao: txt(o.rgEmissao), email: txt(o.email), telefone: txt(o.telefone), necessidade: txt(o.necessidade) || 'Nenhuma', parentescoResponsavel: txt(o.parentescoResponsavel)
+  }),
+  /** Pedido de transferência. tipo: 'rede' (escola estadual do sistema) ou 'fora_da_rede' (outro estado, particular ou municipal).
+   *  status: Pendente → Deferido ou Indeferido → Concluído (quando o histórico é emitido). */
+  transferencia: (o = {}) => Object.assign({}, o, {
+    id: novoId(o.id), alunoId: txt(o.alunoId), escolaOrigemId: txt(o.escolaOrigemId || o.origemId), tipo: o.tipo === 'fora_da_rede' ? 'fora_da_rede' : 'rede',
+    municipioDestinoId: txt(o.municipioDestinoId), escolaDestinoId: txt(o.escolaDestinoId || o.destinoId),
+    destinoExterno: { tipoEscola: txt(o.destinoExterno?.tipoEscola), uf: txt(o.destinoExterno?.uf), cidade: txt(o.destinoExterno?.cidade), escola: txt(o.destinoExterno?.escola) },
+    motivo: txt(o.motivo), status: txt(o.status) || 'Pendente', dataSolicitacao: txt(o.dataSolicitacao || o.data), dataDecisao: txt(o.dataDecisao), justificativa: txt(o.justificativa || o.resposta),
+    solicitante: txt(o.solicitante), declaracaoEmitida: txt(o.declaracaoEmitida), historicoEmitido: txt(o.historicoEmitido), prazoHistorico: txt(o.prazoHistorico), resultado: txt(o.resultado)
+  }),
+  /** Nota vinda de fora da rede, lançada à mão pela secretaria. O sistema não garante a integridade desses dados. */
+  notaExterna: (o = {}) => ({
+    id: novoId(o.id), alunoId: txt(o.alunoId), escola: txt(o.escola), tipoEscola: txt(o.tipoEscola), cidade: txt(o.cidade), uf: txt(o.uf), ano: numero(o.ano), serie: txt(o.serie),
+    componente: txt(o.componente), media: o.media === '' || o.media == null ? null : numero(o.media), cargaHoraria: numero(o.cargaHoraria), situacao: txt(o.situacao), externo: true
   }),
   /** @returns {Lotacao} */
   lotacao: (o = {}) => ({ id: novoId(o.id), professorId: txt(o.professorId), vinculoId: txt(o.vinculoId), escolaId: txt(o.escolaId), cargaHoraria: numero(o.cargaHoraria), dataInicio: txt(o.dataInicio), dataFim: txt(o.dataFim) }),

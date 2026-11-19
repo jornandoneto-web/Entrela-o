@@ -19,7 +19,7 @@ async function telaLotacoes() {
     `<div class="toolbar">${selectCtl('lot-prof', 'Professor', profs.map(x => [x.id, x.pessoa.nome]), p.id, 'lotProf')}</div>
     ${p.vinculos.map((v, i) => { const s = lotacaoService.saldo(v); const la = ativas.filter(l => l.vinculoId === v.id); const ok = vinculoAtivo(v); return `<section class="card" aria-labelledby="vl-${v.id}">
       <div class="card-h"><div><h2 id="vl-${v.id}">${esc(vNome(v, i))}</h2><p class="muted">${v.cargaHoraria} h semanais, de ${fmtD(v.dataInicio)}${v.dataFim ? ' a ' + fmtD(v.dataFim) : ', sem data de fim'}${ok ? '' : '. Vínculo encerrado'}</p></div>
-        ${ok && can('lotacoes.gerir') ? `<button class="btn primary sm" data-act="lot-nova" data-v="${v.id}" ${s.saldo <= 0 ? 'disabled' : ''}>${icon('plus')}Nova lotação</button>` : ''}</div>
+        ${ok && can('lotacoes.gerir') ? `<button class="btn primary sm" data-act="lot-nova" data-v="${v.id}">${icon('plus')}Nova lotação</button>` : ''}</div>
       <div><div class="row sp"><span>${s.usado} h lotadas de ${s.total} h</span><b>${s.saldo > 0 ? st(`Saldo: ${s.saldo} h disponíveis`, 'ok') : s.saldo === 0 ? st('Carga completa', 'info') : st(`Excedido em ${-s.saldo} h`, 'err')}</b></div>
         <span class="bar-track" style="display:block;margin-top:.5rem" aria-hidden="true"><span class="bar-fill" style="display:block;width:${Math.min(100, s.usado / (s.total || 1) * 100)}%"></span></span></div>
       ${la.length ? `<div class="tbl-wrap"><table class="tbl stack"><caption class="sr-only">Lotações ativas</caption><thead><tr><th scope="col">Escola</th><th scope="col" class="n">Horas</th><th scope="col">Desde</th><th scope="col">Até</th><th scope="col" class="n">Ações</th></tr></thead><tbody>${la.map(l => `<tr><th scope="row">${esc(eNome(l.escolaId))}${caption2(esc(eLocal(l.escolaId)))}</th><td class="n" data-label="Horas">${l.cargaHoraria} h</td><td data-label="Desde">${fmtD(l.dataInicio)}</td><td data-label="Até">${l.dataFim ? fmtD(l.dataFim) : 'Sem data de saída'}</td><td class="n"><div class="acts"><button class="btn ghost sm" data-act="lot-nova" data-v="${v.id}" data-id="${l.id}" aria-label="Editar lotação em ${esc(eNome(l.escolaId))}">Editar</button><button class="btn outline sm" data-act="lot-encerrar" data-id="${l.id}" aria-label="Encerrar lotação em ${esc(eNome(l.escolaId))}">Encerrar</button></div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhuma lotação ativa neste vínculo.</p>'}
@@ -38,11 +38,13 @@ ACT['lot-nova'] = async el => {
   openDialog({
     title: el.dataset.id ? 'Editar lotação' : 'Nova lotação', wide: true,
     body: `<p class="muted">${esc(p.pessoa.nome)}. ${esc(v.cargo)}, ${v.cargaHoraria} h. Saldo para esta lotação: <b>${saldo} h</b>.</p>
+      ${saldo <= 0 ? `<p class="quote" role="note">${st('Vínculo sem horas livres', 'warn')} Todas as ${v.cargaHoraria} h já estão lotadas. Para lotar nesta escola, reduza ou encerre uma lotação atual deste vínculo, ou aumente a carga do vínculo no cadastro do professor.</p>` : ''}
       <fieldset class="form-grid"><legend class="lbl">Escola</legend>${cascataHTML('lt', { drId: esc0?.drId || '', municipioId: esc0?.municipioId || '', escolaId: l.escolaId }, { escolas, comEscola: true, obrig: true })}</fieldset>
-      <div class="form-grid">${fieldHTML({ k: 'lt-ch', l: 'Carga horária na escola (h)', t: 'number', req: 1, attrs: `min="1" max="${Math.max(1, saldo)}"`, help: `Até ${saldo} h neste vínculo.` }, l.cargaHoraria || Math.min(saldo, 10))}${fieldHTML({ k: 'lt-ini', l: 'Data de início', t: 'date', req: 1 }, l.dataInicio)}${fieldHTML({ k: 'lt-fim', l: 'Data de saída (opcional)', t: 'date', help: 'Deixe em branco se não houver previsão.' }, l.dataFim)}</div>`,
+      <div class="form-grid">${fieldHTML({ k: 'lt-ch', l: 'Carga horária na escola (h)', t: 'number', req: 1, attrs: 'min="1" step="1"', help: `Até ${saldo} h neste vínculo.` }, l.cargaHoraria || Math.min(saldo, 10))}${fieldHTML({ k: 'lt-ini', l: 'Data de início', t: 'date', req: 1 }, l.dataInicio)}${fieldHTML({ k: 'lt-fim', l: 'Data de saída (opcional)', t: 'date', help: 'Deixe em branco se não houver previsão.' }, l.dataFim)}</div>
+      <p class="err-msg" id="lt-erro" role="alert" hidden></p>`,
     onSubmit: () => {
       const obj = Modelos.lotacao(Object.assign({}, l, { escolaId: $('#lt-esc').value, cargaHoraria: $('#f-lt-ch').value, dataInicio: $('#f-lt-ini').value, dataFim: $('#f-lt-fim').value }));
-      lotacaoService.salvar(obj).then(() => { closeDialog(); rerender(); toast('Lotação salva.'); }).catch(e => { toast(e.message, 'err'); alertSR(e.message); });
+      lotacaoService.salvar(obj).then(() => { closeDialog(); rerender(); toast('Lotação salva.'); }).catch(e => { const b = $('#lt-erro'); b.textContent = e.message; b.hidden = false; b.scrollIntoView({ block: 'nearest' }); alertSR(e.message); });
       return false;
     }
   });

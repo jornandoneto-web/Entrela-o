@@ -24,13 +24,13 @@ Na tela de entrada você escolhe o perfil e a pessoa. No protótipo não há sen
 | Pasta ou arquivo | Conteúdo |
 |---|---|
 | `index.html` | Estilos (design system Entrelaço) e carregamento dos scripts |
-| `models/` | Modelos de dados: Escola, DiretoriaRegional, Municipio, Curso, Matriz, Serie, ComponenteCurricular, InfraestruturaEscola, Pessoa, Professor, Dependente, Vinculo, Formacao, Lotacao, AnoLetivo, Turma |
+| `models/` | Modelos de dados: Escola, DiretoriaRegional, Municipio, Curso, Matriz, Serie, ComponenteCurricular, InfraestruturaEscola, Pessoa, Professor, Dependente, Vinculo, Formacao, Lotacao, AnoLetivo, Turma, Transferencia, NotaExterna |
 | `mock/` | Dados simulados (Diretorias Regionais de Sergipe, cursos, matriz de exemplo, dados de exemplo da rede) |
 | `services/` | Serviços assíncronos (listar, buscarPorId, salvar, atualizar, remover) que simulam o back-end. O `dadosService` carrega os dados de cada tela pelos serviços e envia de volta só o que mudou |
-| `telas/` | Escolas, Infraestrutura, Matrizes, Professor, Lotações, Turmas, Fechamento do ano e Rematrícula, e telas dos perfis da Secretaria |
+| `telas/` | Escolas, Infraestrutura, Matrizes, Professor, Lotações, Turmas, Fechamento do ano e Rematrícula, Transferências, Histórico escolar, Notas externas, Pessoas, e telas dos perfis da Secretaria |
 | `app.js` | Núcleo: perfis e permissões, acessibilidade, navegação, formulários e cadastros genéricos |
 | `pages.js`, `rede.js`, `professores.js`, `estoque.js`, `transporte.js` | Telas e módulos das versões anteriores |
-| `migracoes.js`, `migracoes-v9.js`, `migracoes-v11.js`, `migracoes-v12.js` | Migrações dos dados salvos de uma versão para a outra |
+| `migracoes.js`, `migracoes-v9.js`, `migracoes-v11.js`, `migracoes-v12.js`, `migracoes-v13.js` | Migrações dos dados salvos de uma versão para a outra |
 
 ### Como os dados circulam
 
@@ -65,6 +65,13 @@ O portal oferece:
 - **Fechamento:** a turma só é finalizada quando, em todos os componentes da série, as aulas salvas no diário chegam à carga anual da matriz (1 aula = 1 hora). Aprovado com média final de pelo menos 6,0 em cada componente e frequência de pelo menos 75% (os dois valores ficam em Configurações). O ano é encerrado quando todas as turmas estão finalizadas.
 - **Rematrícula:** aprovado vai para a série seguinte do mesmo curso no ano seguinte; reprovado repete a série; aprovado na última série fica com o curso concluído. A turma de destino precisa ter vaga.
 - **Lotações:** a soma das horas das lotações ativas de um vínculo não pode passar a carga horária desse vínculo. A data de fim da lotação é a data de saída: nesse dia as horas já ficam livres.
+- **Transferência:** o pedido é feito pelo responsável ou pelo aluno, dentro da rede estadual (cidade e escola do sistema) ou fora dela (tipo de escola, UF, cidade e nome). Situações: Pendente, Deferido ou Indeferido, e Concluído. Quem decide é a escola de origem. Indeferir exige justificativa.
+- **Declaração de transferência:** sai na hora em que o pedido é deferido e não depende do histórico.
+- **Prazo do histórico:** 30 dias a partir do deferimento. A tela avisa quando faltam 5 dias ou menos. O pedido fica Concluído quando a escola emite o histórico.
+- **Aluno transferido dentro da rede:** vai para uma turma da mesma série e do mesmo ano na escola de destino, de preferência no mesmo turno. Sem vaga, entra na fila de espera da escola de destino. As notas do ano seguem com ele.
+- **Aluno transferido para fora da rede:** sai da turma com a situação Transferido.
+- **Histórico escolar:** reúne os anos na rede, gerados pelo sistema, e os anos fora da rede, lançados à mão pela secretaria e marcados como lançamento externo.
+- **CPF:** validado pelos dois dígitos verificadores, com máscara. Os dados de exemplo usam CPFs gerados, válidos e fictícios.
 
 ## Listas gerenciáveis
 
@@ -79,4 +86,8 @@ Ficam fixos só os valores que são regra interna do sistema: dias da semana, UF
 - A associação de DR1 a DR10 com os municípios está em `mock/sergipe.js` e precisa ser conferida com o painel da SEDUC. Só a DEA (Aracaju) está confirmada.
 - A sigla do departamento do calendário escolar precisa ser confirmada (nome provisório: Calendário escolar).
 - A definir: uma lotação pode durar além da data de fim do vínculo? Hoje o sistema só bloqueia a lotação que começa depois que o vínculo termina.
+- Nos dados de exemplo, 5 dos 9 vínculos de professor já têm toda a carga lotada (saldo 0), então não aceitam lotação nova. A tela de lotações explica o motivo.
+- A definir: o pedido de transferência fica Concluído quando a escola emite o histórico. Confirmar se deve ser outro momento, como a confirmação da matrícula no destino.
+- A definir: transferência para escola da rede que usa outro sistema (integração por API ou planilha). Hoje o aluno sai como Transferido e a vaga é descontada na escola de destino.
+- O cadastro de Pessoas (dados pessoais completos) está só no perfil Secretário. Confirmar quais perfis podem editar.
 - Os dados ficam só no navegador. Para que sejam compartilhados entre usuários, é preciso um back-end.

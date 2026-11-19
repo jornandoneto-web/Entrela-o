@@ -15,11 +15,11 @@ function telaMatricula() {
         <div class="wide" style="grid-column:1/-1">${campoMt('mt-nome', 'Nome completo (sem abreviações)', 'autocomplete="off"', true)}</div>
         ${campoMt('mt-nasc', 'Data de nascimento', `type="date" max="${TODAY_ISO}"`, true)}${selMt('mt-sexo', 'Sexo', nomes('sexos'), true)}
         <div class="wide" style="grid-column:1/-1">${campoMt('mt-fil', 'Filiação 01 (nome completo da mãe ou do responsável legal)', '', true)}</div>
-        ${selMt('mt-cor', 'Cor/Raça', nomes('coresRacas'), true)}${selMt('mt-bf', 'Recebe Bolsa Família?', ['Sim', 'Não'], true)}${selMt('mt-nec', 'Necessidade de acessibilidade', nomes('necessidades'))}
+        ${selMt('mt-par', 'Seu parentesco com o estudante', nomes('parentescosResponsavel'), true)}${selMt('mt-cor', 'Cor/Raça', nomes('coresRacas'), true)}${selMt('mt-bf', 'Recebe Bolsa Família?', ['Sim', 'Não'], true)}${selMt('mt-nec', 'Necessidade de acessibilidade', nomes('necessidades'))}
         <div class="field"><span class="lbl">Termo de vacinação <span class="req" aria-hidden="true">*</span></span><div class="row"><span id="mt-termo" class="st err" aria-live="polite">Não assinado</span><button type="button" class="btn outline sm" data-act="mt-assinar">Assinar</button></div></div>
       </section>
       <section id="mt2" class="form-grid aba-oculta" aria-label="Documentos">
-        ${campoMt('mt-cpf', 'CPF do estudante', 'inputmode="numeric" maxlength="14" placeholder="000.000.000-00"', true)}${campoMt('mt-nis', 'NIS do estudante', 'inputmode="numeric" maxlength="11"')}${campoMt('mt-sus', 'Cartão SUS', 'inputmode="numeric" maxlength="15"')}
+        ${campoMt('mt-cpf', 'CPF do estudante', 'data-cpf inputmode="numeric" maxlength="14" placeholder="000.000.000-00"', true)}${campoMt('mt-nis', 'NIS do estudante', 'inputmode="numeric" maxlength="11"')}${campoMt('mt-sus', 'Cartão SUS', 'inputmode="numeric" maxlength="15"')}
         ${campoMt('mt-rg', 'RG')}${selMt('mt-org', 'Órgão emissor', nomes('orgaosEmissores'))}${selMt('mt-uf', 'UF', UFS_BR)}${campoMt('mt-rgd', 'Data de emissão', `type="date" max="${TODAY_ISO}"`)}
       </section>
       <section id="mt3" class="form-grid aba-oculta" aria-label="Acesso">
@@ -52,7 +52,7 @@ FORMS.estudante = () => {
   if (!mtValidar(2)) return;
   const g = id => $('#' + id).value.trim();
   // A senha só é conferida: o mock não guarda senhas. O back-end real cuida de autenticação.
-  estudanteService.salvar(Modelos.estudante({ responsavelId: SESSION.userId, nome: g('mt-nome'), nascimento: g('mt-nasc'), sexo: g('mt-sexo'), filiacao: g('mt-fil'), cpf: g('mt-cpf'), nis: g('mt-nis'), cartaoSUS: g('mt-sus'), corRaca: g('mt-cor'), bolsaFamilia: g('mt-bf'), termoVacinacao: $('#mt-termo').textContent, rg: g('mt-rg'), rgOrgao: g('mt-org'), rgUF: g('mt-uf'), rgEmissao: g('mt-rgd'), email: g('mt-email'), telefone: me().telefone, necessidade: g('mt-nec') }))
+  estudanteService.salvar(Modelos.estudante({ responsavelId: SESSION.userId, nome: g('mt-nome'), nascimento: g('mt-nasc'), sexo: g('mt-sexo'), filiacao: g('mt-fil'), parentescoResponsavel: g('mt-par'), cpf: g('mt-cpf'), nis: g('mt-nis'), cartaoSUS: g('mt-sus'), corRaca: g('mt-cor'), bolsaFamilia: g('mt-bf'), termoVacinacao: $('#mt-termo').textContent, rg: g('mt-rg'), rgOrgao: g('mt-org'), rgUF: g('mt-uf'), rgEmissao: g('mt-rgd'), email: g('mt-email'), telefone: me().telefone, necessidade: g('mt-nec') }))
     .then(e => { mtPasso = 0; go('vagas'); toast(`${e.nome} cadastrado. Agora escolha a escola e a série.`); }).catch(e => { toast(e.message, 'err'); alertSR(e.message); });
 };
 // Solicitar vaga a partir de Vagas na rede
