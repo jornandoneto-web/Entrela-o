@@ -1,6 +1,6 @@
 # Matriz de rastreabilidade
 
-Cada instrução da equipe à IA assistente no desenvolvimento do Entrelaço, ligada à versão, ao commit e aos arquivos que ela mudou. A equipe definiu os requisitos, decidiu as regras e revisou as entregas; a IA implementou (papéis em README.md). São 23 prompts: 19 atendidos, 1 substituído, 2 parciais e 1 em andamento.
+Cada instrução da equipe à IA assistente no desenvolvimento do Entrelaço, ligada à versão, ao commit e aos arquivos que ela mudou. A equipe definiu os requisitos, decidiu as regras e revisou as entregas; a IA implementou (papéis em README.md). São 25 prompts: 21 atendidos, 1 substituído, 2 parciais e 1 em andamento.
 
 Datas e horários no horário de Brasília (UTC-3).
 
@@ -28,7 +28,9 @@ Datas e horários no horário de Brasília (UTC-3).
 | [P20](P20-respostas-as-duvidas-da-mentoria-de-19-11.md) | 2026-11-19 | Respostas às dúvidas da mentoria de 19/11 | v23 | [`1c18b32`](https://github.com/jornandoneto-web/Entrela-o/commit/1c18b32272cea2fedd901ba77541970682e06c8c) | 7 | Parcial |
 | [P21](P21-mentoria-de-26-11-2026-parte-1-grade-com-caixinhas.md) | 2026-11-26 | Mentoria de 26/11/2026, parte 1 (grade com caixinhas, boletins, cadastro do professor) | v24 | [`c821a89`](https://github.com/jornandoneto-web/Entrela-o/commit/c821a89cc39f230dbdec813b094b0998bf68e1a5) | 17 | Atendido |
 | [P22](P22-mentoria-de-26-11-2026-parte-2-relatorio-slides-e.md) | 2026-11-26 | Mentoria de 26/11/2026, parte 2 (relatório, slides e roteiro) | entrega | — | — | Em andamento |
-| [P23](P23-repositorio-de-prompts-com-rastreabilidade.md) | 2026-11-26 | Repositório de prompts com rastreabilidade | v25 | commit desta entrega | 31 | Atendido |
+| [P23](P23-repositorio-de-prompts-com-rastreabilidade.md) | 2026-11-26 | Repositório de prompts com rastreabilidade | v25 | [`dc824e5`](https://github.com/jornandoneto-web/Entrela-o/commit/dc824e5c477ff0a9e3b3b3b950f4df34409e9914) | 30 | Atendido |
+| [P24](P24-pdf-do-repositorio-conferencia-dos-dados-e-papeis.md) | 2026-11-26 | PDF do repositório, conferência dos dados e papéis da equipe e da IA | v25 (ajustes) | [`02b5d37`](https://github.com/jornandoneto-web/Entrela-o/commit/02b5d370fd6f5caeda71cf9ca7b164671f928503) | 26 | Atendido |
+| [P25](P25-remover-os-fios-entrelacados-de-todos-os-lugares.md) | 2026-11-26 | Remover os fios entrelaçados de todos os lugares | v26 | commit desta entrega | 8 | Atendido |
 
 \* Versão deduzida pela ordem do CHANGELOG: antes do Git não há ligação registrada entre o prompt e a versão. A situação "Atendido" desses prompts segue a mesma ressalva.
 

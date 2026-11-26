@@ -2,6 +2,10 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v26 — Sem os fios entrelaçados
+- A linha do dia do painel inicial (aluno e professor) troca os dois fios entrelaçados por uma linha simples entre os horários. Os fios sob os títulos já tinham saído na v20.
+- Repositório de prompts: PDF completo, horários em Brasília, verificações conferidas no histórico e quadro de papéis da equipe e da IA.
+
 ## v25 — Repositório de prompts
 - Nova pasta `prompts/` com os 23 prompts enviados à IA desde o protótipo inicial, cada um com o texto original, a data, a versão, o commit, a release, os arquivos alterados, como foi verificado e as pendências.
 - Nova matriz `prompts/RASTREABILIDADE.md`, com todos os prompts numa tabela e as pendências em aberto.

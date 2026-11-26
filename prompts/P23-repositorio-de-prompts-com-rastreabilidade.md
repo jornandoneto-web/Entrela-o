@@ -4,8 +4,8 @@
 | --- | --- |
 | Data | 2026-11-26 |
 | Versão | v25 |
-| Commit | commit desta entrega |
-| Release | — |
+| Commit | [`dc824e5`](https://github.com/jornandoneto-web/Entrela-o/commit/dc824e5c477ff0a9e3b3b3b950f4df34409e9914) |
+| Release | [v25](https://github.com/jornandoneto-web/Entrela-o/releases/tag/v25) |
 | Situação | Atendido |
 | Como foi verificado | Conferência dos links e da matriz. |
 
@@ -36,7 +36,7 @@ Também retira três páginas de teste que entraram por engano na v24.
 
 ## Arquivos alterados
 
-Diferença entre v24 e esta entrega.
+Diferença entre v24 e v25.
 
 | Arquivo | Mudança |
 | --- | --- |
@@ -67,7 +67,6 @@ Diferença entre v24 e esta entrega.
 | `prompts/P23-repositorio-de-prompts-com-rastreabilidade.md` | novo |
 | `prompts/RASTREABILIDADE.md` | novo |
 | `prompts/README.md` | novo |
-| `prompts/Repositorio_de_prompts_Entrelaco.pdf` | novo |
 | `t24.html` | removido |
 | `teste-up.html` | removido |
 | `teste.html` | removido |

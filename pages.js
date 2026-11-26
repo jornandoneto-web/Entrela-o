@@ -228,11 +228,8 @@ function boletimFala(aid) {
 
 // ---------- O fio do dia: aulas como um fio contínuo que atravessa as horas ----------
 const toMin = h => { const [a, b] = h.split(':').map(Number); return a * 60 + b; };
-function fioWave(n) {
-  const xs = [0, ...Array.from({ length: n }, (_, i) => (i + .5) / n * 1000), 1000];
-  const path = phase => xs.slice(1).reduce((d, x, i) => { const x0 = xs[i]; return d + ` Q ${((x0 + x) / 2).toFixed(1)},${(i + phase) % 2 ? 4 : 36} ${x.toFixed(1)},20`; }, 'M 0,20');
-  return `<svg class="fio-wave" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="w2" d="${path(1)}" pathLength="1" vector-effect="non-scaling-stroke"/><path class="w1" d="${path(0)}" pathLength="1" vector-effect="non-scaling-stroke"/></svg>`;
-}
+// Linha simples que liga os pontos do dia (sem os fios entrelaçados)
+function fioWave() { return '<span class="fio-linha" aria-hidden="true"></span>'; }
 function fioDia(aulas, role) {
   const nowD = new Date(); let dia = TODAY.getDay(); let nowMin = nowD.getHours() * 60 + nowD.getMinutes(); let quando = fmtLong(TODAY_ISO);
   let titulo = role === 'professor' ? 'Suas aulas hoje' : 'Seu dia';

@@ -232,7 +232,7 @@ button.stat{border:0;text-align:left;cursor:pointer;font:inherit}
 @media (max-width:48em){#content:has(.hrow) .stats{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:26em){#content:has(.hrow) .stats{gap:.625rem}#content:has(.hrow) .stat{padding:1rem}#content:has(.hrow) .stat .v{font-size:1.75rem}}
 @media (max-width:48em){
-  .fio .fio-wave{display:none}
+  .fio .fio-linha{display:none}
   .fio .fio-inner{min-width:0}
   .fio .fio-list{grid-template-columns:minmax(0,1fr);border-left:3px solid var(--v300);margin-left:.6rem}
   .fio .fio-list li{align-items:flex-start;text-align:left;padding:.75rem 0 .75rem 1.5rem}
@@ -363,11 +363,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.8125rem;padding:.125rem 
 .fio-head h2{font-size:1.25rem;font-weight:600}
 .fio-track{overflow-x:auto;padding-bottom:.5rem;scrollbar-width:thin}
 .fio-inner{position:relative;min-width:calc(var(--n) * 10.5rem)}
-.fio-wave{position:absolute;left:0;top:0;width:100%;height:40px;overflow:visible}
-.fio-wave path{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0;animation:fio-draw 1.4s cubic-bezier(.6,0,.2,1) both}
-.fio-wave .w1{stroke:var(--v600)}
-.fio-wave .w2{stroke:var(--v300);animation-delay:.15s}
-@keyframes fio-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.fio-linha{position:absolute;left:0;right:0;top:19px;height:2px;background:var(--v300);border-radius:2px}
 .fio-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
 .fio-list li{position:relative;padding:3.25rem .75rem .25rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.125rem}
 .knot{position:absolute;top:12px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:999px;background:var(--bg-page);border:3px solid var(--v600)}
@@ -381,7 +377,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:.8125rem;padding:.125rem 
 .fio-sub{font-size:.8125rem;color:var(--tx-2)}
 .fio-list .btn{margin-top:.5rem}
 .fio-list .st{margin-top:.375rem;font-size:.8125rem}
-[data-contrast="high"] .fio-wave .w1{stroke:#FFE600}[data-contrast="high"] .fio-wave .w2{stroke:#fff}
+[data-contrast="high"] .fio-linha{background:#FFE600}
 [data-contrast="high"] .knot{background:#000;border-color:#FFE600}
 
 /* ===== Notificações ===== */

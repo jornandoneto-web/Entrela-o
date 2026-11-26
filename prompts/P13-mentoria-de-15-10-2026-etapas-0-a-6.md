@@ -5,7 +5,7 @@
 | Data | 2026-10-15 |
 | Versão | v16 e v17 |
 | Commit | [`67c460b`](https://github.com/jornandoneto-web/Entrela-o/commit/67c460b5d51c2ade570403ffb5be4edd81967eb7) |
-| Release | [v16](https://github.com/jornandoneto-web/Entrela-o/releases/tag/v17) |
+| Release | [v17](https://github.com/jornandoneto-web/Entrela-o/releases/tag/v17) |
 | Situação | Atendido |
 | Como foi verificado | Os 32 testes dos critérios de aceite passaram, e todas as telas de 13 usuários abriram sem erro. |
 
