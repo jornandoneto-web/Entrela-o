@@ -3,17 +3,17 @@
 | Campo | Valor |
 | --- | --- |
 | Data | 2026-09-24 |
-| Versão | v1 |
+| Versão | v1 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
-| Como foi verificado | Conferência visual pelo usuário (antes do Git). |
+| Como foi verificado | Execução no navegador sem janela registrada no histórico (2 vezes). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-09-24 23:29** (mensagem)
+**2026-09-24 20:29** (mensagem)
 
 ```text
 crie um prototipo funcional  com designer mordernos com poucos badgets ou nenhum com funcionalidades para deficientes visuais.
@@ -26,7 +26,7 @@ Coloque todas as funcionalidades possiveis que uma escola precisa, desde cadastr
 Utilize essas imagens como base no designer
 ```
 
-**2026-09-24 23:37** (enviada durante a tarefa)
+**2026-09-24 20:37** (enviada durante a tarefa)
 
 ```text
 onde está os arquivos ?

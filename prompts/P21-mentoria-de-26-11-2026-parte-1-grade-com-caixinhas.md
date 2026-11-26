@@ -13,7 +13,7 @@
 
 Texto como foi enviado, sem correções.
 
-**2026-11-26 22:06** (mensagem)
+**2026-11-26 19:06** (mensagem)
 
 ```text
 Etapa 1 — Grade horária: quem monta e quem vê

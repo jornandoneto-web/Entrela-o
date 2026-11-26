@@ -13,7 +13,7 @@
 
 Texto como foi enviado, sem correções.
 
-**2026-11-26 22:27** (mensagem)
+**2026-11-26 19:27** (mensagem)
 
 ```text
 Preciso que monte uma versão final do repositorio de prompts com rastreabilidade de alterações
@@ -67,6 +67,7 @@ Diferença entre v24 e esta entrega.
 | `prompts/P23-repositorio-de-prompts-com-rastreabilidade.md` | novo |
 | `prompts/RASTREABILIDADE.md` | novo |
 | `prompts/README.md` | novo |
+| `prompts/Repositorio_de_prompts_Entrelaco.pdf` | novo |
 | `t24.html` | removido |
 | `teste-up.html` | removido |
 | `teste.html` | removido |

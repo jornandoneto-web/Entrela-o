@@ -2,24 +2,24 @@
 
 | Campo | Valor |
 | --- | --- |
-| Data | 2026-09-25 |
-| Versão | v2 a v4 |
+| Data | 2026-09-24 |
+| Versão | v2 a v4 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Substituído |
-| Como foi verificado | Conferência visual pelo usuário. |
+| Como foi verificado | Não registrado (versão anterior ao Git). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-09-25 00:30** (mensagem)
+**2026-09-24 21:30** (mensagem)
 
 ```text
 Aplique o dashboard inicial para horizontal
 ```
 
-**2026-09-25 00:33** (mensagem)
+**2026-09-24 21:33** (mensagem)
 
 ```text
 Quero todos os elementos da pag inicial na horizontal

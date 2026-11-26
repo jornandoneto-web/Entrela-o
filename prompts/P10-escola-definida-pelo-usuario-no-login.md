@@ -3,17 +3,17 @@
 | Campo | Valor |
 | --- | --- |
 | Data | 2026-10-01 |
-| Versão | v13 |
+| Versão | v13 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
-| Como foi verificado | Conferência visual pelo usuário. |
+| Como foi verificado | Execução no navegador sem janela registrada no histórico (1 vez). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-10-01 14:47** (mensagem)
+**2026-10-01 11:47** (mensagem)
 
 ```text
 Ao entrar no usuario remova a opção de escolher a escola, essa escolha é feita ao acessar com o usuario

@@ -3,7 +3,7 @@
 | Campo | Valor |
 | --- | --- |
 | Data | 2026-10-15 |
-| Versão | v15 |
+| Versão | v15 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
@@ -13,13 +13,13 @@
 
 Texto como foi enviado, sem correções.
 
-**2026-10-15 22:49** (mensagem)
+**2026-10-15 19:49** (mensagem)
 
 ```text
 (comando /anthropic-skills:frontend-design)
 ```
 
-**2026-10-15 22:50** (enviada durante a tarefa)
+**2026-10-15 19:50** (enviada durante a tarefa)
 
 ```text
 No mapa de rota subistitua para uma rota a caminho da universidade tiradentes em aracaju

@@ -3,23 +3,23 @@
 | Campo | Valor |
 | --- | --- |
 | Data | 2026-09-28 |
-| Versão | v5 |
+| Versão | v5 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
-| Como foi verificado | Conferência visual pelo usuário. |
+| Como foi verificado | Execução no navegador sem janela registrada no histórico (1 vez). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-09-28 16:22** (mensagem)
+**2026-09-28 13:22** (mensagem)
 
 ```text
 (comando /anthropic-skills:frontend-design)
 ```
 
-**2026-09-28 16:22** (enviada durante a tarefa)
+**2026-09-28 13:22** (enviada durante a tarefa)
 
 ```text
 Altere o estilo desse site.

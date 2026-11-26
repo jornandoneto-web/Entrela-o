@@ -30,6 +30,8 @@ Um arquivo por prompt, com o nome `Pnn-assunto.md`:
 - As versões v1 a v15 vêm de antes do uso do Git. Elas têm o prompt e o resultado, mas não têm commit nem a lista de arquivos.
 - O texto do prompt da mentoria de 12/11/2026 (v21) foi trabalhado fora da sessão registrada aqui e precisa ser anexado ao P18.
 - Mensagens enviadas enquanto a IA trabalhava aparecem marcadas como "enviada durante a tarefa".
+- Datas e horários estão no horário de Brasília (UTC-3). O histórico original grava em UTC.
+- Nos prompts P01 a P12, a versão foi deduzida pela ordem do CHANGELOG e vem marcada com * na matriz. O campo "Como foi verificado" diz só o que o histórico registra: execuções no navegador sem janela, ou "Não registrado".
 
 ## Como registrar um prompt novo
 

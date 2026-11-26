@@ -7,13 +7,13 @@
 | Commit | [`67c460b`](https://github.com/jornandoneto-web/Entrela-o/commit/67c460b5d51c2ade570403ffb5be4edd81967eb7) |
 | Release | [v16](https://github.com/jornandoneto-web/Entrela-o/releases/tag/v17) |
 | Situação | Atendido |
-| Como foi verificado | Teste automático de todas as telas e dos cadastros novos. |
+| Como foi verificado | Os 32 testes dos critérios de aceite passaram, e todas as telas de 13 usuários abriram sem erro. |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-10-15 23:58** (mensagem)
+**2026-10-15 20:58** (mensagem)
 
 ```text
 Contexto
@@ -118,7 +118,7 @@ Critérios de aceite (verifique no final)
 Ao terminar, me mostre um resumo do que foi alterado (arquivos e telas), o que ficou pendente e qualquer dúvida sobre regra de negócio.
 ```
 
-**2026-10-29 22:15** (mensagem)
+**2026-10-29 19:15** (mensagem)
 
 ```text
 O prompt está pronto no arquivo **Prompt_Alteracoes_Mentoria_15102026.md**, para colar no seu assistente de código (Claude Code, Cursor etc.) com o projeto aberto. Ele pede que o assistente primeiro analise o projeto e apresente um plano, e só depois faça as mudanças, em 7 etapas:
@@ -142,7 +142,7 @@ Alguns detalhes eu completei por conta própria, porque a transcrição não dei
 Vale revisar esses pontos antes de rodar o prompt.
 ```
 
-**2026-10-29 22:40** (mensagem)
+**2026-10-29 19:40** (mensagem)
 
 ```text
 Contexto
@@ -247,13 +247,13 @@ Critérios de aceite (verifique no final)
 Ao terminar, me mostre um resumo do que foi alterado (arquivos e telas), o que ficou pendente e qualquer dúvida sobre regra de negócio.
 ```
 
-**2026-10-29 22:43** (mensagem)
+**2026-10-29 19:43** (mensagem)
 
 ```text
 faça e publique
 ```
 
-**2026-10-29 23:00** (mensagem)
+**2026-10-29 20:00** (mensagem)
 
 ```text
 Na mentoria de hoje, o professor revisou as telas do nosso sistema e pediu as alterações abaixo. Implemente todas elas no projeto em que já estamos trabalhando, etapa por etapa, aproveitando as telas, componentes e padrões que já existem. Não troque bibliotecas nem refaça telas que não estão nesta lista, e não quebre o que já funciona.
@@ -356,7 +356,7 @@ Critérios de aceite (verifique no final)
 Ao terminar, me mostre um resumo do que foi alterado (arquivos e telas), o que ficou pendente e qualquer dúvida sobre regra de negócio.
 ```
 
-**2026-10-29 23:03** (mensagem)
+**2026-10-29 20:03** (mensagem)
 
 ```text
 2 qualquer pessoa cadastrada

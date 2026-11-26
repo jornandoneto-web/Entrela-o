@@ -2,18 +2,18 @@
 
 | Campo | Valor |
 | --- | --- |
-| Data | 2026-09-25 |
-| Versão | v2 a v4 |
+| Data | 2026-09-24 |
+| Versão | v2 a v4 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
-| Como foi verificado | Conferência visual pelo usuário (antes do Git). |
+| Como foi verificado | Execução no navegador sem janela registrada no histórico (1 vez). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-09-25 00:13** (mensagem)
+**2026-09-24 21:13** (mensagem)
 
 ```text
 Geral: 

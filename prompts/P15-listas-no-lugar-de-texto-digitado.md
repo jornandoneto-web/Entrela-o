@@ -7,20 +7,20 @@
 | Commit | [`daec05e`](https://github.com/jornandoneto-web/Entrela-o/commit/daec05eaf54faca6774bc618ec24ee7f96fedfbb) |
 | Release | [v18](https://github.com/jornandoneto-web/Entrela-o/releases/tag/v18) |
 | Situação | Atendido |
-| Como foi verificado | Teste automático das telas. |
+| Como foi verificado | Testes no navegador registrados no histórico. |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-10-29 22:51** (mensagem)
+**2026-10-29 19:51** (mensagem)
 
 ```text
 Tudo que puder colocar em lista ao inves da pessoa digitar, altere
 Ex: Cidade, Estado
 ```
 
-**2026-10-29 22:55** (mensagem)
+**2026-10-29 19:55** (mensagem)
 
 ```text
 publicou ?

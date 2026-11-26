@@ -13,7 +13,7 @@
 
 Texto como foi enviado, sem correções.
 
-**2026-11-19 13:50** (mensagem)
+**2026-11-19 10:50** (mensagem)
 
 ```text
 Na mentoria, o mentor revisou o sistema e pediu as alterações abaixo. Implemente todas no projeto em que já estamos trabalhando, etapa por etapa, aproveitando as telas, componentes e padrões que já existem. Não troque bibliotecas, não refaça telas fora desta lista e não quebre o que já funciona. Os dados continuam mockados: use os modelos/objetos e a camada de serviço mock, como no resto do sistema.

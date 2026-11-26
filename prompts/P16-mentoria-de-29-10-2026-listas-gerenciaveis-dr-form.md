@@ -7,13 +7,13 @@
 | Commit | [`9c5db9d`](https://github.com/jornandoneto-web/Entrela-o/commit/9c5db9d6dfa0b81a47e9a1ff186060ac454612cf) |
 | Release | [v19](https://github.com/jornandoneto-web/Entrela-o/releases/tag/v19) |
 | Situação | Parcial |
-| Como foi verificado | Teste automático de atualização a partir de um banco da v18; pegou uma migração que apagaria as formações antes de publicar. |
+| Como foi verificado | Testes no navegador antes de publicar. Neles apareceu uma migração que perderia as formações dos professores, corrigida antes da publicação. |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-10-30 15:07** (mensagem)
+**2026-10-30 12:07** (mensagem)
 
 ```text
 Etapa 1 — Regra geral: "tudo que está em tela deve ser gerenciado"
@@ -110,19 +110,19 @@ Critérios de aceite
 Ao terminar, me mostre um resumo do que foi alterado (arquivos e telas), o que ficou pendente e as dúvidas de regra de negócio.
 ```
 
-**2026-10-30 15:07** (enviada durante a tarefa)
+**2026-10-30 12:07** (enviada durante a tarefa)
 
 ```text
 https://seduc.se.gov.br/escolas/
 ```
 
-**2026-10-30 15:08** (enviada durante a tarefa)
+**2026-10-30 12:08** (enviada durante a tarefa)
 
 ```text
 (imagem anexada: print do Portal da Matrícula, Cadastro Básico)
 ```
 
-**2026-10-30 15:21** (mensagem)
+**2026-10-30 12:21** (mensagem)
 
 ```text
 publicou ?

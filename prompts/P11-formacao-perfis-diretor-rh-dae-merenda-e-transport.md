@@ -3,17 +3,17 @@
 | Campo | Valor |
 | --- | --- |
 | Data | 2026-10-08 |
-| Versão | v14 |
+| Versão | v14 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
-| Como foi verificado | Teste automático das telas no navegador. |
+| Como foi verificado | Execução no navegador sem janela registrada no histórico (2 vezes). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-10-08 23:50** (mensagem)
+**2026-10-08 20:50** (mensagem)
 
 ```text
 1. FORMAÇÃO DO PROFESSOR → DISCIPLINAS HABILITADAS
@@ -77,7 +77,7 @@ AO FINAL, ENTREGUE
 - o que ficou pendente e as decisões que você tomou por conta própria.
 ```
 
-**2026-10-09 00:11** (mensagem)
+**2026-10-08 21:11** (mensagem)
 
 ```text
 tente novamente

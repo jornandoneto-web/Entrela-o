@@ -3,17 +3,17 @@
 | Campo | Valor |
 | --- | --- |
 | Data | 2026-09-28 |
-| Versão | v6 |
+| Versão | v6 (deduzida pela ordem do CHANGELOG) |
 | Commit | anterior ao Git |
 | Release | — |
 | Situação | Atendido |
-| Como foi verificado | Conferência visual pelo usuário. |
+| Como foi verificado | Execução no navegador sem janela registrada no histórico (1 vez). |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-09-28 16:28** (mensagem)
+**2026-09-28 13:28** (mensagem)
 
 ```text
 adicione funções importantes para escolas da rede pulblica e preciso de uma forma que possa integrar com outras escolas para verificar vagas disponiveis tanto para as escolas cadastrar vagsa e transferir alunos quanto para os pais/responsaveis matricular os filhos

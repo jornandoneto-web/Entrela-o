@@ -13,7 +13,7 @@
 
 Texto como foi enviado, sem correções.
 
-**2026-11-19 14:14** (mensagem)
+**2026-11-19 11:14** (mensagem)
 
 ```text
 2 sim
@@ -23,13 +23,13 @@ Texto como foi enviado, sem correções.
 6 sim, deixe
 ```
 
-**2026-11-19 14:20** (mensagem)
+**2026-11-19 11:20** (mensagem)
 
 ```text
 publicou ?
 ```
 
-**2026-11-19 14:22** (mensagem)
+**2026-11-19 11:22** (mensagem)
 
 ```text
 ficou alguma duvida ?

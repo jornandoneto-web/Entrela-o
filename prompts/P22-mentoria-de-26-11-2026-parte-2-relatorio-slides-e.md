@@ -7,13 +7,13 @@
 | Commit | — |
 | Release | — |
 | Situação | Em andamento |
-| Como foi verificado | Relatório de prompts feito; slides parciais (4 de 10); roteiro não iniciado. |
+| Como foi verificado | Relatório de prompts publicado. Slides: só a capa publicada; os slides 2 a 4 foram escritos e não enviados; faltam 6. Roteiro de fala não iniciado. |
 
 ## Prompt original
 
 Texto como foi enviado, sem correções.
 
-**2026-11-26 22:21** (mensagem)
+**2026-11-26 19:21** (mensagem)
 
 ```text
 sim, monte a parte 2
@@ -21,7 +21,7 @@ sim, monte a parte 2
 
 ## Resultado
 
-Relatório de engenharia de prompts e slides da apresentação, publicados no claude.ai. O roteiro de fala ainda não foi feito.
+Relatório de engenharia de prompts publicado no claude.ai. Dos slides, só a capa foi publicada. O roteiro de fala ainda não foi feito.
 
 ## Observações e pendências
 
