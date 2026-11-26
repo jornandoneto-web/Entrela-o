@@ -1,6 +1,22 @@
 # Repositório de prompts
 
-Esta pasta guarda os prompts enviados à IA (Claude Code) no desenvolvimento do Entrelaço. Cada prompt fica ligado à versão que o atendeu, ao commit, aos arquivos alterados e a como o resultado foi verificado.
+Esta pasta registra como o Entrelaço foi desenvolvido. A equipe conduziu o projeto: definiu o produto, trouxe os requisitos das mentorias, tomou as decisões de regra de negócio e revisou cada entrega. A IA (Claude Code) atuou como assistente de desenvolvimento: escreveu o código a partir das instruções da equipe, testou e publicou.
+
+Cada prompt fica ligado à versão que o atendeu, ao commit, aos arquivos alterados e a como o resultado foi verificado.
+
+## Papéis
+
+| Quem | O que fez | Onde aparece |
+| --- | --- | --- |
+| Equipe | Design system no Figma (cores, tipografia, componentes), usado como base desde o primeiro prompt | P01, P04, P12 |
+| Equipe | Requisitos e prioridades de cada versão, a partir das mentorias | P13, P16, P18, P19, P21 |
+| Equipe | Decisões de regra de negócio quando havia dúvida (diretor, carga horária, transferência, notas externas) | P13, P20 |
+| Equipe | Revisão das entregas e pedidos de correção, com prints e testes nas telas | P03, P06, P07, P17 |
+| Equipe | Preferências de produto: sem badges, modo claro, sem financeiro, listas no lugar de texto, linguagem "deficiente visual" | P02, P04, P15 |
+| Equipe | Publicação, repositório no GitHub e integração do trabalho de outra integrante (mudança de cores) | P14, P18 |
+| IA (Claude Code) | Escrita do código, das migrações de dados e dos testes automáticos | Todos os prompts de implementação |
+| IA (Claude Code) | Levantamento de dúvidas de regra de negócio para a equipe decidir | P19, P21 |
+| IA (Claude Code) | Execução técnica da publicação (Vercel, GitHub, releases) | P14 em diante |
 
 Comece pela [matriz de rastreabilidade](RASTREABILIDADE.md): ela lista todos os prompts numa tabela e as pendências em aberto.
 

@@ -1,6 +1,6 @@
 # Matriz de rastreabilidade
 
-Cada prompt enviado à IA no desenvolvimento do Entrelaço, ligado à versão, ao commit e aos arquivos que ele mudou. São 23 prompts: 19 atendidos, 1 substituído, 2 parciais e 1 em andamento.
+Cada instrução da equipe à IA assistente no desenvolvimento do Entrelaço, ligada à versão, ao commit e aos arquivos que ela mudou. A equipe definiu os requisitos, decidiu as regras e revisou as entregas; a IA implementou (papéis em README.md). São 23 prompts: 19 atendidos, 1 substituído, 2 parciais e 1 em andamento.
 
 Datas e horários no horário de Brasília (UTC-3).
 
