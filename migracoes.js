@@ -46,6 +46,7 @@ function migrar(db) {
   if (db.v < 12) migrarV12(db);
   if (db.v < 13 && typeof migrarV13 === 'function') migrarV13(db);
   if (db.v < 14 && typeof migrarV14 === 'function') migrarV14(db);
+  if (db.v < 15 && typeof migrarV15 === 'function') migrarV15(db);
 }
 function migrarV7(db) {
   const rel = [];
@@ -138,7 +139,7 @@ function migrarV8(db) {
   db.v = 8;
 }
 
-if (!ARMAZEM.v || ARMAZEM.v < 14) { migrar(ARMAZEM); persistirArmazem(); }
+if (!ARMAZEM.v || ARMAZEM.v < 15) { migrar(ARMAZEM); persistirArmazem(); }
 
 // ---------- Início ----------
 dadosService.carregar().then(() => { applyA11y(); render(); });

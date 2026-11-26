@@ -64,7 +64,8 @@ Object.assign(ENT, {
     desc: 'Corpo docente, disciplinas que cada professor leciona e carga semanal.',
     fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, { k: 'email', l: 'E-mail institucional', t: 'email', req: 1 }, { k: 'telefone', l: 'Telefone', t: 'tel' }, { k: 'escolaId', l: 'Unidade de lotação', t: 'select', o: optsOf('escolas'), req: 1 }, { k: 'formacao', l: 'Formação', wide: 1 }, { k: 'disciplinas', l: 'Disciplinas que leciona', t: 'checks', o: optsOf('disciplinas') }],
     defaults: () => ({ disciplinas: [], escolaId: escSessao() || undefined }),
-    rows: () => DADOS.professores.filter(p => naEscola(p.escolaId) || DADOS.aulas.some(a => a.professorId === p.id && naEscola(byId('turmas', a.turmaId)?.escolaId))),
+    // A escola vê só quem está lotado nela (lotação ativa). O cadastro é do RH.
+    rows: () => DADOS.professores.filter(p => !escSessao() || DADOS.lotacoes.some(l => l.professorId === p.id && naEscola(l.escolaId) && lotacaoAtiva(l))),
     cols: [['Professor', r => `${esc(r.nome)}${caption2(esc(r.email))}`], ['Disciplinas', r => esc((r.disciplinas || []).map(discNome).join(', ') || '—')], ['Unidade', r => esc(byId('escolas', r.escolaId)?.nome.split('— ').pop() || '—')], ['Turmas', r => uniq(DADOS.aulas.filter(a => a.professorId === r.id).map(a => a.turmaId)).length, 'n'], ['Aulas/semana', r => DADOS.aulas.filter(a => a.professorId === r.id).length, 'n']]
   },
   disciplinas: {

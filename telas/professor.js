@@ -80,7 +80,7 @@ async function abrirProfessor(id) {
       <div role="tablist" class="abas" aria-label="Partes do cadastro">${aba('pes', 'Dados pessoais', true)}${aba('for', `Formação (${p.habilitacoes.length})`, false)}${aba('dep', `Dependentes (${p.dependentes.length})`, false)}${aba('vin', `Vínculos (${p.vinculos.length})`, false)}</div>
       <div role="tabpanel" id="pan-pes" aria-labelledby="tab-pes" class="aba-painel">
         <p class="caption">Dados enviados a órgãos como a Receita Federal. Campos com <span class="req">*</span> são obrigatórios.</p>
-        <div class="form-grid">${c('pf-nome', 'Nome completo', pe.nome, 'autocomplete="off"', true)}${c('pf-cpf', 'CPF', formatarCPF(pe.cpf), 'data-cpf inputmode="numeric" maxlength="14" placeholder="000.000.000-00"', true)}${c('pf-nasc', 'Data de nascimento', pe.nascimento, 'type="date"', true)}
+        <div class="form-grid">${c('pf-nome', 'Nome completo', pe.nome, 'autocomplete="off"', true)}${c('pf-cpf', 'CPF', formatarCPF(pe.cpf), 'data-cpf inputmode="numeric" maxlength="14" placeholder="000.000.000-00"', true)}${c('pf-nasc', 'Data de nascimento', pe.nascimento, `type="date" max="${idadeMaxISO(18)}"`, true)}
           <div class="field"><label for="pf-sexo">Sexo</label><select id="pf-sexo">${opt(nomes('sexos'), pe.sexo)}</select></div>
           <div class="field"><label for="pf-civil">Estado civil</label><select id="pf-civil">${opt(nomes('estadosCivis'), pe.estadoCivil)}</select></div>
           ${c('pf-tel1', 'Telefone principal', pe.telefones[0] || '', 'type="tel"')}${c('pf-tel2', 'Outro telefone', pe.telefones[1] || '', 'type="tel"')}${c('pf-email', 'E-mail', pe.email, 'type="email"')}
@@ -129,8 +129,11 @@ Object.assign(ENT.professores, {
   ],
   rowActs: r => can('lotacoes.gerir') ? `<button class="btn ghost sm" data-act="lot-ver" data-id="${r.id}" aria-label="Ver lotações de ${esc(r.nome)}">Lotações</button>` : '',
   onDelete: r => { DADOS.lotacoes = (DADOS.lotacoes || []).filter(l => l.professorId !== r.id); },
-  desc: 'Cadastro dos professores: dados pessoais, dependentes e vínculos. A escola de cada um é definida em Gerir lotações.'
 });
+// O cadastro do professor é só do RH; a escola consulta os lotados nela
+Object.defineProperty(ENT.professores, 'desc', { configurable: true, get: () => can('professores.editar')
+  ? 'Cadastro dos professores: dados pessoais, dependentes e vínculos. A escola de cada um é definida em Gerir lotações.'
+  : 'Professores lotados nesta escola. O cadastro e as lotações são feitos pelo RH da Secretaria de Educação.' });
 
 // Banco de talentos: "Chamar" cria o professor completo (Pessoa + Vínculo) e a primeira lotação
 ACT.chamar = el => {

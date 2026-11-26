@@ -19,6 +19,8 @@ const professorService = criarRepositorio('professores', {
     if (!cpfValido(pe.cpf)) return 'Dados pessoais: o CPF não é válido. Confira os 11 números.';
     if (ARMAZEM.professores.some(x => x.id !== p.id && x.pessoa && x.pessoa.cpf.replace(/\D/g, '') === pe.cpf.replace(/\D/g, ''))) return 'Dados pessoais: já existe um professor com esse CPF.';
     if (!pe.nascimento) return 'Dados pessoais: informe a data de nascimento.';
+    { const e = erroNascimento(pe.nascimento, { min: 18, max: 80, quem: 'O professor' }); if (e) return 'Dados pessoais: ' + e.charAt(0).toLowerCase() + e.slice(1); }
+    for (const d of p.dependentes) { const e = erroNascimento(d.nascimento, { quem: 'O dependente' }); if (e) return `Dependente ${d.nome}: ${e.charAt(0).toLowerCase() + e.slice(1)}`; }
     if (p.dependentes.some(d => !d.nome || !d.parentesco)) return 'Dependentes: todo dependente precisa de nome e parentesco.';
     if (!p.habilitacoes.length) return 'Formação: cadastre pelo menos uma formação.';
     for (const h of p.habilitacoes) {

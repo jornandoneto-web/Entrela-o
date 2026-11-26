@@ -2,6 +2,28 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v24 — Mentoria de 26/11/2026
+- Grade horária com caixinhas:
+  - ao escolher a turma, aparece a lista "Aulas a distribuir", com uma caixinha por aula, gerada pelas aulas por semana da matriz;
+  - a caixinha pode ser arrastada para o dia e o horário; no celular, toca-se na caixinha e depois em "Colocar aqui";
+  - o professor vem filtrado pela disciplina e pela lotação na escola, e é escolhido automaticamente se houver um só;
+  - cada componente mostra quantas aulas ainda faltam, e a aula tirada da grade volta para a lista;
+  - choque de horário da turma e do professor é recusado com o motivo;
+  - a turma mostra "Grade completa" ou "Faltam X aulas".
+- Grade horária no menu e no painel da Secretaria escolar e do Diretor, com as turmas que ainda faltam montar. O professor continua só consultando o horário dele. Nova permissão "Montar a grade horária".
+- Matriz (DED): novo campo "Aulas por semana" em cada componente.
+- Notas e boletins refeitos:
+  - filtro por turma e bimestre;
+  - nota de cada componente no bimestre, média, frequência e resultado final (Aprovado, Reprovado ou Em andamento) pela regra do fechamento;
+  - só consulta, com a estrela roxa;
+  - o Diretor também tem acesso. A tela antiga só mostrava a média dos 4 bimestres, e por isso a nota lançada num bimestre parecia não aparecer.
+- Professores: a escola vê só os lotados nela e não cadastra (o cadastro é do RH). A data de nascimento não aceita data futura e exige pelo menos 18 anos para o professor.
+- Dados de exemplo:
+  - matriz do Ensino Médio com 25 aulas por semana;
+  - novos professores de Educação Física (Fábio Rezende) e de Filosofia e Sociologia (Lívia Prado);
+  - grade da Unidade Centro refeita: 1º e 2º ano completos, 3º ano com 5 aulas para distribuir.
+- Migração para a versão 15 dos dados.
+
 ## v23 — Respostas da mentoria de 19/11/2026
 - A escola de destino escolhe a turma do aluno transferido dentro da rede. Depois do deferimento, o aluno aparece em "Chegando por transferência", na tela Pedidos de transferência da escola de destino. Ela escolhe uma turma da mesma série e do mesmo ano letivo, com as vagas livres de cada uma, ou a fila de espera.
 - Dados de exemplo: Renata Moura, André Siqueira e Patrícia Lemos passam a ter horas livres para lotar. Marina Costa e Juliana Freitas continuam sem saldo, para mostrar o aviso.

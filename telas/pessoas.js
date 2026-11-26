@@ -12,6 +12,7 @@ const alunoCheckAntes = ENT.alunos.check;
 ENT.alunos.check = (v, id) => {
   if (v.cpf && !cpfValido(v.cpf)) return 'O CPF do aluno não é válido. Confira os 11 números.';
   if (v.cpf && cpfDuplicado(v.cpf, 'alunos', id)) return 'Já existe um aluno com esse CPF.';
+  { const e = erroNascimento(v.nascimento, { max: 100, quem: 'O aluno' }); if (e) return e; }
   return alunoCheckAntes ? alunoCheckAntes(v, id) : '';
 };
 const alunoAfterAntes = ENT.alunos.after;
@@ -24,7 +25,7 @@ ENT.pessoas = {
   fields: () => [{ k: 'nome', l: 'Nome completo', req: 1, wide: 1 }, CAMPO_CPF, { k: 'nascimento', l: 'Data de nascimento', t: 'date', req: 1 }, { k: 'sexo', l: 'Sexo', t: 'select', o: L('sexos'), req: 1 }, { k: 'estadoCivil', l: 'Estado civil', t: 'select', o: L('estadosCivis'), req: 1 }, { k: 'telefone', l: 'Telefone', t: 'tel' }, { k: 'email', l: 'E-mail', t: 'email' }],
   sort: (a, b) => a.nome.localeCompare(b.nome),
   after: r => { r.cpf = String(r.cpf || '').replace(/\D/g, ''); r.telefones = [r.telefone || (r.telefones || [])[0] || ''].filter(Boolean); },
-  check: (v, id) => !cpfValido(v.cpf) ? 'O CPF não é válido. Confira os 11 números.' : cpfDuplicado(v.cpf, 'pessoas', id) ? 'Já existe uma pessoa com esse CPF.' : '',
+  check: (v, id) => !cpfValido(v.cpf) ? 'O CPF não é válido. Confira os 11 números.' : cpfDuplicado(v.cpf, 'pessoas', id) ? 'Já existe uma pessoa com esse CPF.' : erroNascimento(v.nascimento),
   cols: [['Pessoa', r => `${esc(r.nome)}${caption2(r.cpf ? 'CPF ' + esc(formatarCPF(r.cpf)) : 'CPF não informado')}`], ['Contato', r => `${esc((r.telefones || [])[0] || '—')}${caption2(esc(r.email || ''))}`], ['Estado civil', r => esc(r.estadoCivil || '—')], ['Diretor de', r => esc(DADOS.escolas.filter(e => e.diretorId === r.id).map(e => e.nome).join(', ') || '—')]],
   canEdit: () => SESSION.role === 'secretario', canNew: () => SESSION.role === 'secretario'
 };

@@ -27,10 +27,10 @@ Na tela de entrada você escolhe o perfil e a pessoa. No protótipo não há sen
 | `models/` | Modelos de dados: Escola, DiretoriaRegional, Municipio, Curso, Matriz, Serie, ComponenteCurricular, InfraestruturaEscola, Pessoa, Professor, Dependente, Vinculo, Formacao, Lotacao, AnoLetivo, Turma, Transferencia, NotaExterna |
 | `mock/` | Dados simulados (Diretorias Regionais de Sergipe, cursos, matriz de exemplo, dados de exemplo da rede) |
 | `services/` | Serviços assíncronos (listar, buscarPorId, salvar, atualizar, remover) que simulam o back-end. O `dadosService` carrega os dados de cada tela pelos serviços e envia de volta só o que mudou |
-| `telas/` | Escolas, Infraestrutura, Matrizes, Professor, Lotações, Turmas, Fechamento do ano e Rematrícula, Transferências, Histórico escolar, Notas externas, Pessoas, e telas dos perfis da Secretaria |
+| `telas/` | Escolas, Infraestrutura, Matrizes, Professor, Lotações, Turmas, Fechamento do ano e Rematrícula, Transferências, Histórico escolar, Notas externas, Pessoas, Notas e boletins, Grade horária, e telas dos perfis da Secretaria |
 | `app.js` | Núcleo: perfis e permissões, acessibilidade, navegação, formulários e cadastros genéricos |
 | `pages.js`, `rede.js`, `professores.js`, `estoque.js`, `transporte.js` | Telas e módulos das versões anteriores |
-| `migracoes.js`, `migracoes-v9.js`, `migracoes-v11.js`, `migracoes-v12.js`, `migracoes-v13.js`, `migracoes-v14.js` | Migrações dos dados salvos de uma versão para a outra |
+| `migracoes.js`, `migracoes-v9.js`, `migracoes-v11.js`, `migracoes-v12.js`, `migracoes-v13.js`, `migracoes-v14.js`, `migracoes-v15.js` | Migrações dos dados salvos de uma versão para a outra |
 
 ### Como os dados circulam
 
@@ -55,7 +55,12 @@ O portal oferece:
 ## Regras de negócio confirmadas
 
 - **Diretor da escola:** pode ser qualquer pessoa cadastrada no sistema, não precisa ter vínculo de servidor.
-- **Grade e matriz:** aulas por semana = carga anual da matriz ÷ 40 semanas letivas (valor em configuração, a confirmar).
+- **Grade e matriz:** cada componente da matriz tem as aulas por semana, cadastradas pelo DED. Elas viram as caixinhas da grade horária. Se o campo estiver vazio, o sistema estima com a carga anual ÷ 40 semanas letivas (valor em configuração, a confirmar).
+- **Grade horária:** é montada pela Secretaria escolar e pelo Diretor. O professor só consulta a dele. A turma não pode ter duas aulas no mesmo horário, e o professor não pode estar em duas turmas no mesmo dia e horário do turno.
+- **Professor na grade:** aparecem só os habilitados na disciplina (pela formação) e lotados na escola. Se houver um só, ele é escolhido automaticamente.
+- **Notas e boletins:** a escola consulta as notas que o professor lança, por turma e bimestre, sem editar. O resultado final usa a regra do fechamento. Fica "Em andamento" enquanto faltam notas do ano.
+- **Cadastro do professor:** só o RH cadastra. A escola vê apenas os professores lotados nela.
+- **Data de nascimento:** não pode ser no futuro. O professor precisa ter pelo menos 18 anos.
 - **Unidades de carga horária:** a carga do vínculo do professor é semanal (padrão 25 h, integral 40 h). A carga dos componentes na matriz curricular é anual (ex.: Matemática, 80 h).
 - **Secretaria de Educação × Secretaria escolar:** a Secretaria de Estado da Educação (SEDUC, perfil Secretário) reúne todas as escolas da rede e é a única que cadastra escolas. A Secretaria escolar é a secretaria de cada escola: cadastra turmas, horários e alunos da sua escola.
 - **Ano letivo:** cada escola tem um único ano ativo. O ano escolhido no topo vale para turmas, alunos, horários, notas e diário. Num ano encerrado tudo fica só para consulta.

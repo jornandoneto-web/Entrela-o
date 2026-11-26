@@ -10,7 +10,7 @@
 /** @typedef {{ cep: string, logradouro: string, numero: string, complemento: string, bairro: string, cidade: string, uf: string }} Endereco */
 /** @typedef {{ id: string, nome: string, inep: string, drId: string, municipioId: string, endereco: Endereco, telefone: string, diretorId: string, cursos: string[], integracao: string }} Escola */
 /** @typedef {{ id: string, nome: string, etapa: string, descricao: string }} Curso */
-/** @typedef {{ id: string, nome: string, cargaHoraria: number }} ComponenteCurricular */
+/** @typedef {{ id: string, nome: string, cargaHoraria: number, aulasPorSemana: number }} ComponenteCurricular — cargaHoraria anual (h); aulasPorSemana usada para montar a grade */
 /** @typedef {{ id: string, nome: string, componentes: ComponenteCurricular[] }} Serie */
 /** @typedef {{ id: string, cursoId: string, series: Serie[] }} Matriz */
 /** @typedef {{ escolaId: string, salasAula: number, salasTI: number, laboratorios: number, tiposLaboratorio: string, banheiros: number, salasProfessores: number, possuiGinasio: boolean, recursosAcessibilidade: string[] }} InfraestruturaEscola */
@@ -46,7 +46,7 @@ const Modelos = {
   /** @returns {Curso} */
   curso: (o = {}) => ({ id: novoId(o.id), nome: txt(o.nome), etapa: txt(o.etapa), descricao: txt(o.descricao) }),
   /** @returns {ComponenteCurricular} */
-  componenteCurricular: (o = {}) => ({ id: novoId(o.id), nome: txt(o.nome), cargaHoraria: numero(o.cargaHoraria) }),
+  componenteCurricular: (o = {}) => ({ id: novoId(o.id), nome: txt(o.nome), cargaHoraria: numero(o.cargaHoraria), aulasPorSemana: numero(o.aulasPorSemana) }),
   /** @returns {Serie} */
   serie: (o = {}) => ({ id: novoId(o.id), nome: txt(o.nome), componentes: lista(o.componentes).map(Modelos.componenteCurricular) }),
   /** @returns {Matriz} */
@@ -122,5 +122,18 @@ function cpfValido(c) {
   if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
   const dig = n => { let s = 0; for (let i = 0; i < n; i++) s += Number(d[i]) * (n + 1 - i); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
   return dig(9) === Number(d[9]) && dig(10) === Number(d[10]);
+}
+/** Idade completa hoje e conferência da data de nascimento: não pode ser no futuro nem fora da faixa de idade. Devolve a mensagem de erro ou ''. */
+const idadeEm = iso => { const d = new Date(iso + 'T12:00:00'), t = TODAY; let n = t.getFullYear() - d.getFullYear(); if (t.getMonth() < d.getMonth() || (t.getMonth() === d.getMonth() && t.getDate() < d.getDate())) n--; return n; };
+/** Última data de nascimento possível para quem precisa ter pelo menos n anos hoje. */
+const idadeMaxISO = n => { const d = new Date(TODAY); d.setFullYear(d.getFullYear() - n); return isoOf(d); };
+function erroNascimento(iso, { min = 0, max = 110, quem = 'A pessoa' } = {}) {
+  if (!iso) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || isNaN(new Date(iso + 'T12:00:00'))) return 'Data de nascimento inválida.';
+  if (iso > TODAY_ISO) return 'A data de nascimento não pode ser no futuro.';
+  const i = idadeEm(iso);
+  if (i < min) return `Data de nascimento: ${quem.toLowerCase()} precisa ter pelo menos ${min} anos. Pela data informada, tem ${i}.`;
+  if (i > max) return `Data de nascimento: confira o ano. Pela data informada, ${quem.toLowerCase()} teria ${i} anos.`;
+  return '';
 }
 const formatarCPF = c => { const d = String(c || '').replace(/\D/g, '').slice(0, 11); return d.length === 11 ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}` : c; };

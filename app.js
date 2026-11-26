@@ -292,14 +292,15 @@ const PERMISSOES = [
   ['cursos.gerir', 'Cadastrar cursos e matrizes curriculares'],
   ['lotacoes.gerir', 'Gerir lotações de professores'],
   ['vagas.editar', 'Cadastrar vagas por série e turma'],
-  ['turmas.gerir', 'Cadastrar turmas e montar a grade horária da escola'],
+  ['turmas.gerir', 'Cadastrar turmas da escola'],
+  ['grade.montar', 'Montar a grade horária das turmas da escola'],
   ['alunos.necessidades', 'Ver o diagnóstico dos alunos com atendimento especializado'],
   ['anoletivo.fechar', 'Finalizar turmas, encerrar o ano letivo e rematricular']
 ];
 const PERFIS_PADRAO = {
   // Secretaria escolar: a secretaria de cada escola. Não cadastra escolas (isso é da Secretaria de Educação).
-  gestao: ['comunicados.publicar', 'relatorios.ver', 'boletins.ver', 'ocorrencias.ver', 'merenda.estoque', 'vagas.editar', 'turmas.gerir', 'alunos.necessidades', 'anoletivo.fechar'],
-  diretor: ['comunicados.publicar', 'relatorios.ver', 'infraestrutura.editar', 'vagas.editar'],
+  gestao: ['comunicados.publicar', 'relatorios.ver', 'boletins.ver', 'ocorrencias.ver', 'merenda.estoque', 'vagas.editar', 'turmas.gerir', 'grade.montar', 'alunos.necessidades', 'anoletivo.fechar'],
+  diretor: ['comunicados.publicar', 'relatorios.ver', 'infraestrutura.editar', 'vagas.editar', 'grade.montar', 'boletins.ver'],
   calendario: ['calendario.editar', 'comunicados.publicar'], // TODO: confirmar a sigla do departamento citado na mentoria
   rh: ['professores.editar', 'rh.painel', 'talentos.gerir', 'lotacoes.gerir'],
   ded: ['cursos.gerir'],
@@ -374,7 +375,7 @@ const navFor = role => (NAV[role] || []).filter(n => !n[3] || can(n[3]));
 const NAV = {
   gestao: [['inicio', 'Início', 'home'], ['relatorios', 'Relatórios', 'chart'],
     ['§', 'Rede e matrículas'], ['vagas', 'Vagas da rede', 'door'], ['prematriculas', 'Pré-matrículas', 'inbox'], ['transferencias', 'Pedidos de transferência', 'swap'], ['integracoes', 'Integrações', 'plug'],
-    ['§', 'Escola'], ['turmas', 'Turmas', 'layers', 'turmas.gerir'], ['alunos', 'Alunos', 'users'], ['professores', 'Professores', 'teacher'], ['disciplinas', 'Disciplinas', 'book'], ['horarios', 'Grade horária', 'clock', 'turmas.gerir'],
+    ['§', 'Escola'], ['turmas', 'Turmas', 'layers', 'turmas.gerir'], ['horarios', 'Grade horária', 'clock'], ['alunos', 'Alunos', 'users'], ['professores', 'Professores', 'teacher'], ['disciplinas', 'Disciplinas', 'book'],
     ['§', 'Ano letivo'], ['fechamento', 'Fechamento do ano', 'check2', 'anoletivo.fechar'], ['rematricula', 'Rematrícula', 'swap', 'anoletivo.fechar'],
     ['§', 'Pedagógico'], ['boletins', 'Notas e boletins', 'pencil'], ['frequencia', 'Frequência', 'check2'], ['aee', 'Educação especial (AEE)', 'access'], ['ocorrencias', 'Ocorrências', 'alert'], ['historico', 'Histórico escolar', 'file'], ['notasExternas', 'Notas externas', 'pencil'],
     ['§', 'Programas e apoio'], ['buscaativa', 'Busca ativa', 'radar'], ['merenda', 'Merenda escolar', 'utensils'], ['transporte', 'Transporte escolar', 'bus'],
@@ -382,7 +383,7 @@ const NAV = {
     ['§', 'Cadastros auxiliares'], ['cadastros', 'Listas do sistema', 'clip'], ['faixas', 'Faixas de horário', 'clock'], ['config', 'Configurações', 'gear']],
   professor: [['inicio', 'Início', 'home'], ['turmas', 'Minhas turmas', 'layers'], ['notas', 'Lançar notas', 'pencil'], ['chamada', 'Diário de classe', 'check2'], ['atividades', 'Atividades', 'clip'], ['ocorrencias', 'Ocorrências', 'alert'], ['horario', 'Meu horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['comunicados', 'Comunicados', 'bell']],
   aluno: [['inicio', 'Início', 'home'], ['boletim', 'Boletim', 'pencil'], ['atividades', 'Atividades', 'clip'], ['horario', 'Horário', 'clock'], ['calendario', 'Calendário', 'calendar'], ['merenda', 'Merenda', 'utensils'], ['comunicados', 'Comunicados', 'bell'], ['solicitacoes', 'Solicitações', 'file'], ['transferencia', 'Pedir transferência', 'swap'], ['perfil', 'Meu perfil', 'user']],
-  diretor: [['inicio', 'Início', 'home'], ['infraestrutura', 'Infraestrutura da escola', 'building', 'infraestrutura.editar'], ['vagas', 'Vagas da escola', 'door', 'vagas.editar'], ['calendario', 'Calendário escolar', 'calendar'], ['comunicados', 'Comunicados', 'bell', 'comunicados.publicar'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver'], ['boletins', 'Notas e boletins', 'pencil', 'boletins.ver'], ['ocorrencias', 'Ocorrências', 'alert', 'ocorrencias.ver']],
+  diretor: [['inicio', 'Início', 'home'], ['horarios', 'Grade horária', 'clock'], ['infraestrutura', 'Infraestrutura da escola', 'building', 'infraestrutura.editar'], ['vagas', 'Vagas da escola', 'door', 'vagas.editar'], ['calendario', 'Calendário escolar', 'calendar'], ['comunicados', 'Comunicados', 'bell', 'comunicados.publicar'], ['relatorios', 'Relatórios', 'chart', 'relatorios.ver'], ['boletins', 'Notas e boletins', 'pencil', 'boletins.ver'], ['ocorrencias', 'Ocorrências', 'alert', 'ocorrencias.ver']],
   rh: [['inicio', 'Necessidade de professores', 'chart'], ['professores', 'Professores', 'teacher'], ['formacoes', 'Formações', 'cap'], ['lotacoes', 'Gerir lotações', 'swap', 'lotacoes.gerir'], ['contratos', 'Contratos a vencer', 'calendar', 'rh.painel'], ['talentos', 'Banco de talentos', 'users', 'talentos.gerir'], ['cadastros', 'Cadastros auxiliares', 'clip']],
   dae: [['inicio', 'Estoque da rede', 'utensils'], ['alimentos', 'Alimentos', 'clip'], ['entradas', 'Entradas da Seduc', 'inbox', 'merenda.estoque'], ['historico', 'Histórico de consumo', 'chart'], ['cardapio', 'Cardápio', 'book'], ['cadastros', 'Cadastros auxiliares', 'clip']],
   motorista: [['inicio', 'Embarque', 'bus'], ['rota', 'Minha rota', 'pin']],
