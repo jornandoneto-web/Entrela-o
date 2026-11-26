@@ -31,6 +31,7 @@ Na tela de entrada você escolhe o perfil e a pessoa. No protótipo não há sen
 | `app.js` | Núcleo: perfis e permissões, acessibilidade, navegação, formulários e cadastros genéricos |
 | `pages.js`, `rede.js`, `professores.js`, `estoque.js`, `transporte.js` | Telas e módulos das versões anteriores |
 | `migracoes.js`, `migracoes-v9.js`, `migracoes-v11.js`, `migracoes-v12.js`, `migracoes-v13.js`, `migracoes-v14.js`, `migracoes-v15.js` | Migrações dos dados salvos de uma versão para a outra |
+| `prompts/` | Repositório de prompts: cada prompt enviado à IA, com a versão, o commit e os arquivos que ele mudou. Comece por `prompts/RASTREABILIDADE.md` |
 
 ### Como os dados circulam
 

@@ -2,6 +2,11 @@
 
 As versões seguem a numeração em que o protótipo foi publicado.
 
+## v25 — Repositório de prompts
+- Nova pasta `prompts/` com os 23 prompts enviados à IA desde o protótipo inicial, cada um com o texto original, a data, a versão, o commit, a release, os arquivos alterados, como foi verificado e as pendências.
+- Nova matriz `prompts/RASTREABILIDADE.md`, com todos os prompts numa tabela e as pendências em aberto.
+- Retiradas três páginas de teste (`t24.html`, `teste.html` e `teste-up.html`) que entraram por engano na v24.
+
 ## v24 — Mentoria de 26/11/2026
 - Grade horária com caixinhas:
   - ao escolher a turma, aparece a lista "Aulas a distribuir", com uma caixinha por aula, gerada pelas aulas por semana da matriz;
